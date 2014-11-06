@@ -1,0 +1,20 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.asc
+
+target/
+
+# Eclipse related
+.project
+.settings
+.classpath
+
+#Intelij related
+.idea/
+*.iml
+
+.DS_Store

@@ -1,0 +1,73 @@
+/**
+ * JBoss, Home of Professional Open Source
+ * Copyright Red Hat, Inc., and individual contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jboss.aerogear.webpush;
+
+import org.jboss.aerogear.webpush.datastore.RegistrationNotFoundException;
+
+/**
+ * A Java implementation of <a href="http://tools.ietf.org/html/draft-thomson-webpush-http2-00">WebPush</a> Server.
+ */
+public interface WebPushServer {
+
+    /**
+     * Handles a new or re-registration of a device in the WebPush protocol.
+     *
+     * @return {@link Registration} the response for this registration.
+     */
+    Registration register();
+
+    /**
+     * Handles the creation of new channels for a registration.
+     *
+     * @param registrationId the registration id for which this new channel belongs to.
+     */
+    Channel newChannel(String registrationId) throws RegistrationNotFoundException;
+
+    /**
+     * Handles the retrieval of a channnel's message.
+     * This enables clients to query the server for the latest notification/message.
+     *
+     * @param endpointToken the endpoint token for the channel.
+     * @return {code String} the latest notification/message for the specified channel.
+     */
+    String getMessage(String endpointToken);
+
+    /**
+     * Set the notifcation/message for a channel.
+     *
+     * @param endpointToken that identifies the channel.
+     * @param content the new content.
+     */
+    void setMessage(String endpointToken, String content);
+
+    /**
+     * Handles device monitorURI requests which are a signal to the server to begin delivering
+     * push notification/messages to the client.
+     *
+     * @param registrationId the id of the registration.
+     * @param channelUri the channelURI uri to monitorURI.
+     */
+    void monitor(String registrationId, String channelUri);
+
+    /**
+     * Returns the configuration for this SimplePush server.
+     *
+     * @return {@link WebPushServerConfig} this servers configuration.
+     */
+    WebPushServerConfig config();
+
+}

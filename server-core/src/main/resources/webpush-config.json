@@ -1,0 +1,8 @@
+{
+    "host": "0.0.0.0",
+    "port": 7777,
+    "ssl": true,
+    "endpoint-host": "localhost",
+    "password": "ChangeMe!!!!",
+    "datastore": { "in-memory": {} }
+}

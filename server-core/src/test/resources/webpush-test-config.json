@@ -1,0 +1,13 @@
+{
+    "host": "localhost",
+    "port": 9999,
+    "password" :"testing",
+    "endpoint-host": "external",
+    "endpoint-port": 8889,
+    "endpoint-tls": true,
+    "endpoint-prefix": "/endpoint",
+    "ack-interval": "80000",
+    "datastore": { "in-memory": {} },
+    "registration-max-age": 3000,
+    "channel-max-age": 4000
+}

@@ -31,6 +31,7 @@ import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
@@ -40,14 +41,12 @@ import org.jboss.aerogear.webpush.standalone.ConfigReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-
 /**
  * A HTTP/2 based WebPush Server.
  */
-public final class NettyWebPushServer {
+public final class WebPushNettyServer {
 
-    private static final Logger logger = LoggerFactory.getLogger(NettyWebPushServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebPushNettyServer.class);
     private static final String DEFAULT_CONFIG = "/webpush-config.json";
 
     public static void main(final String[] args) throws Exception {
@@ -65,7 +64,7 @@ public final class NettyWebPushServer {
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new WebPushChannelInitializer(sslCtx, inMemoryDataStore, config));
             final Channel ch = b.bind(config.host(), config.port()).sync().channel();
-            logger.info("WebPush server bound to " + config.host() + ":" + config.port());
+            LOGGER.info("WebPush server bound to {}:{}", config.host(), config.port());
             ch.closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();
@@ -81,14 +80,14 @@ public final class NettyWebPushServer {
 
         if (config.useEndpointTls()) {
             SelfSignedCertificate ssc = new SelfSignedCertificate();
-            return SslContext.newServerContext(
-                    ssc.certificate(), ssc.privateKey(), null,
+            return SslContext.newServerContext(SslProvider.JDK,
+                    ssc.certificate(),
+                    ssc.privateKey(),
+                    null,
                     Http2SecurityUtil.CIPHERS,
-                    /* NOTE: the following filter may not include all ciphers required by the HTTP/2 specification
-                     * Please refer to the HTTP/2 specification for cipher requirements. */
                     SupportedCipherSuiteFilter.INSTANCE,
                     new ApplicationProtocolConfig(
-                            Protocol.ALPN,
+                            protocol(config),
                             SelectorFailureBehavior.FATAL_ALERT,
                             SelectedListenerFailureBehavior.FATAL_ALERT,
                             SelectedProtocol.HTTP_2.protocolName(),
@@ -96,5 +95,16 @@ public final class NettyWebPushServer {
                     0, 0);
         }
         return null;
+    }
+
+    private static Protocol protocol(final WebPushServerConfig config) {
+        switch (config.protocol()) {
+            case ALPN:
+                return Protocol.ALPN;
+            case NPN:
+                return Protocol.NPN;
+            default:
+                throw new IllegalStateException("Protocol not supported [" + config.protocol() + "]");
+        }
     }
 }

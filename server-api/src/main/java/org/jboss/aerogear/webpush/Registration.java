@@ -16,8 +16,9 @@ public interface Registration {
     String id();
 
     /**
-     * The {@link URI} used by devices to signal to the server that it should begin delivering
-     * notifications/messages to the device.
+     * The {@link URI} describing how a device is expected to monitor for incoming push messages.
+     * <p>
+     * The monitoring URI is used by a device to setup a push stream.
      *
      * @return {@link URI} which will be returned to the calling client, most often as HTTP Location Header value.
      */

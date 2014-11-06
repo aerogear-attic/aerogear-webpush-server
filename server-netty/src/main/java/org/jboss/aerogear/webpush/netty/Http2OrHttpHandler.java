@@ -17,6 +17,8 @@
 package org.jboss.aerogear.webpush.netty;
 
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http2.Http2ConnectionHandler;
 import io.netty.handler.codec.http2.Http2OrHttpChooser;
 import org.jboss.aerogear.webpush.WebPushServer;
 
@@ -41,11 +43,14 @@ public class Http2OrHttpHandler extends Http2OrHttpChooser {
     }
 
     @Override
-    protected SelectedProtocol getProtocol(SSLEngine engine) {
-        String[] protocol = engine.getSession().getProtocol().split(":");
-        SelectedProtocol selectedProtocol = SelectedProtocol.protocol(protocol[1]);
-        System.err.println("Selected Protocol is " + selectedProtocol);
-        return selectedProtocol;
+    protected SelectedProtocol getProtocol(final SSLEngine engine) {
+        final String[] protocols = engine.getSession().getProtocol().split(":");
+        if (protocols.length > 1) {
+            SelectedProtocol selectedProtocol = SelectedProtocol.protocol(protocols[1]);
+            System.err.println("Selected Protocol is " + selectedProtocol);
+            return selectedProtocol;
+        }
+        return SelectedProtocol.UNKNOWN;
     }
 
     @Override
@@ -54,7 +59,14 @@ public class Http2OrHttpHandler extends Http2OrHttpChooser {
     }
 
     @Override
-    protected ChannelHandler createHttp2RequestHandler() {
-        return new WebPushConnectionHandler(webPushServer);
+    protected Http2ConnectionHandler createHttp2RequestHandler() {
+        return new WebPushHttp2Handler(webPushServer);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if (!cause.getMessage().equals("javax.net.ssl.SSLException: Received fatal alert: unknown_ca")) {
+            ctx.fireExceptionCaught(cause);
+        }
     }
 }

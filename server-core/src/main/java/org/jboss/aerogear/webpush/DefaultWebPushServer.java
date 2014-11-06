@@ -55,15 +55,15 @@ public class DefaultWebPushServer implements WebPushServer {
     }
 
     private static URI monitorURI(final String id) {
-        return webpushURI(id, ":push:monitor");
+        return webpushURI(id, "/monitor");
     }
 
     private static URI channelURI(final String id) {
-        return webpushURI(id, ":push:channel");
+        return webpushURI(id, "/channel");
     }
 
     private static URI webpushURI(final String id, final String postfix) {
-        return URI.create("webpush:" + id + postfix);
+        return URI.create("webpush/" + id + postfix);
     }
 
     private static String urlEncodeId(final String id) {
@@ -82,6 +82,11 @@ public class DefaultWebPushServer implements WebPushServer {
         final DefaultChannel newChannel = new DefaultChannel(registration.id(), channelId, endpointToken);
         store.saveChannel(newChannel);
         return newChannel;
+    }
+
+    @Override
+    public void removeChannel(Channel channel) throws RegistrationNotFoundException {
+        store.removeChannel(channel);
     }
 
     @Override

@@ -57,6 +57,7 @@
   </scm>
 
   <properties>
+    <java.version>1.8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <aerogear.crypto.version>0.1.2</aerogear.crypto.version>
     <bouncycastle.version>140</bouncycastle.version>
@@ -173,18 +174,20 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <!-- Inherits version 3.0 from jboss-parent pom.xml -->
-        <!-- <version>3.0</version>  -->
         <configuration>
-          <compilerVersion>1.6</compilerVersion>
+          <compilerVersion>${java.version}</compilerVersion>
           <fork>true</fork>
-          <source>1.6</source>
-          <target>1.6</target>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
           <debug>true</debug>
           <optimize>true</optimize>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
           <compilerArgument>-Xlint:-options</compilerArgument>
+          <compilerArguments>
+            <source>${java.version}</source>
+            <target>${java.version}</target>
+          </compilerArguments>
         </configuration>
       </plugin>
       <plugin>

@@ -17,9 +17,13 @@
 package org.jboss.aerogear.webpush;
 
 /**
- * Configuration settings for SimplePush server
+ * Configuration settings for WebPush server
  */
 public interface WebPushServerConfig {
+
+    enum Protocol {
+        ALPN, NPN
+    }
 
     /**
      * The default prefix for the the notification endpoint url. This
@@ -43,6 +47,13 @@ public interface WebPushServerConfig {
     int port();
 
     /**
+     * Returnes the {@link Protocol} to use.
+     *
+     * @return {@link Protocol} the protocol used for TLS application protocol negotiation.
+     */
+    Protocol protocol();
+
+    /**
      * Determins whether transport layer security is in use.
      *
      * @return {@code true} if transport layer security is in use.
@@ -57,7 +68,7 @@ public interface WebPushServerConfig {
     String password();
 
     /**
-     * Returns the endpoint url prefix for this SimplePush server.
+     * Returns the endpoint url prefix for this WebPush server.
      * This will get the channelId appended to it.
      *
      * @return {@code String} the endpoint url prefix.
@@ -65,7 +76,7 @@ public interface WebPushServerConfig {
     String endpointPrefix();
 
     /**
-     * Returns the notification endpoint url prefix for this SimplePush server.
+     * Returns the notification endpoint url prefix for this WebPush server.
      * This will be the in the format:
      * protocol://endpointHost:endpointPort/endpointPrefix
      *

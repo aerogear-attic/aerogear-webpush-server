@@ -28,6 +28,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     private final int endpointPort;
     private final long registrationMaxAge;
     private final long channelMaxAge;
+    private final Protocol protocol;
 
     private DefaultWebPushConfig(final Builder builder) {
         host = builder.host;
@@ -40,6 +41,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         password = builder.password;
         registrationMaxAge = builder.registrationMaxAge;
         channelMaxAge = builder.channelMaxAge;
+        protocol = builder.protocol;
     }
 
     private static String makeEndpointUrl(final String endpointHost, final int endpointPort, final String prefix, final boolean tls) {
@@ -99,6 +101,11 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         return channelMaxAge;
     }
 
+    @Override
+    public Protocol protocol() {
+        return protocol;
+    }
+
     public String toString() {
         return new StringBuilder("WebPushConfig[host=").append(host)
                 .append(", port=").append(port)
@@ -107,6 +114,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
                 .append(", endpointTls=").append(endpointTls)
                 .append(", endpointUrlPrefix=").append(endpointPrefix)
                 .append(", endpointUrl=").append(endpointUrl)
+                .append(", protocol=").append(protocol)
                 .append("]").toString();
     }
 
@@ -128,6 +136,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private int endpointPort;
         private long registrationMaxAge = 604800000L;
         private long channelMaxAge = 604800000L;
+        private Protocol protocol = Protocol.ALPN;
 
         public Builder host(final String host) {
             if (host != null) {
@@ -179,6 +188,11 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             if (maxAge != null) {
                 this.channelMaxAge = maxAge;
             }
+            return this;
+        }
+
+        public Builder protocol(final Protocol protocol) {
+            this.protocol = protocol;
             return this;
         }
 

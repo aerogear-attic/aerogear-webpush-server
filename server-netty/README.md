@@ -4,23 +4,15 @@ This project is a Java implementation of the server side that follows the
 
 ## Usage
 
-### Build the SimplePush Server
+### Build the WebPush Server
 
     mvn install
 
-### Start the SimplePush Server
+### Start the WebPush Server
 
-    mvn exec:java
+    mvn exec:exec
     
 This will start the server listening localhost using port 7777. This will use a default configuration which can be found
-in ```src/main/resources/webpush-config.json```
-
-    mvn exec:java
-
-The configuration file can either be a path to a file on the file system or to a file on the classpath.
-
-The default sample configuration file can be found in ```src/main/resources``` directory, which also contains sample 
-configurations. 
 
 ### Configuration
 Configuration is done using JSON configuration file.
@@ -34,7 +26,8 @@ Example configuration:
         "endpoint-port": 8899,
         "endpoint-tls": false,
         "endpoint-prefix": "/update",
-        "datastore": { "in-memory": {} }
+        "datastore": { "in-memory": {} },
+        "protocol": "ALPN"
     }
 
 #### host

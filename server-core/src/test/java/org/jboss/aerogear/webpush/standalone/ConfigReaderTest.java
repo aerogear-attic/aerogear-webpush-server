@@ -14,10 +14,12 @@ package org.jboss.aerogear.webpush.standalone;
 
 import org.hamcrest.CoreMatchers;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
+import org.jboss.aerogear.webpush.WebPushServerConfig.Protocol;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ConfigReaderTest {
@@ -40,13 +42,13 @@ public class ConfigReaderTest {
 
     @Test
     public void port() {
-        assertThat(webPushServerConfig.port(), CoreMatchers.is(9999));
-        assertThat(webPushServerConfig.password(), CoreMatchers.is(CoreMatchers.notNullValue()));
+        assertThat(webPushServerConfig.port(), is(9999));
+        assertThat(webPushServerConfig.password(), is(CoreMatchers.notNullValue()));
     }
 
     @Test
     public void tokenKey() {
-        assertThat(webPushServerConfig.password(), CoreMatchers.is(CoreMatchers.notNullValue()));
+        assertThat(webPushServerConfig.password(), is(CoreMatchers.notNullValue()));
     }
 
     @Test
@@ -56,7 +58,7 @@ public class ConfigReaderTest {
 
     @Test
     public void endpointPort() {
-        assertThat(webPushServerConfig.endpointPort(), CoreMatchers.is(8889));
+        assertThat(webPushServerConfig.endpointPort(), is(8889));
     }
 
     @Test
@@ -66,25 +68,35 @@ public class ConfigReaderTest {
 
     @Test
     public void endpointTls() {
-        assertThat(webPushServerConfig.useEndpointTls(), CoreMatchers.is(true));
+        assertThat(webPushServerConfig.useEndpointTls(), is(true));
     }
 
     @Test
     public void registrationMaxAge() {
-        assertThat(webPushServerConfig.registrationMaxAge(), CoreMatchers.is(3000L));
+        assertThat(webPushServerConfig.registrationMaxAge(), is(3000L));
     }
 
     @Test
     public void channelMaxAge() {
-        assertThat(webPushServerConfig.channelMaxAge(), CoreMatchers.is(4000L));
+        assertThat(webPushServerConfig.channelMaxAge(), is(4000L));
+    }
+
+    @Test
+    public void protocol() {
+        assertThat(webPushServerConfig.protocol(), is(Protocol.NPN));
     }
 
     @Test
     public void sampleConfig() {
         final WebPushServerConfig config = ConfigReader.parse(ConfigReaderTest.class.getResourceAsStream("/webpush-config.json"));
         assertThat(config.host(), equalTo("0.0.0.0"));
-        assertThat(config.port(), CoreMatchers.is(7777));
-        assertThat(config.password(), CoreMatchers.is(CoreMatchers.notNullValue()));
+        assertThat(config.port(), is(7777));
+        assertThat(config.password(), is(CoreMatchers.notNullValue()));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void readNonExistingConfigFile() {
+        ConfigReader.parse(ConfigReaderTest.class.getResourceAsStream("/dummy.json"));
     }
 
 }

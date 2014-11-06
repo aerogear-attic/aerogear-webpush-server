@@ -23,7 +23,7 @@ import org.jboss.aerogear.webpush.Channel;
 import org.jboss.aerogear.webpush.Registration;
 
 /**
- * Handles the storing of channels for a SimplePush Server implementation.
+ * Handles the storing of channels for a WebPush Server implementation.
  */
 public interface DataStore {
 

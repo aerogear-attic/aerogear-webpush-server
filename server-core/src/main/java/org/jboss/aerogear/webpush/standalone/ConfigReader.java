@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.aerogear.webpush.DefaultWebPushConfig;
 import org.jboss.aerogear.webpush.DefaultWebPushConfig.Builder;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
+import org.jboss.aerogear.webpush.WebPushServerConfig.Protocol;
 
 /**
  * Utility to read a JSON config files.
@@ -60,13 +61,16 @@ public class ConfigReader {
      * Will parse the passed InputStream into a {@link WebPushServerConfig} instance.
      *
      *
-     * @param in the input stream to parse. Should be from a JSON source representing a SimplePush configuration.
+     * @param in the input stream to parse. Should be from a JSON source representing a WebPush configuration.
      * @return {@link WebPushServerConfig} populated with the values in the JSON input stream.
      */
     public static WebPushServerConfig parse(final InputStream in) {
+        if (in == null) {
+            throw new IllegalArgumentException("Input stream was null. Please check if the source exists or is emtpy");
+        }
         try {
             final JsonNode json = OM.readTree(in);
-            return parseSimplePushProperties(json);
+            return parseWebPushProperties(json);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
@@ -74,7 +78,7 @@ public class ConfigReader {
         }
     }
 
-    private static WebPushServerConfig parseSimplePushProperties(final JsonNode json) {
+    private static WebPushServerConfig parseWebPushProperties(final JsonNode json) {
         final JsonNode host = json.get("host");
         final JsonNode port = json.get("port");
         final Builder builder = DefaultWebPushConfig.create(host.asText(), port.asInt());
@@ -105,6 +109,10 @@ public class ConfigReader {
         final JsonNode channelMaxAge = json.get("channel-max-age");
         if (channelMaxAge != null) {
             builder.channelMaxAge(channelMaxAge.asLong());
+        }
+        final JsonNode protocol = json.get("protocol");
+        if (protocol != null) {
+            builder.protocol(Protocol.valueOf(protocol.asText()));
         }
         return builder.build();
     }

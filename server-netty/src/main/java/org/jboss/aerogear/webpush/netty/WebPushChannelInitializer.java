@@ -27,8 +27,7 @@ import org.jboss.aerogear.webpush.WebPushServer;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
 import org.jboss.aerogear.webpush.datastore.DataStore;
 
-import java.util.Collections;
-
+import static io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodec;
 import static java.util.Collections.singletonList;
 
 public class WebPushChannelInitializer extends ChannelInitializer<SocketChannel> {
@@ -62,12 +61,10 @@ public class WebPushChannelInitializer extends ChannelInitializer<SocketChannel>
     }
 
     private void configureClearText(final SocketChannel ch, final WebPushServer webPushServer) {
-        final HttpServerUpgradeHandler.UpgradeCodec upgradeCodec =
-                new Http2ServerUpgradeCodec(new WebPushConnectionHandler(webPushServer));
+        final UpgradeCodec upgradeCodec = new Http2ServerUpgradeCodec(new WebPushHttp2Handler(webPushServer));
         final HttpServerCodec sourceCodec = new HttpServerCodec();
         final HttpServerUpgradeHandler upgradeHandler =
                 new HttpServerUpgradeHandler(sourceCodec, singletonList(upgradeCodec), 65536);
-
         ch.pipeline().addLast(sourceCodec);
         ch.pipeline().addLast(upgradeHandler);
     }

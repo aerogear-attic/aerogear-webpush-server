@@ -1,4 +1,4 @@
-# AeroGear SimplePush Server
+# AeroGear WebPush Server Core
 This project is a Java implementation of the server side that follows the
 [WebPush Protocol](http://tools.ietf.org/html/draft-thomson-webpush-http2-00)
 

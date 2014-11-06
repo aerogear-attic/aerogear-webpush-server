@@ -30,8 +30,14 @@
     <url>http://aerogear.org</url>
 
     <properties>
-        <include.redis.tests>none</include.redis.tests>
-        <include.couchdb.tests>none</include.couchdb.tests>
+        <jetty.npn.version>1.1.9.v20141016</jetty.npn.version>
+        <jetty.npn.path>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${jetty.npn.version}/npn-boot-${jetty.npn.version}.jar</jetty.npn.path>
+        <jetty.alpn.version>8.1.0.v20141016</jetty.alpn.version>
+        <jetty.alpn.path>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${jetty.alpn.version}/alpn-boot-${jetty.alpn.version}.jar</jetty.alpn.path>
+        <bootcp>${jetty.alpn.path}</bootcp>
+        <webpush.alpn.config>/webpush-config.json</webpush.alpn.config>
+        <webpush.npn.config>/webpush-npn-config.json</webpush.npn.config>
+        <webpush.config>${webpush.alpn.config}</webpush.config>
     </properties>
 
     <dependencies>
@@ -52,16 +58,16 @@
         </dependency>
 
         <dependency>
+          <groupId>org.eclipse.jetty.npn</groupId>
+          <artifactId>npn-api</artifactId>
+          <version>1.1.1.v20141010</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
             <version>1.1.30.Fork1</version>
             <classifier>${os.detected.classifier}</classifier>
-        </dependency>
-
-        <dependency>
-          <groupId>org.eclipse.jetty.npn</groupId>
-          <artifactId>npn-api</artifactId>
-          <version>${jetty.npn.version}</version>
         </dependency>
 
         <dependency>
@@ -110,38 +116,25 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>${version.exec-maven-plugin}</version>
+                <version>1.2.1</version>
                 <configuration>
-                    <mainClass>org.jboss.aerogear.webpush.netty.NettyWebPushServer</mainClass>
-                    <classpathScope>test</classpathScope>
+                    <executable>${java.home}/bin/java</executable>
                     <arguments>
-                        <argument>/webpush-config.json</argument>
+                        <argument>-Xbootclasspath/p:${bootcp}</argument>
+                        <argument>-Djavax.net.debug=all</argument>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>org.jboss.aerogear.webpush.netty.WebPushNettyServer</argument>
+                        <argument>${webpush.config}</argument>
                     </arguments>
+                  <classpathScope>compile</classpathScope>
+                  <systemProperties>
+                      <property>
+                          <key>io.netty.leakDetectionLevel</key>
+                          <value>disabled</value>
+                      </property>
+                  </systemProperties>
                 </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.mortbay.jetty.npn</groupId>
-                                    <artifactId>npn-boot</artifactId>
-                                    <version>${npn.version}</version>
-                                    <type>jar</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/npn</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
         <extensions>
@@ -155,6 +148,30 @@
     
     <profiles>
         <profile>
+            <id>jdk8</id>
+            <activation>
+              <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
+                <!-- npn-boot does not work with JDK 8 -->
+                <jetty.alpn.version>8.1.0.v20141016</jetty.alpn.version>
+                <bootcp>-Xbootclasspath/p:${jetty.alpn.path}</bootcp>
+            </properties>
+        </profile>
+        <profile>
+            <id>alpn-8u25</id>
+            <activation>
+                <property>
+                    <name>java.version</name>
+                    <value>1.8.0_25</value>
+                </property>
+            </activation>
+            <properties>
+                <jetty.alpn.version>8.1.1.v20141016</jetty.alpn.version>
+            </properties>
+        </profile>
+        <profile>
             <id>7u9</id>
             <activation>
                 <property>
@@ -164,6 +181,8 @@
             </activation>
             <properties>
                 <npn.version>1.1.3.v20130313</npn.version>
+                <bootcp>${jetty.npn.path}</bootcp>
+                <webpush.config>${webpush.npn.config}</webpush.config>
             </properties>
         </profile>
       <profile>
@@ -176,6 +195,8 @@
         </activation>
         <properties>
           <npn.version>1.1.3.v20130313</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -188,6 +209,8 @@
         </activation>
         <properties>
           <npn.version>1.1.3.v20130313</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -200,6 +223,8 @@
         </activation>
         <properties>
           <npn.version>1.1.4.v20130313</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -212,6 +237,8 @@
         </activation>
         <properties>
           <npn.version>1.1.5.v20130313</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -224,6 +251,8 @@
         </activation>
         <properties>
           <npn.version>1.1.5.v20130313</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -236,6 +265,8 @@
         </activation>
         <properties>
           <npn.version>1.1.5.v20130313</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -248,6 +279,8 @@
         </activation>
         <properties>
           <npn.version>1.1.5.v20130313</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -260,6 +293,8 @@
         </activation>
         <properties>
           <npn.version>1.1.6.v20130911</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -272,6 +307,8 @@
         </activation>
         <properties>
           <npn.version>1.1.6.v20130911</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
       <profile>
@@ -284,10 +321,29 @@
         </activation>
         <properties>
           <npn.version>1.1.6.v20130911</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
+        </properties>
+      </profile>
+      <profile>
+          <!--
+          This profile exists because either ALPN or NPN can exits on the class path at once, but not both.
+          The JDK version is typically used to distinguish which should be used but there is some overlap
+          where both could be used.  ALPN is the default and this profile is enabled with a -Dforcenpn=true arugument
+          -->
+        <id>forcenpn</id>
+        <activation>
+          <property>
+            <name>forcenpn</name>
+            <value>true</value>
+          </property>
+        </activation>
+        <properties>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
         </properties>
       </profile>
     </profiles>
-    
 
 </project>
 

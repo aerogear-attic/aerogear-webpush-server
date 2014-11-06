@@ -41,8 +41,8 @@ public class DefaultWebPushServerTest {
     public void register() {
         final Registration reg = server.register();
         assertThat(reg.id(), is(notNullValue()));
-        assertThat(reg.monitorURI().toString(), equalTo("webpush:" + reg.id() + ":push:monitor"));
-        assertThat(reg.channelURI().toString(), equalTo("webpush:" + reg.id() + ":push:channel"));
+        assertThat(reg.monitorURI().toString(), equalTo("webpush/" + reg.id() + "/monitor"));
+        assertThat(reg.channelURI().toString(), equalTo("webpush/" + reg.id() + "/channel"));
     }
 
     @Test
@@ -51,6 +51,15 @@ public class DefaultWebPushServerTest {
         final Channel ch = server.newChannel(reg.id());
         assertThat(ch.registrationId(), equalTo(reg.id()));
         assertThat(ch.message(), equalTo(DefaultChannel.NONE));
+    }
+
+    @Test
+    public void removeChannel() throws RegistrationNotFoundException {
+        final Registration reg = server.register();
+        final Channel ch = server.newChannel(reg.id());
+        assertThat(ch.registrationId(), equalTo(reg.id()));
+        server.removeChannel(ch);
+        //TODO: add asserts
     }
 
     @Test

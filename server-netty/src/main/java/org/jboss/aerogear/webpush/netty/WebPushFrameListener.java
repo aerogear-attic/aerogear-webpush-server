@@ -128,7 +128,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
       previous client-initiated request (the monitor request)
      */
     private void handleMonitor(final String path, final ChannelHandlerContext ctx, final int streamId) {
-        final Http2Headers responseHeaders = new DefaultHttp2Headers(false);
+        final Http2Headers responseHeaders = new DefaultHttp2Headers(false).status(OK.codeAsText());
         final Http2Connection connection = encoder.connection();
         final Endpoint local = connection.local();
         try {

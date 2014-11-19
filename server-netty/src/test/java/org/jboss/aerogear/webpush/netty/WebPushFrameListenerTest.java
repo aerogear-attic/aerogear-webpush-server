@@ -1,5 +1,7 @@
 package org.jboss.aerogear.webpush.netty;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.AsciiString;
@@ -10,6 +12,8 @@ import io.netty.handler.codec.http2.Http2Connection.Endpoint;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
+import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.util.CharsetUtil;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -20,6 +24,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.*;
 import static org.jboss.aerogear.webpush.netty.WebPushFrameListener.LINK;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -64,7 +69,7 @@ public class WebPushFrameListenerTest {
         final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
         final Http2Headers channelResponseHeaders = channel(frameListener, ctx, encoder, registrationHeaders);
         assertThat(channelResponseHeaders.status(), equalTo(asciiString("201")));
-        assertThat(channelResponseHeaders.get(LOCATION), equalTo(asciiString("webpush/9999/endpointToken")));
+        assertThat(channelResponseHeaders.get(LOCATION), equalTo(asciiString("webpush/endpointToken")));
         assertThat(channelResponseHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=50000")));
     }
 
@@ -85,6 +90,34 @@ public class WebPushFrameListenerTest {
                 any(ChannelPromise.class));
     }
 
+    @Test
+    public void notification() throws Exception {
+        final ByteBuf data = Unpooled.copiedBuffer("some payload", CharsetUtil.UTF_8);
+        final int pushStreamId = 4;
+        try {
+            final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+            final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
+                    .withRegistrationid("9999")
+                    .registrationMaxAge(10000L)
+                    .channelMaxAge(50000L)
+                    .build());
+            final Http2ConnectionEncoder encoder = mockEncoder();
+            frameListener.encoder(encoder);
+
+            final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
+            final Http2Headers channelHeaders = channel(frameListener, ctx, encoder, registrationHeaders);
+            assertThat(channelHeaders.status(), equalTo(asciiString("201")));
+            monitor(frameListener, ctx, registrationHeaders);
+            verify(encoder).writePushPromise(eq(ctx), eq(3), eq(pushStreamId), any(Http2Headers.class), eq(0),
+                    any(ChannelPromise.class));
+
+            notify(frameListener, ctx, channelHeaders, data);
+            verify(encoder).writeData(eq(ctx), eq(pushStreamId), eq(data), eq(0), eq(false), any(ChannelPromise.class));
+        } finally {
+            data.release();
+        }
+    }
+
     private static Http2Headers register(final WebPushFrameListener frameListener,
                                          final ChannelHandlerContext ctx,
                                          final Http2ConnectionEncoder encoder) throws Http2Exception {
@@ -98,7 +131,6 @@ public class WebPushFrameListenerTest {
                                        final Http2Headers registrationHeaders) throws Http2Exception {
         final AsciiString link = registrationHeaders.get(LINK);
         final AsciiString channelUri = link.subSequence(1, link.indexOf(";")-1);
-        //final AsciiString channelUri = link.subSequence(link.indexOf('/')+1, link.indexOf("/channel"));
         frameListener.onHeadersRead(ctx, 3, channelHeaders(channelUri), 0, (short) 22, false, 0, true);
         return verifyAndCapture(ctx, encoder, 2);
     }
@@ -108,6 +140,15 @@ public class WebPushFrameListenerTest {
                                         final Http2Headers registrationHeaders) throws Http2Exception {
         final AsciiString location = registrationHeaders.get(LOCATION);
         frameListener.onHeadersRead(ctx, 3, monitorHeaders(location), 0, (short) 22, false, 0, true);
+    }
+
+    private static void notify(final WebPushFrameListener frameListener,
+                                final ChannelHandlerContext ctx,
+                                final Http2Headers channelHeaders,
+                                final ByteBuf data) throws Http2Exception {
+        final AsciiString location = channelHeaders.get(LOCATION);
+        frameListener.onHeadersRead(ctx, 3, notifyHeaders(location), 0, (short) 22, false, 0, false);
+        frameListener.onDataRead(ctx, 3, data , 0, true);
     }
 
     private static Http2Headers verifyAndCapture(final ChannelHandlerContext ctx,
@@ -145,12 +186,22 @@ public class WebPushFrameListenerTest {
         return requestHeaders;
     }
 
+    private static Http2Headers notifyHeaders(final AsciiString resourceUrl) {
+        final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
+        requestHeaders.method(asciiString(HttpMethod.PUT.name()));
+        requestHeaders.path(resourceUrl);
+        return requestHeaders;
+    }
+
     private static Http2ConnectionEncoder mockEncoder() {
         final Http2ConnectionEncoder encoder = mock(Http2ConnectionEncoder.class);
         final Http2Connection connection = mock(Http2Connection.class);
         final Endpoint local = mock(Endpoint.class);
+        final Http2Stream stream = mock(Http2Stream.class);
         when(local.nextStreamId()).thenReturn(4);
+        when(stream.data()).thenReturn("webpush/9999/endpointToken");
         when(connection.local()).thenReturn(local);
+        when(connection.stream(anyInt())).thenReturn(stream);
         when(encoder.connection()).thenReturn(connection);
         return encoder;
     }

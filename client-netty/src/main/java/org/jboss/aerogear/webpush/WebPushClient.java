@@ -17,6 +17,7 @@
 package org.jboss.aerogear.webpush;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -35,6 +36,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.util.CharsetUtil;
 
 import javax.net.ssl.SSLException;
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ import java.util.List;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpMethod.PUT;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class WebPushClient {
@@ -96,6 +99,15 @@ public class WebPushClient {
     public void createChannel(final String channelUrl) throws Exception {
         writeRequest(new DefaultFullHttpRequest(HTTP_1_1, POST, channelUrl));
     }
+
+    public void notify(final String channelUrl, final String payload) throws Exception {
+        final DefaultFullHttpRequest request = new DefaultFullHttpRequest(HTTP_1_1,
+                PUT,
+                channelUrl,
+                Unpooled.copiedBuffer(payload, CharsetUtil.UTF_8));
+        writeRequest(request);
+    }
+
     private void writeRequest(final FullHttpRequest request) throws Exception {
         request.headers().add(HttpHeaderNames.HOST, host + ':' + port);
         ChannelFuture requestFuture = channel.writeAndFlush(request).sync();

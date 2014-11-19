@@ -9,6 +9,7 @@ import org.jboss.aesh.console.settings.SettingsBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class WebPushConsole {
@@ -38,6 +39,9 @@ public class WebPushConsole {
             if(co.getBuffer().startsWith("no")) {
                 commands.add("notify <notify-url> <payload>");
             }
+            if(co.getBuffer().startsWith("q")) {
+                commands.add("quit");
+            }
             co.setCompletionCandidates(commands);
         };
 
@@ -47,7 +51,7 @@ public class WebPushConsole {
             @Override
             public int execute(ConsoleOperation output) {
 
-                if (output.getBuffer().equals("quit")) {
+                if (output.getBuffer().startsWith("quit")) {
                     try {
                         if (client != null) {
                             client.disconnect();
@@ -66,6 +70,8 @@ public class WebPushConsole {
                     handleMonitor(client, getFirstArg(output.getBuffer()));
                 } else if (output.getBuffer().startsWith("channel")) {
                     handleCreateChannel(client, getFirstArg(output.getBuffer()));
+                } else if (output.getBuffer().startsWith("notify")) {
+                    handleNotification(client, output.getBuffer());
                 } else {
                     console.getShell().out().println("Unknown command:" + output.getBuffer());
                 }
@@ -112,7 +118,24 @@ public class WebPushConsole {
         }
     }
 
+    private static void handleNotification(final WebPushClient client, final String cmd) {
+        final String[] args = getFirstTwoArg(cmd);
+        try {
+            client.notify(args[0], args[1]);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private static String getFirstArg(final String cmd) {
         return cmd.substring(cmd.indexOf(" ") + 1, cmd.length());
+    }
+
+    private static String[] getFirstTwoArg(final String cmd) {
+        final String[] args = new String[2];
+        String tmp = cmd.substring(cmd.indexOf(" ") + 1, cmd.length());
+        args[0] = tmp.substring(0, tmp.indexOf(" "));
+        args[1] = tmp.substring(tmp.indexOf(" ") + 1, tmp.length());
+        return args;
     }
 }

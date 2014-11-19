@@ -24,8 +24,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpClientUpgradeHandler;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
 import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
 import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
@@ -34,24 +32,17 @@ import io.netty.handler.codec.http2.DefaultHttp2OutboundFlowController;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
 import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Connection;
-import io.netty.handler.codec.http2.Http2FrameLogger;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
-import io.netty.handler.codec.http2.Http2InboundFrameLogger;
-import io.netty.handler.codec.http2.Http2OutboundFrameLogger;
 import io.netty.handler.codec.http2.Http2ToHttpConnectionHandler;
 import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import static io.netty.util.internal.logging.InternalLogLevel.INFO;
 
 public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> {
 
-    private static final Http2FrameLogger LOGGER =
-            new Http2FrameLogger(INFO, InternalLoggerFactory.getInstance(WebPushClientInitializer.class));
     private final SslContext sslCtx;
     private final int maxContentLength;
     private Http2ToHttpConnectionHandler connectionHandler;
@@ -147,10 +138,10 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     }
 
     private static Http2FrameReader frameReader() {
-        return new Http2InboundFrameLogger(new DefaultHttp2FrameReader(), LOGGER);
+        return new WebPushFrameReader(new DefaultHttp2FrameReader());
     }
 
     private static Http2FrameWriter frameWriter() {
-        return new Http2OutboundFrameLogger(new DefaultHttp2FrameWriter(), LOGGER);
+        return new DefaultHttp2FrameWriter();
     }
 }

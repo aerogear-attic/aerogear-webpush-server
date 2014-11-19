@@ -44,7 +44,7 @@ public class MockWebPushServerBuilder {
         when(webPushServer.config()).thenReturn(config);
         when(webPushServer.register()).thenReturn(registration);
         final Channel channel = mock(Channel.class);
-        when(channel.endpointToken()).thenReturn(asURI(context, registrationId, "endpointToken").toString());
+        when(channel.endpointToken()).thenReturn("endpointToken");
         when(webPushServer.newChannel(registrationId)).thenReturn(channel);
         return webPushServer;
     }

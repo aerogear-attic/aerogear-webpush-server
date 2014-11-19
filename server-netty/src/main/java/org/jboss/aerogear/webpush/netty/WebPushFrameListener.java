@@ -16,15 +16,18 @@
  */
 package org.jboss.aerogear.webpush.netty;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import io.netty.handler.codec.http2.EmptyHttp2Headers;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2Connection.Endpoint;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2FrameAdapter;
 import io.netty.handler.codec.http2.Http2Headers;
+import io.netty.util.CharsetUtil;
 import org.jboss.aerogear.webpush.Channel;
 import org.jboss.aerogear.webpush.Registration;
 import org.jboss.aerogear.webpush.WebPushServer;
@@ -34,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
@@ -44,7 +48,8 @@ import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
 public class WebPushFrameListener extends Http2FrameAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebPushNettyServer.class);
-    private final ConcurrentHashMap<String, Integer> streams = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Optional<Integer>> monitoredStreams = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> notificationStreams = new ConcurrentHashMap<>();
     public static final AsciiString LINK = new AsciiString("link");
     private final WebPushServer webpushServer;
     private Http2ConnectionEncoder encoder;
@@ -67,9 +72,11 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                               final boolean exclusive,
                               final int padding,
                               final boolean endStream) throws Http2Exception {
+        /*
         if (!endStream) {
             return;
         }
+        */
         final String path = headers.path().toString();
         LOGGER.debug("streamId={}, method={}, path={}", streamId, headers.method(), path);
 
@@ -89,7 +96,33 @@ public class WebPushFrameListener extends Http2FrameAdapter {
             case "DELETE":
                 handleChannelRemoval(path, ctx, streamId);
                 break;
+            case "PUT":
+                LOGGER.debug("Handle notification for {}", path);
+                handleNotification(path, ctx, streamId);
+                break;
         }
+    }
+
+    @Override
+    public int onDataRead(final ChannelHandlerContext ctx,
+                          final int streamId,
+                          final ByteBuf data,
+                          final int padding,
+                          final boolean endOfStream) throws Http2Exception {
+        LOGGER.debug("Handle notification payload {}", data.toString(CharsetUtil.UTF_8));
+        final String path = encoder.connection().stream(streamId).data();
+        final String endpointToken = extractEndpointToken(path);
+        final String registrationId = notificationStreams.get(endpointToken);
+        final Optional<Integer> pushStreamId = monitoredStreams.get(registrationId);
+        if (pushStreamId.isPresent()) {
+            encoder.writeHeaders(ctx, pushStreamId.get(), EmptyHttp2Headers.INSTANCE, 0, false, ctx.newPromise());
+            encoder.writeData(ctx, pushStreamId.get(), data.retain(), padding, false, ctx.newPromise());
+        }
+        return super.onDataRead(ctx, streamId, data, padding, endOfStream);
+    }
+
+    private void handleNotification(final String path, final ChannelHandlerContext ctx, final int streamId) {
+        encoder.connection().stream(streamId).data(path);
     }
 
     private void handleDeviceRegistration(final ChannelHandlerContext ctx, final int streamId) {
@@ -108,10 +141,12 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     private void handleChannelCreation(final String path, final ChannelHandlerContext ctx, final int streamId) {
         try {
-            final Channel channel = webpushServer.newChannel(extractRegistrationId(path));
+            final String registrationId = extractRegistrationId(path);
+            final Channel channel = webpushServer.newChannel(registrationId);
+            notificationStreams.put(channel.endpointToken(), registrationId);
             final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
                     .status(CREATED.codeAsText())
-                    .set(LOCATION, new AsciiString(channel.endpointToken()))
+                    .set(LOCATION, new AsciiString("webpush/" + channel.endpointToken()))
                     .set(CACHE_CONTROL, new AsciiString("private, max-age=" + webpushServer.config().channelMaxAge()));
             encoder.writeHeaders(ctx, streamId, responseHeaders, 0, false, ctx.newPromise());
         } catch (RegistrationNotFoundException e) {
@@ -129,12 +164,11 @@ public class WebPushFrameListener extends Http2FrameAdapter {
      */
     private void handleMonitor(final String path, final ChannelHandlerContext ctx, final int streamId) {
         final Http2Headers responseHeaders = new DefaultHttp2Headers(false).status(OK.codeAsText());
-        final Http2Connection connection = encoder.connection();
-        final Endpoint local = connection.local();
         try {
-            final int pushStreamId = local.nextStreamId();
-            streams.put(extractRegistrationId(path), pushStreamId);
-            LOGGER.info("Storing stream for " + extractRegistrationId(path) + ", promiseId="  + pushStreamId);
+            final String registrationId = extractRegistrationId(path);
+            final int pushStreamId = encoder.connection().local().nextStreamId();
+            monitoredStreams.put(registrationId, Optional.of(pushStreamId));
+            LOGGER.info("Storing stream for " + registrationId + ", pushPromiseStreamId=" + pushStreamId);
             encoder.writePushPromise(ctx, streamId, pushStreamId, responseHeaders, 0, ctx.newPromise());
         } catch (Exception e) {
             e.printStackTrace();
@@ -144,6 +178,10 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private static String extractRegistrationId(final String path) {
         final String subpath = path.substring(path.indexOf("/") + 1);
         return subpath.subSequence(0, subpath.indexOf('/')).toString();
+    }
+
+    private static String extractEndpointToken(final String path) {
+        return path.substring(path.lastIndexOf("/") + 1);
     }
 
 }

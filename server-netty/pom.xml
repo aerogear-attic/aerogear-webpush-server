@@ -121,7 +121,7 @@
                     <executable>${java.home}/bin/java</executable>
                     <arguments>
                         <argument>-Xbootclasspath/p:${bootcp}</argument>
-                        <argument>-Djavax.net.debug=all</argument>
+                        <argument>-Djavax.net.debug=none</argument>
                         <argument>-classpath</argument>
                         <classpath/>
                         <argument>org.jboss.aerogear.webpush.netty.WebPushNettyServer</argument>

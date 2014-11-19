@@ -44,6 +44,8 @@ import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static io.netty.util.internal.logging.InternalLogLevel.INFO;
 
 public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> {
@@ -112,7 +114,6 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
         HttpClientCodec sourceCodec = new HttpClientCodec();
         Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(connectionHandler);
         HttpClientUpgradeHandler upgradeHandler = new HttpClientUpgradeHandler(sourceCodec, upgradeCodec, 65536);
-
         ch.pipeline().addLast("Http2SourceCodec", sourceCodec);
         ch.pipeline().addLast("Http2UpgradeHandler", upgradeHandler);
         ch.pipeline().addLast("Http2UpgradeRequestHandler", new UpgradeRequestHandler());
@@ -125,15 +126,11 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     private final class UpgradeRequestHandler extends ChannelHandlerAdapter {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            DefaultFullHttpRequest upgradeRequest =
-                    new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
+            DefaultFullHttpRequest upgradeRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "/");
             ctx.writeAndFlush(upgradeRequest);
-
             super.channelActive(ctx);
-
             // Done with this handler, remove it from the pipeline.
             ctx.pipeline().remove(this);
-
             WebPushClientInitializer.this.configureEndOfPipeline(ctx.pipeline());
         }
     }

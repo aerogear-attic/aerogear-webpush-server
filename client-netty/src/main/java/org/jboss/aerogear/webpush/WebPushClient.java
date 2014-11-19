@@ -32,12 +32,12 @@ import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 import javax.net.ssl.SSLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
@@ -112,7 +112,7 @@ public class WebPushClient {
 
     private SslContext configureSsl() throws SSLException {
         if (ssl) {
-            return SslContext.newClientContext(
+            return SslContext.newClientContext(SslProvider.JDK,
                     null,
                     InsecureTrustManagerFactory.INSTANCE,
                     Http2SecurityUtil.CIPHERS,

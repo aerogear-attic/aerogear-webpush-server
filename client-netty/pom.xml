@@ -64,28 +64,52 @@
             </plugins>
         </pluginManagement>
         <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.2.1</version>
-            <configuration>
-              <executable>${java.home}/bin/java</executable>
-              <arguments>
-                <!--argument>-Djavax.net.debug=all</argument-->
-                <argument>-Xbootclasspath/p:${bootcp}</argument>
-                <argument>-classpath</argument>
-                <classpath/>
-                <argument>org.jboss.aerogear.webpush.WebPushConsole</argument>
-              </arguments>
-              <classpathScope>compile</classpathScope>
-              <systemProperties>
-                <property>
-                  <key>io.netty.leakDetectionLevel</key>
-                  <value>disabled</value>
-                </property>
-              </systemProperties>
-            </configuration>
-          </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                    <executable>${java.home}/bin/java</executable>
+                    <arguments>
+                        <!--argument>-Djavax.net.debug=all</argument-->
+                        <argument>-Xbootclasspath/p:${bootcp}</argument>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>org.jboss.aerogear.webpush.WebPushConsole</argument>
+                    </arguments>
+                    <classpathScope>compile</classpathScope>
+                    <systemProperties>
+                        <property>
+                            <key>io.netty.leakDetectionLevel</key>
+                            <value>disabled</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <descriptorRefs>
+                    <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.jboss.aerogear.webpush.WebPushConsole</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -105,13 +129,23 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>org.jboss.aesh</groupId>
-          <artifactId>aesh</artifactId>
-          <version>0.56</version>
-          <scope>compile</scope>
-      </dependency>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.npn</groupId>
+            <artifactId>npn-api</artifactId>
+            <version>1.1.1.v20141010</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.alpn</groupId>
+            <artifactId>alpn-api</artifactId>
+            <version>1.1.0.v20141014</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.aesh</groupId>
+            <artifactId>aesh</artifactId>
+            <version>0.56</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
   <profiles>

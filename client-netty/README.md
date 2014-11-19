@@ -8,9 +8,8 @@ A very basic console/command line application is available to assist in developm
 
     cd server-netty
     mvn exec:exec
-    
-    ...
-    main] INFO org.jboss.aerogear.webpush.netty.WebPushNettyServer - WebPush server bound to localhost:8443
+    (maven output not displayed)
+    [main] INFO org.jboss.aerogear.webpush.netty.WebPushNettyServer - WebPush server bound to localhost:8443
     
 ### Start the console
   

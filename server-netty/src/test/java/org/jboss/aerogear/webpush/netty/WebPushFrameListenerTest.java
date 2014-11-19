@@ -5,6 +5,8 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.codec.http2.Http2Connection.Endpoint;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
@@ -22,6 +24,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class WebPushFrameListenerTest {
 
@@ -37,7 +40,7 @@ public class WebPushFrameListenerTest {
                 .withRegistrationid("9999")
                 .registrationMaxAge(10000L)
                 .build());
-        final Http2ConnectionEncoder encoder = mock(Http2ConnectionEncoder.class);
+        final Http2ConnectionEncoder encoder = mockEncoder();
         frameListener.encoder(encoder);
 
         final Http2Headers responseHeaders = register(frameListener, ctx, encoder);
@@ -55,7 +58,7 @@ public class WebPushFrameListenerTest {
                 .registrationMaxAge(10000L)
                 .channelMaxAge(50000L)
                 .build());
-        final Http2ConnectionEncoder encoder = mock(Http2ConnectionEncoder.class);
+        final Http2ConnectionEncoder encoder = mockEncoder();
         frameListener.encoder(encoder);
 
         final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
@@ -73,12 +76,12 @@ public class WebPushFrameListenerTest {
                 .registrationMaxAge(10000L)
                 .channelMaxAge(50000L)
                 .build());
-        final Http2ConnectionEncoder encoder = mock(Http2ConnectionEncoder.class);
+        final Http2ConnectionEncoder encoder = mockEncoder();
         frameListener.encoder(encoder);
 
         final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
         monitor(frameListener, ctx, registrationHeaders);
-        verify(encoder).writePushPromise(eq(ctx), eq(3), eq(2), any(Http2Headers.class), eq(0),
+        verify(encoder).writePushPromise(eq(ctx), eq(3), eq(4), any(Http2Headers.class), eq(0),
                 any(ChannelPromise.class));
     }
 
@@ -140,6 +143,16 @@ public class WebPushFrameListenerTest {
         requestHeaders.method(asciiString(HttpMethod.GET.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
+    }
+
+    private static Http2ConnectionEncoder mockEncoder() {
+        final Http2ConnectionEncoder encoder = mock(Http2ConnectionEncoder.class);
+        final Http2Connection connection = mock(Http2Connection.class);
+        final Endpoint local = mock(Endpoint.class);
+        when(local.nextStreamId()).thenReturn(4);
+        when(connection.local()).thenReturn(local);
+        when(encoder.connection()).thenReturn(connection);
+        return encoder;
     }
 
 }

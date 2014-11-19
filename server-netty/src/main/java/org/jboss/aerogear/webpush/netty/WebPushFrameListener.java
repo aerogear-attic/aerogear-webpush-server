@@ -19,6 +19,8 @@ package org.jboss.aerogear.webpush.netty;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.codec.http2.Http2Connection.Endpoint;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2FrameAdapter;
@@ -32,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
@@ -41,7 +44,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
 public class WebPushFrameListener extends Http2FrameAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebPushNettyServer.class);
-    private static final int PROMISE_STREAM_ID = 2;
+    private final ConcurrentHashMap<String, Integer> streams = new ConcurrentHashMap<>();
     public static final AsciiString LINK = new AsciiString("link");
     private final WebPushServer webpushServer;
     private Http2ConnectionEncoder encoder;
@@ -80,7 +83,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 break;
             case "GET":
                 if (path.contains("monitor")) {
-                    handleMonitor(ctx, streamId);
+                    handleMonitor(path, ctx, streamId);
                 }
                 break;
             case "DELETE":
@@ -124,9 +127,18 @@ public class WebPushFrameListener extends Http2FrameAdapter {
       A monitor request is responded to with a push promise. A push promise is associated with a
       previous client-initiated request (the monitor request)
      */
-    private void handleMonitor(final ChannelHandlerContext ctx, final int streamId) {
+    private void handleMonitor(final String path, final ChannelHandlerContext ctx, final int streamId) {
         final Http2Headers responseHeaders = new DefaultHttp2Headers(false);
-        encoder.writePushPromise(ctx, streamId, PROMISE_STREAM_ID, responseHeaders, 0, ctx.newPromise());
+        final Http2Connection connection = encoder.connection();
+        final Endpoint local = connection.local();
+        try {
+            final int pushStreamId = local.nextStreamId();
+            streams.put(extractRegistrationId(path), pushStreamId);
+            LOGGER.info("Storing stream for " + extractRegistrationId(path) + ", promiseId="  + pushStreamId);
+            encoder.writePushPromise(ctx, streamId, pushStreamId, responseHeaders, 0, ctx.newPromise());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private static String extractRegistrationId(final String path) {

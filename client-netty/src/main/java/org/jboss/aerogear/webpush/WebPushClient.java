@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class WebPushClient {
@@ -67,44 +68,38 @@ public class WebPushClient {
         return port;
     }
 
-    public boolean isSsl() {
-        return ssl;
-    }
-
-    public List<String> protocols() {
-        return Collections.unmodifiableList(protocols);
-    }
-
     public void connect() throws Exception {
         workerGroup = new NioEventLoopGroup();
         try {
-            // Configure the client.
             final Bootstrap b = new Bootstrap();
             b.group(workerGroup);
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.remoteAddress(host, port);
             b.handler(new WebPushClientInitializer(configureSsl(), Integer.MAX_VALUE));
-
-            // Start the client.
             channel = b.connect().syncUninterruptibly().channel();
             System.out.println("Connected to [" + host + ':' + port + ']');
         } catch (final Exception e) {
+            e.printStackTrace();
             workerGroup.shutdownGracefully();
         }
     }
 
-    public void post() throws Exception {
-        // Create a simple GET request with just headers.
-        FullHttpRequest register = new DefaultFullHttpRequest(HTTP_1_1, POST, "/register");
-        register.headers().add(HttpHeaderNames.HOST, host + ':' + port);
+    public void register() throws Exception {
+        writeRequest(new DefaultFullHttpRequest(HTTP_1_1, POST, "webpush/register"));
+    }
 
-        // Send the request to the server.
-        System.err.println("Sending POST request...");
-        ChannelFuture requestFuture = channel.writeAndFlush(register).sync();
-        System.err.println("Back from POST sending headers...");
+    public void monitor(final String monitorUrl) throws Exception {
+        writeRequest(new DefaultFullHttpRequest(HTTP_1_1, GET, monitorUrl));
+    }
+
+    public void createChannel(final String channelUrl) throws Exception {
+        writeRequest(new DefaultFullHttpRequest(HTTP_1_1, POST, channelUrl));
+    }
+    private void writeRequest(final FullHttpRequest request) throws Exception {
+        request.headers().add(HttpHeaderNames.HOST, host + ':' + port);
+        ChannelFuture requestFuture = channel.writeAndFlush(request).sync();
         requestFuture.sync();
-
     }
 
     public void disconnect() {
@@ -153,6 +148,11 @@ public class WebPushClient {
 
         public Builder port(final int port) {
             this.port = port;
+            return this;
+        }
+
+        public Builder port(final String port) {
+            this.port = Integer.parseInt(port);
             return this;
         }
 

@@ -21,8 +21,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.EmptyHttp2Headers;
-import io.netty.handler.codec.http2.Http2Connection;
-import io.netty.handler.codec.http2.Http2Connection.Endpoint;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2FrameAdapter;
@@ -72,11 +70,6 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                               final boolean exclusive,
                               final int padding,
                               final boolean endStream) throws Http2Exception {
-        /*
-        if (!endStream) {
-            return;
-        }
-        */
         final String path = headers.path().toString();
         LOGGER.debug("streamId={}, method={}, path={}", streamId, headers.method(), path);
 
@@ -98,7 +91,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 break;
             case "PUT":
                 LOGGER.debug("Handle notification for {}", path);
-                handleNotification(path, ctx, streamId);
+                handleNotification(path, streamId);
                 break;
         }
     }
@@ -121,7 +114,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         return super.onDataRead(ctx, streamId, data, padding, endOfStream);
     }
 
-    private void handleNotification(final String path, final ChannelHandlerContext ctx, final int streamId) {
+    private void handleNotification(final String path, final int streamId) {
         encoder.connection().stream(streamId).data(path);
     }
 

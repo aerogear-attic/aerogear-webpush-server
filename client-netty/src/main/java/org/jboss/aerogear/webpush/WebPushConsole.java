@@ -9,7 +9,6 @@ import org.jboss.aesh.console.settings.SettingsBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class WebPushConsole {
@@ -24,7 +23,7 @@ public class WebPushConsole {
         final Completion completer = co -> {
             final List<String> commands = new ArrayList<>();
             if(co.getBuffer().startsWith("co")) {
-                commands.add("connect <host>:<port>");
+                commands.add("connect localhost:8443");
             }
             if(co.getBuffer().startsWith("re")) {
                 commands.add("register");
@@ -63,7 +62,7 @@ public class WebPushConsole {
                     }
                 }
                 else if (output.getBuffer().startsWith("connect")) {
-                    client = handleConnect(output);
+                    client = handleConnect(output, console);
                 } else if (output.getBuffer().startsWith("register")) {
                     handleRegister(client);
                 } else if (output.getBuffer().startsWith("monitor")) {
@@ -82,10 +81,47 @@ public class WebPushConsole {
         console.start();
     }
 
-    private static WebPushClient handleConnect(final ConsoleOperation output) {
+    private static class CallbackHandler implements ResponseHandler {
+
+        private final Console console;
+        private Prompt inbound = new Prompt("< ");
+
+        CallbackHandler(final Console console) {
+            this.console = console;
+        }
+
+        @Override
+        public void registerResponse(final String channelLink, final String monitorLink, final int streamId) {
+            print("ChannelLink: " + channelLink + ", MonitorLink: " + monitorLink, streamId);
+        }
+
+        @Override
+        public void channelResponse(final String endpoint, final int streamId) {
+            print("Notification URL: " + endpoint, streamId);
+        }
+
+        @Override
+        public void notification(final String data, final int streamId) {
+            print(data, streamId);
+        }
+
+        private void print(final String message, final int streamId) {
+            final Prompt current =  console.getPrompt();
+            console.setPrompt(inbound);
+            console.getShell().out().println("[streamid:" + streamId + "] " + message);
+            console.setPrompt(current);
+        }
+
+    }
+
+    private static WebPushClient handleConnect(final ConsoleOperation output, final Console console) {
         final String cmd = output.getBuffer();
         final String[] hostPort = cmd.substring(cmd.indexOf(" "), cmd.length()).trim().split(":");
-        final WebPushClient client = WebPushClient.forHost(hostPort[0]).port(hostPort[1]).ssl(true).build();
+        final WebPushClient client = WebPushClient.forHost(hostPort[0])
+                .port(hostPort[1])
+                .ssl(true)
+                .notificationHandler(new CallbackHandler(console))
+                .build();
         try {
             client.connect();
         } catch (Exception e) {

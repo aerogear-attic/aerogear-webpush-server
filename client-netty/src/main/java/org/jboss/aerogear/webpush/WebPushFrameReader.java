@@ -2,6 +2,7 @@ package org.jboss.aerogear.webpush;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Flags;
 import io.netty.handler.codec.http2.Http2FrameListener;
@@ -10,17 +11,22 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.util.CharsetUtil;
 
+import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
 import static io.netty.util.internal.ObjectUtil.checkNotNull;
 
 public class WebPushFrameReader implements Http2FrameReader {
     private final Http2FrameReader reader;
+    private final ResponseHandler callback;
 
-    public WebPushFrameReader(Http2FrameReader reader) {
+    private final static AsciiString LINK = new AsciiString("link");
+
+    public WebPushFrameReader(final ResponseHandler callback, final Http2FrameReader reader) {
         this.reader = checkNotNull(reader, "reader");
+        this.callback = callback;
     }
 
     @Override
-    public void readFrame(ChannelHandlerContext ctx, ByteBuf input, final Http2FrameListener listener)
+    public void readFrame(final ChannelHandlerContext ctx, final ByteBuf input, final Http2FrameListener listener)
             throws Http2Exception {
 
         reader.readFrame(ctx, input, new Http2FrameListener() {
@@ -28,8 +34,7 @@ public class WebPushFrameReader implements Http2FrameReader {
             @Override
             public int onDataRead(ChannelHandlerContext ctx, int streamId, ByteBuf data,
                                   int padding, boolean endOfStream) throws Http2Exception {
-                System.out.println("Got notification: " + data.toString(CharsetUtil.UTF_8));
-                System.out.print("> ");
+                callback.notification(data.toString(CharsetUtil.UTF_8), streamId);
                 return listener.onDataRead(ctx, streamId, data, padding, endOfStream);
             }
 
@@ -37,17 +42,23 @@ public class WebPushFrameReader implements Http2FrameReader {
             public void onHeadersRead(ChannelHandlerContext ctx, int streamId,
                                       Http2Headers headers, int padding, boolean endStream)
                     throws Http2Exception {
-                System.out.println("Headers: " + headers);
-                System.out.print("> ");
+                processHeaders(headers, streamId);
                 listener.onHeadersRead(ctx, streamId, headers, padding, endStream);
+            }
+
+            private void processHeaders(final Http2Headers headers, final int streamId) {
+                if (headers.contains(LINK) && headers.contains(LOCATION)) {
+                    callback.registerResponse(headers.get(LINK).toString(), headers.get(LOCATION).toString(), streamId);
+                } else if (headers.contains(LOCATION)) {
+                    callback.channelResponse(headers.get(LOCATION).toString(), streamId);
+                }
             }
 
             @Override
             public void onHeadersRead(ChannelHandlerContext ctx, int streamId,
                                       Http2Headers headers, int streamDependency, short weight, boolean exclusive,
                                       int padding, boolean endStream) throws Http2Exception {
-                System.out.println("Headers: " + headers);
-                System.out.print("> ");
+                processHeaders(headers, streamId);
                 listener.onHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive,
                         padding, endStream);
             }

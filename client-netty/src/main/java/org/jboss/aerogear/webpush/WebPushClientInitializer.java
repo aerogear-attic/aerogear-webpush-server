@@ -45,22 +45,26 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
 
     private final SslContext sslCtx;
     private final int maxContentLength;
+    private final ResponseHandler callback;
     private Http2ToHttpConnectionHandler connectionHandler;
     private HttpResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
 
-    public WebPushClientInitializer(SslContext sslCtx, int maxContentLength) {
+    public WebPushClientInitializer(SslContext sslCtx, int maxContentLength, final ResponseHandler callback) {
         this.sslCtx = sslCtx;
         this.maxContentLength = maxContentLength;
+        this.callback = callback;
     }
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
         final Http2Connection connection = new DefaultHttp2Connection(false);
-        final Http2FrameWriter frameWriter = frameWriter();
+        final Http2FrameWriter frameWriter = new DefaultHttp2FrameWriter();
+        final Http2FrameReader frameReader = new WebPushFrameReader(callback, new DefaultHttp2FrameReader());
+
         connectionHandler = new Http2ToHttpConnectionHandler(connection,
-                frameReader(),
+                frameReader,
                 frameWriter,
                 new DefaultHttp2InboundFlowController(connection, frameWriter),
                 new DefaultHttp2OutboundFlowController(connection, frameWriter),
@@ -68,6 +72,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
                         InboundHttp2ToHttpAdapter.newInstance(connection, maxContentLength)));
         responseHandler = new HttpResponseHandler();
         settingsHandler = new Http2SettingsHandler(ch.newPromise());
+
         if (sslCtx != null) {
             configureSsl(ch);
         } else {
@@ -120,7 +125,6 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
             DefaultFullHttpRequest upgradeRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "/");
             ctx.writeAndFlush(upgradeRequest);
             super.channelActive(ctx);
-            // Done with this handler, remove it from the pipeline.
             ctx.pipeline().remove(this);
             WebPushClientInitializer.this.configureEndOfPipeline(ctx.pipeline());
         }
@@ -137,11 +141,4 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
         }
     }
 
-    private static Http2FrameReader frameReader() {
-        return new WebPushFrameReader(new DefaultHttp2FrameReader());
-    }
-
-    private static Http2FrameWriter frameWriter() {
-        return new DefaultHttp2FrameWriter();
-    }
 }

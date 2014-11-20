@@ -55,12 +55,14 @@ public class WebPushClient {
     private final List<String> protocols;
     private NioEventLoopGroup workerGroup;
     private Channel channel;
+    private final ResponseHandler handler;
 
     private WebPushClient(final Builder builder) {
-        this.host = builder.host;
-        this.port = builder.port;
-        this.ssl = builder.ssl;
-        this.protocols = builder.protocols;
+        host = builder.host;
+        port = builder.port;
+        ssl = builder.ssl;
+        protocols = builder.protocols;
+        handler = builder.handler;
     }
 
     public String host() {
@@ -79,7 +81,7 @@ public class WebPushClient {
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.remoteAddress(host, port);
-            b.handler(new WebPushClientInitializer(configureSsl(), Integer.MAX_VALUE));
+            b.handler(new WebPushClientInitializer(configureSsl(), Integer.MAX_VALUE, handler));
             channel = b.connect().syncUninterruptibly().channel();
             System.out.println("Connected to [" + host + ':' + port + ']');
         } catch (final Exception e) {
@@ -153,6 +155,7 @@ public class WebPushClient {
         private int port = 8080;
         private boolean ssl;
         private List<String> protocols = new ArrayList<String>();
+        private ResponseHandler handler;
 
         public Builder(final String host) {
             this.host = host;
@@ -170,6 +173,11 @@ public class WebPushClient {
 
         public Builder ssl(final boolean ssl) {
             this.ssl = ssl;
+            return this;
+        }
+
+        public Builder notificationHandler(final ResponseHandler handler) {
+            this.handler = handler;
             return this;
         }
 

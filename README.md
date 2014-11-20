@@ -5,6 +5,11 @@ a better understanding of the specification.
 
 IETF [charter](https://datatracker.ietf.org/wg/webpush/charter)
 
+
+This [screen cast](https://drive.google.com/file/d/0B2E1HZ1JnrJfYW90eVBTaGkzSkU/view?usp=sharing) shows a sample 
+interaction of the server and client and might help explain things.
+
+
 One thing to keep in mind when reading [draft-thomson-webpush-http2-02](https://tools.ietf.org/html/draft-thomson-webpush-http2-02) 
 is that we are talking about a single communication channel for all applications using HTTP/2.   
 

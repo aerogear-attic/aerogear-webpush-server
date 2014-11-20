@@ -3,6 +3,9 @@
 
 ## Using the WebPush console
 A very basic console/command line application is available to assist in development and testing of the server. 
+
+The following [screen cast](https://drive.google.com/file/d/0B2E1HZ1JnrJfYW90eVBTaGkzSkU/view?usp=sharing) shows the 
+same interactions as below.
  
 ### Start the server
 

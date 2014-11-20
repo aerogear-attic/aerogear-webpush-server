@@ -34,7 +34,7 @@ import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
-import io.netty.handler.codec.http2.Http2ToHttpConnectionHandler;
+import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandler;
 import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
 import io.netty.handler.ssl.SslContext;
 
@@ -46,7 +46,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     private final SslContext sslCtx;
     private final int maxContentLength;
     private final ResponseHandler callback;
-    private Http2ToHttpConnectionHandler connectionHandler;
+    private HttpToHttp2ConnectionHandler connectionHandler;
     private HttpResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
@@ -63,13 +63,13 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
         final Http2FrameWriter frameWriter = new DefaultHttp2FrameWriter();
         final Http2FrameReader frameReader = new WebPushFrameReader(callback, new DefaultHttp2FrameReader());
 
-        connectionHandler = new Http2ToHttpConnectionHandler(connection,
+        connectionHandler = new HttpToHttp2ConnectionHandler(connection,
                 frameReader,
                 frameWriter,
                 new DefaultHttp2InboundFlowController(connection, frameWriter),
                 new DefaultHttp2OutboundFlowController(connection, frameWriter),
                 new DelegatingDecompressorFrameListener(connection,
-                        InboundHttp2ToHttpAdapter.newInstance(connection, maxContentLength)));
+                        new InboundHttp2ToHttpAdapter.Builder(connection).maxContentLength(maxContentLength).build()));
         responseHandler = new HttpResponseHandler();
         settingsHandler = new Http2SettingsHandler(ch.newPromise());
 

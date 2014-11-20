@@ -199,7 +199,7 @@ public class WebPushFrameListenerTest {
         final Endpoint local = mock(Endpoint.class);
         final Http2Stream stream = mock(Http2Stream.class);
         when(local.nextStreamId()).thenReturn(4);
-        when(stream.data()).thenReturn("webpush/9999/endpointToken");
+        when(stream.getProperty("webpush.path")).thenReturn("webpush/9999/endpointToken");
         when(connection.local()).thenReturn(local);
         when(connection.stream(anyInt())).thenReturn(stream);
         when(encoder.connection()).thenReturn(connection);

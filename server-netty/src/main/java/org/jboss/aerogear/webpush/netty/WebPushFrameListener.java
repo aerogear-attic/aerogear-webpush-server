@@ -51,6 +51,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     public static final AsciiString LINK = new AsciiString("link");
     public static final String LINK_MONITOR_TYPE = "push:monitor";
     public static final String LINK_CHANNEL_TYPE = "push:channel";
+    private static final String PATH_KEY = "webpush.path";
     private final WebPushServer webpushServer;
     private Http2ConnectionEncoder encoder;
 
@@ -105,7 +106,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                           final int padding,
                           final boolean endOfStream) throws Http2Exception {
         LOGGER.info("Handle notification payload {}", data.toString(CharsetUtil.UTF_8));
-        final String path = encoder.connection().stream(streamId).data();
+        final String path = encoder.connection().stream(streamId).getProperty(PATH_KEY);
         final String endpointToken = extractEndpointToken(path);
         final String registrationId = notificationStreams.get(endpointToken);
         final Optional<Integer> pushStreamId = monitoredStreams.get(registrationId);
@@ -117,7 +118,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private void handleNotification(final String path, final int streamId) {
-        encoder.connection().stream(streamId).data(path);
+        encoder.connection().stream(streamId).setProperty(PATH_KEY, path);
     }
 
     private void handleDeviceRegistration(final ChannelHandlerContext ctx, final int streamId) {

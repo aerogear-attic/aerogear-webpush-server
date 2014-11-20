@@ -104,7 +104,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                           final ByteBuf data,
                           final int padding,
                           final boolean endOfStream) throws Http2Exception {
-        LOGGER.debug("Handle notification payload {}", data.toString(CharsetUtil.UTF_8));
+        LOGGER.info("Handle notification payload {}", data.toString(CharsetUtil.UTF_8));
         final String path = encoder.connection().stream(streamId).data();
         final String endpointToken = extractEndpointToken(path);
         final String registrationId = notificationStreams.get(endpointToken);
@@ -122,6 +122,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     private void handleDeviceRegistration(final ChannelHandlerContext ctx, final int streamId) {
         final Registration registration = webpushServer.register();
+        LOGGER.info("Registered {} " + registration);
         final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
                 .status(OK.codeAsText())
                 .set(CACHE_CONTROL, new AsciiString("private, max-age=" + webpushServer.config().registrationMaxAge()))
@@ -138,6 +139,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         try {
             final String registrationId = extractRegistrationId(path);
             final Channel channel = webpushServer.newChannel(registrationId);
+            LOGGER.info("Created channel {} " + channel);
             notificationStreams.put(channel.endpointToken(), registrationId);
             final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
                     .status(CREATED.codeAsText())
@@ -163,7 +165,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
             final String registrationId = extractRegistrationId(path);
             final int pushStreamId = encoder.connection().local().nextStreamId();
             monitoredStreams.put(registrationId, Optional.of(pushStreamId));
-            LOGGER.info("Storing stream for " + registrationId + ", pushPromiseStreamId=" + pushStreamId);
+            LOGGER.info("Monitor registrationId={}, pushPromiseStreamId={}", registrationId, pushStreamId);
             encoder.writePushPromise(ctx, streamId, pushStreamId, responseHeaders, 0, ctx.newPromise());
         } catch (Exception e) {
             e.printStackTrace();

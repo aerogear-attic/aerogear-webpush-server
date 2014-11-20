@@ -40,6 +40,8 @@ But in the same paragragh it says this:
 
     The push server includes the "monitor" link relation in a Location header field.
 
+I've posted a question about this to the spec [mailing-list](http://www.ietf.org/mail-archive/web/webpush/current/msg00105.html)
+to try to figure out what is correct.
 
 ### Location header
 This header contains the URL which the device can use to monitor. 

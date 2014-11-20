@@ -50,7 +50,7 @@ public class WebPushFrameListenerTest {
 
         final Http2Headers responseHeaders = register(frameListener, ctx, encoder);
         assertThat(responseHeaders.status(), equalTo(asciiString("200")));
-        assertThat(responseHeaders.get(LOCATION), equalTo(asciiString("webpush/9999/monitor")));
+        assertThat(responseHeaders.get(LOCATION), equalTo(asciiString("<webpush/9999/monitor>;rel=\"push:monitor\"")));
         assertThat(responseHeaders.get(LINK), equalTo(asciiString("<webpush/9999/channel>;rel=\"push:channel\"")));
         assertThat(responseHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=10000")));
     }

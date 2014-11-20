@@ -27,14 +27,24 @@ Google Cloud Messaging. Similar for iOS perhaps but there Apple Push Notificatio
 
 There are two HTTP/2 headers that will be returned to a registration request which are described below.
 
+The [specification](https://tools.ietf.org/html/draft-thomson-webpush-http2-01#section-4) states that ```channel``` and
+ ```monitor``` resources be included in the response as [WebLink](https://tools.ietf.org/html/rfc5988):
+ 
+    These URIs are included in link relations [RFC5988] that are included in Link header fields in the response.
+But in the same paragragh it says this:
+
+    The push server includes the "monitor" link relation in a Location header field.
+
+
 ### Location header
 This header contains the URL which the device can use to monitor. 
 
-    location: webpush/123/monitor
+    location: <webpush/123/monitor>;rel="push:monitor"
 
 A device can issue a GET request against the above URl to monitor a resource. This allows the server to set up a 
 push stream by writing a push promise in response to this GET request. This allows the server to have a HTTP/2 stream
 on which it can push notifications to the device.  
+
 It is possible that a device first registers, then creates a number of channels, and at a later time calls monitor. 
 During this time push notifications can arrive at the server and stored. When a device sends the monitor request it can
 specify that a ```Prefer: wait=0```, which will cause the server to send all the stored messages straight away.

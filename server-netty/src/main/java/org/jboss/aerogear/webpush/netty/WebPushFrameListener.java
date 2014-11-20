@@ -49,6 +49,8 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private final ConcurrentHashMap<String, Optional<Integer>> monitoredStreams = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> notificationStreams = new ConcurrentHashMap<>();
     public static final AsciiString LINK = new AsciiString("link");
+    public static final String LINK_MONITOR_TYPE = "push:monitor";
+    public static final String LINK_CHANNEL_TYPE = "push:channel";
     private final WebPushServer webpushServer;
     private Http2ConnectionEncoder encoder;
 
@@ -123,13 +125,13 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
                 .status(OK.codeAsText())
                 .set(CACHE_CONTROL, new AsciiString("private, max-age=" + webpushServer.config().registrationMaxAge()))
-                .set(LOCATION, new AsciiString(registration.monitorURI().toString()))
-                .set(LINK, asLink(registration.channelURI(), "push:channel"));
+                .set(LOCATION, asLink(registration.monitorURI(), LINK_MONITOR_TYPE))
+                .set(LINK, asLink(registration.channelURI(), LINK_CHANNEL_TYPE));
         encoder.writeHeaders(ctx, streamId, responseHeaders, 0, false, ctx.newPromise());
     }
 
-    private static AsciiString asLink(final URI uri, final String type) {
-        return new AsciiString("<" + uri + ">;rel=\"" +  type + "\"");
+    private static AsciiString asLink(final URI contextUri, final String relationType) {
+        return new AsciiString("<" + contextUri + ">;rel=\"" +  relationType + "\"");
     }
 
     private void handleChannelCreation(final String path, final ChannelHandlerContext ctx, final int streamId) {

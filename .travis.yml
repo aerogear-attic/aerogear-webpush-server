@@ -4,10 +4,10 @@ jdk:
   - oraclejdk8
 
 before_install:
-  git clone https://github.com/netty/netty.git
-  cd netty
-  mvn install -DskipTests --quiet
-  cd ..
+ - git clone https://github.com/netty/netty.git
+ - cd netty
+ - mvn install -DskipTests --quiet
+ - cd ..
 
 notifications:
   irc: "irc.freenode.org#aerogear"

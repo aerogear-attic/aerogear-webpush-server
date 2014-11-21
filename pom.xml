@@ -75,7 +75,7 @@
 
   <modules>
     <module>common</module>
-    <module>server-api</module>
+    <module>api</module>
     <module>datastores</module>
     <module>server-core</module>
     <module>server-netty</module>
@@ -91,7 +91,7 @@
       </dependency>
       <dependency>
         <groupId>org.jboss.aerogear</groupId>
-        <artifactId>aerogear-webpush-server-api</artifactId>
+        <artifactId>aerogear-webpush-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -38,7 +38,7 @@
 
         <dependency>
             <groupId>org.jboss.aerogear</groupId>
-            <artifactId>aerogear-webpush-server-api</artifactId>
+            <artifactId>aerogear-webpush-api</artifactId>
         </dependency>
 
         <dependency>

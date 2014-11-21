@@ -11,10 +11,16 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.util.CharsetUtil;
 
+import java.util.List;
+import java.util.Optional;
+
 import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
 import static io.netty.util.internal.ObjectUtil.checkNotNull;
 
 public class WebPushFrameReader implements Http2FrameReader {
+
+    private static final AsciiString MONITOR_TYPE = new AsciiString("push:monitor");
+    private static final AsciiString CHANNEL_TYPE = new AsciiString("push:channel");
     private final Http2FrameReader reader;
     private final ResponseHandler callback;
 
@@ -48,10 +54,20 @@ public class WebPushFrameReader implements Http2FrameReader {
 
             private void processHeaders(final Http2Headers headers, final int streamId) {
                 if (headers.contains(LINK) && headers.contains(LOCATION)) {
-                    callback.registerResponse(headers.get(LINK).toString(), headers.get(LOCATION).toString(), streamId);
+                    Optional<AsciiString> channelLink = getLinkUri(CHANNEL_TYPE, headers.getAll(LINK));
+                    callback.registerResponse(channelLink.get().toString(), headers.get(LOCATION).toString(), streamId);
                 } else if (headers.contains(LOCATION)) {
                     callback.channelResponse(headers.get(LOCATION).toString(), streamId);
                 }
+            }
+
+            private Optional<AsciiString> getLinkUri(final AsciiString linkType, final List<AsciiString> links) {
+                for (AsciiString link : links) {
+                    if (link.contains(linkType)) {
+                        return Optional.of(link.subSequence(1, link.indexOf(";") - 1));
+                    }
+                }
+                return Optional.empty();
             }
 
             @Override

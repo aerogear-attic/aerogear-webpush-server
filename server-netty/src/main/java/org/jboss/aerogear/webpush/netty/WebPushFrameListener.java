@@ -127,8 +127,9 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
                 .status(OK.codeAsText())
                 .set(CACHE_CONTROL, new AsciiString("private, max-age=" + webpushServer.config().registrationMaxAge()))
-                .set(LOCATION, asLink(registration.monitorURI(), LINK_MONITOR_TYPE))
-                .set(LINK, asLink(registration.channelURI(), LINK_CHANNEL_TYPE));
+                .set(LOCATION, new AsciiString(registration.monitorURI().toString()))
+                .set(LINK, asLink(registration.monitorURI(), LINK_MONITOR_TYPE),
+                        asLink(registration.channelURI(), LINK_CHANNEL_TYPE));
         encoder.writeHeaders(ctx, streamId, responseHeaders, 0, false, ctx.newPromise());
     }
 

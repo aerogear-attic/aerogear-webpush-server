@@ -18,9 +18,12 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 
+import java.util.List;
+
 import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.*;
 import static org.jboss.aerogear.webpush.netty.WebPushFrameListener.LINK;
 import static org.mockito.Matchers.any;
@@ -50,8 +53,10 @@ public class WebPushFrameListenerTest {
 
         final Http2Headers responseHeaders = register(frameListener, ctx, encoder);
         assertThat(responseHeaders.status(), equalTo(asciiString("200")));
-        assertThat(responseHeaders.get(LOCATION), equalTo(asciiString("<webpush/9999/monitor>;rel=\"push:monitor\"")));
-        assertThat(responseHeaders.get(LINK), equalTo(asciiString("<webpush/9999/channel>;rel=\"push:channel\"")));
+        assertThat(responseHeaders.get(LOCATION), equalTo(asciiString("webpush/9999/monitor")));
+        assertThat(responseHeaders.getAll(LINK), hasItems(
+                asciiString("<webpush/9999/monitor>;rel=\"push:monitor\""),
+                asciiString("<webpush/9999/channel>;rel=\"push:channel\"")));
         assertThat(responseHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=10000")));
     }
 
@@ -129,10 +134,18 @@ public class WebPushFrameListenerTest {
                                        final ChannelHandlerContext ctx,
                                        final Http2ConnectionEncoder encoder,
                                        final Http2Headers registrationHeaders) throws Http2Exception {
-        final AsciiString link = registrationHeaders.get(LINK);
-        final AsciiString channelUri = link.subSequence(1, link.indexOf(";")-1);
+        final AsciiString channelUri = getLinkUri(new AsciiString("push:channel"), registrationHeaders.getAll(LINK));
         frameListener.onHeadersRead(ctx, 3, channelHeaders(channelUri), 0, (short) 22, false, 0, true);
         return verifyAndCapture(ctx, encoder, 2);
+    }
+
+    private static AsciiString getLinkUri(final AsciiString linkType, final List<AsciiString> links) {
+        for (AsciiString link : links) {
+            if (link.contains(linkType)) {
+                return link.subSequence(1, link.indexOf(";")-1);
+            }
+        }
+        throw new IllegalStateException("No link header of type " + linkType + " was found in " + links);
     }
 
     private static void monitor(final WebPushFrameListener frameListener,

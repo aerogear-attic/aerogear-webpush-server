@@ -29,36 +29,30 @@ same interactions as below.
     >
     
 #### Register 
+
     > register
-    > Headers: DefaultHttp2Headers[:status: 200, cache-control: private, max-age=604800000, link: <webpush/531cc9eb-7978-487b-b517-1a56a4291cb2/channel>;rel="push:channel", location: webpush/531cc9eb-7978-487b-b517-1a56a4291cb2/monitor]
+    < [streamid:3] ChannelLink: webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/channel, MonitorLink: webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/monitor
     >
     
 #### Create a channel
     
-    > channel webpush/531cc9eb-7978-487b-b517-1a56a4291cb2/channel
-    > Headers: DefaultHttp2Headers[:status: 201, cache-control: private, max-age=604800000, location: webpush/P8E9BM32X%2BEQZDvltW%2BhuGeuGmQeQSxpqewRB7Awb9UIAWFxK%2BvIovuTwkMI8xocwwW2sStHfzg0OEC9Ovo41FDCz5nYXHSgFDOKYANsFwX1moavATBX0cruZkc1ySTVSngjpoMwvx8x]
+    > channel webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/channel
+    < [streamid:5] Notification URL: webpush/a453gLsY5hlfXfs3TDzrIbjKUb6oKtoOIP4SX2VCYbIajei%2FaJTp7SgUGGv233sQOkY0v1peXoeun01xg9xQvMG7YAgcfTEEUZeKXS1m2CONLGZZoqfFlqthU4Owcy4MVu4sNN9YaqmI
     >
     
 #### Monitor    
-    > monitor webpush/531cc9eb-7978-487b-b517-1a56a4291cb2/monitor
+    > monitor webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/monitor
     >
     
 #### Send notification
-    > monitor webpush/531cc9eb-7978-487b-b517-1a56a4291cb2/monitor
-    > notify webpush/P8E9BM32X%2BEQZDvltW%2BhuGeuGmQeQSxpqewRB7Awb9UIAWFxK%2BvIovuTwkMI8xocwwW2sStHfzg0OEC9Ovo41FDCz5nYXHSgFDOKYANsFwX1moavATBX0cruZkc1ySTVSngjpoMwvx8x hello
-    > Headers: DefaultHttp2Header]
-    > Got notification: hello
-    
-    > notify webpush/P8E9BM32X%2BEQZDvltW%2BhuGeuGmQeQSxpqewRB7Awb9UIAWFxK%2BvIovuTwkMI8xocwwW2sStHfzg0OEC9Ovo41FDCz5nYXHSgFDOKYANsFwX1moavATBX0cruZkc1ySTVSngjpoMwvx8x helloWorld
-    > Got notification: helloWorld
+    > notify webpush/a453gLsY5hlfXfs3TDzrIbjKUb6oKtoOIP4SX2VCYbIajei%2FaJTp7SgUGGv233sQOkY0v1peXoeun01xg9xQvMG7YAgcfTEEUZeKXS1m2CONLGZZoqfFlqthU4Owcy4MVu4sNN9YaqmI hello
+    < [streamid:2] hello
     >
     
 #### Exit the console
     
     > quit
     
-This is really as far as I've gotten. I need to figure out how push promises should be handled on both the server and
-the client side. 
     
 
 

@@ -17,15 +17,17 @@
 package org.jboss.aerogear.webpush;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.AsciiString;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2OrHttpChooser.SelectedProtocol;
 import io.netty.handler.codec.http2.Http2SecurityUtil;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
@@ -39,13 +41,14 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.util.CharsetUtil;
 
 import javax.net.ssl.SSLException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.PUT;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class WebPushClient {
 
@@ -91,33 +94,50 @@ public class WebPushClient {
     }
 
     public void register() throws Exception {
-        writeRequest(new DefaultFullHttpRequest(HTTP_1_1, POST, "webpush/register"));
+        writeRequest(POST, "/webpush/register");
     }
 
     public void monitor(final String monitorUrl) throws Exception {
-        writeRequest(new DefaultFullHttpRequest(HTTP_1_1, GET, monitorUrl));
+        writeRequest(GET, monitorUrl);
     }
 
     public void createChannel(final String channelUrl) throws Exception {
-        writeRequest(new DefaultFullHttpRequest(HTTP_1_1, POST, channelUrl));
+        writeRequest(POST, channelUrl);
     }
 
     public void notify(final String channelUrl, final String payload) throws Exception {
-        final DefaultFullHttpRequest request = new DefaultFullHttpRequest(HTTP_1_1,
-                PUT,
-                channelUrl,
-                Unpooled.copiedBuffer(payload, CharsetUtil.UTF_8));
-        writeRequest(request);
+        writeRequest(PUT, channelUrl, Unpooled.copiedBuffer(payload, CharsetUtil.UTF_8));
     }
 
-    private void writeRequest(final FullHttpRequest request) throws Exception {
-        request.headers().add(HttpHeaderNames.HOST, host + ':' + port);
-        ChannelFuture requestFuture = channel.writeAndFlush(request).sync();
+    private void writeRequest(final HttpMethod method, final String url) throws Exception {
+        final Http2Headers headers = http2Headers(method, url);
+        ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers)).sync();
         requestFuture.sync();
     }
 
+    private void writeRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
+        final Http2Headers headers = http2Headers(method, url);
+        ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, Optional.of(payload))).sync();
+        requestFuture.sync();
+    }
+
+    private Http2Headers http2Headers(final HttpMethod method, final String url) {
+        final URI hostUri = URI.create("https://" + host + ":" + port + url);
+        final Http2Headers headers = new DefaultHttp2Headers(false).method(asciiString(method.name()));
+        headers.path(asciiString(url));
+        headers.authority(asciiString(hostUri.getAuthority()));
+        headers.scheme(asciiString(hostUri.getScheme()));
+        return headers;
+    }
+
+    private static AsciiString asciiString(final String str) {
+        return new AsciiString(str);
+    }
+
     public void disconnect() {
-        channel.close();
+        if (channel != null) {
+            channel.close();
+        }
     }
 
     public void shutdown() {
@@ -154,7 +174,7 @@ public class WebPushClient {
         private final String host;
         private int port = 8080;
         private boolean ssl;
-        private List<String> protocols = new ArrayList<String>();
+        private List<String> protocols = new ArrayList<>();
         private ResponseHandler handler;
 
         public Builder(final String host) {

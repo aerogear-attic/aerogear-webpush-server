@@ -20,6 +20,8 @@ import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.ChannelPromiseAggregator;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
@@ -32,9 +34,13 @@ import io.netty.handler.codec.http2.DefaultHttp2OutboundFlowController;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
 import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.codec.http2.Http2ConnectionEncoder;
+import io.netty.handler.codec.http2.Http2ConnectionHandler;
+import io.netty.handler.codec.http2.Http2FrameListener;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
-import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandler;
+import io.netty.handler.codec.http2.Http2InboundFlowController;
+import io.netty.handler.codec.http2.Http2OutboundFlowController;
 import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
 import io.netty.handler.ssl.SslContext;
 
@@ -46,7 +52,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     private final SslContext sslCtx;
     private final int maxContentLength;
     private final ResponseHandler callback;
-    private HttpToHttp2ConnectionHandler connectionHandler;
+    private WebPushToHttp2ConnectionHandler connectionHandler;
     private HttpResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
@@ -62,8 +68,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
         final Http2Connection connection = new DefaultHttp2Connection(false);
         final Http2FrameWriter frameWriter = new DefaultHttp2FrameWriter();
         final Http2FrameReader frameReader = new WebPushFrameReader(callback, new DefaultHttp2FrameReader());
-
-        connectionHandler = new HttpToHttp2ConnectionHandler(connection,
+        connectionHandler = new WebPushToHttp2ConnectionHandler(connection,
                 frameReader,
                 frameWriter,
                 new DefaultHttp2InboundFlowController(connection, frameWriter),
@@ -140,5 +145,40 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
             super.userEventTriggered(ctx, evt);
         }
     }
+
+    public static class WebPushToHttp2ConnectionHandler extends Http2ConnectionHandler {
+
+        public WebPushToHttp2ConnectionHandler(final Http2Connection connection,
+                                               final Http2FrameReader frameReader,
+                                               final Http2FrameWriter frameWriter,
+                                               final Http2InboundFlowController inboundFlow,
+                                               final Http2OutboundFlowController outboundFlow,
+                                               final Http2FrameListener listener) {
+            super(connection, frameReader, frameWriter, inboundFlow, outboundFlow, listener);
+        }
+
+        @Override
+        public void write(final ChannelHandlerContext ctx, final Object msg, final ChannelPromise promise) {
+            if (msg instanceof WebPushMessage) {
+                final WebPushMessage message = (WebPushMessage) msg;
+                final Http2ConnectionEncoder encoder = encoder();
+                final int streamId = connection().local().nextStreamId();
+                if (message.hasData()) {
+                    final ChannelPromiseAggregator promiseAggregator = new ChannelPromiseAggregator(promise);
+                    final ChannelPromise headerPromise = ctx.newPromise();
+                    final ChannelPromise dataPromise = ctx.newPromise();
+                    promiseAggregator.add(headerPromise, dataPromise);
+                    encoder.writeHeaders(ctx, streamId, message.headers(), 0, false, headerPromise);
+                    encoder.writeData(ctx, streamId, message.payload().get(), 0, true, dataPromise);
+                } else {
+                    encoder.writeHeaders(ctx, streamId, message.headers(), 0, true, promise);
+                }
+            } else {
+                ctx.write(msg, promise);
+            }
+        }
+
+    }
+
 
 }

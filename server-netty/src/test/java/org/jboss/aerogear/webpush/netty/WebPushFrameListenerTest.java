@@ -14,6 +14,7 @@ import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.CharsetUtil;
+import org.jboss.aerogear.webpush.Registration.WebLink;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -55,8 +56,8 @@ public class WebPushFrameListenerTest {
         assertThat(responseHeaders.status(), equalTo(asciiString("200")));
         assertThat(responseHeaders.get(LOCATION), equalTo(asciiString("webpush/9999/monitor")));
         assertThat(responseHeaders.getAll(LINK), hasItems(
-                asciiString("<webpush/9999/monitor>;rel=\"push:monitor\""),
-                asciiString("<webpush/9999/channel>;rel=\"push:channel\"")));
+                asciiString(WebLink.MONITOR.weblink("webpush/9999/monitor")),
+                asciiString(WebLink.CHANNEL.weblink("webpush/9999/channel"))));
         assertThat(responseHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=10000")));
     }
 
@@ -134,7 +135,7 @@ public class WebPushFrameListenerTest {
                                        final ChannelHandlerContext ctx,
                                        final Http2ConnectionEncoder encoder,
                                        final Http2Headers registrationHeaders) throws Http2Exception {
-        final AsciiString channelUri = getLinkUri(new AsciiString("push:channel"), registrationHeaders.getAll(LINK));
+        final AsciiString channelUri = getLinkUri(asciiString(WebLink.CHANNEL), registrationHeaders.getAll(LINK));
         frameListener.onHeadersRead(ctx, 3, channelHeaders(channelUri), 0, (short) 22, false, 0, true);
         return verifyAndCapture(ctx, encoder, 2);
     }
@@ -176,6 +177,10 @@ public class WebPushFrameListenerTest {
 
     private static AsciiString asciiString(final String str) {
         return new AsciiString(str);
+    }
+
+    private static AsciiString asciiString(final WebLink type) {
+        return new AsciiString(type.toString());
     }
 
     private static Http2Headers registerHeaders() {

@@ -28,6 +28,7 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.util.CharsetUtil;
 import org.jboss.aerogear.webpush.Channel;
 import org.jboss.aerogear.webpush.Registration;
+import org.jboss.aerogear.webpush.Registration.WebLink;
 import org.jboss.aerogear.webpush.WebPushServer;
 import org.jboss.aerogear.webpush.datastore.RegistrationNotFoundException;
 import org.jboss.aerogear.webpush.util.ArgumentUtil;
@@ -49,8 +50,6 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private final ConcurrentHashMap<String, Optional<Integer>> monitoredStreams = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> notificationStreams = new ConcurrentHashMap<>();
     public static final AsciiString LINK = new AsciiString("link");
-    public static final String LINK_MONITOR_TYPE = "push:monitor";
-    public static final String LINK_CHANNEL_TYPE = "push:channel";
     private static final String PATH_KEY = "webpush.path";
     private final WebPushServer webpushServer;
     private Http2ConnectionEncoder encoder;
@@ -128,8 +127,8 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 .status(OK.codeAsText())
                 .set(CACHE_CONTROL, new AsciiString("private, max-age=" + webpushServer.config().registrationMaxAge()))
                 .set(LOCATION, new AsciiString(registration.monitorURI().toString()))
-                .set(LINK, asLink(registration.monitorURI(), LINK_MONITOR_TYPE),
-                        asLink(registration.channelURI(), LINK_CHANNEL_TYPE));
+                .set(LINK, asLink(registration.monitorURI(), WebLink.MONITOR.toString()),
+                        asLink(registration.channelURI(), WebLink.CHANNEL.toString()));
         encoder.writeHeaders(ctx, streamId, responseHeaders, 0, false, ctx.newPromise());
     }
 

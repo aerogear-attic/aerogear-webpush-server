@@ -10,6 +10,7 @@ import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.util.CharsetUtil;
+import org.jboss.aerogear.webpush.Registration.WebLink;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,8 +20,7 @@ import static io.netty.util.internal.ObjectUtil.checkNotNull;
 
 public class WebPushFrameReader implements Http2FrameReader {
 
-    private static final AsciiString MONITOR_TYPE = new AsciiString("push:monitor");
-    private static final AsciiString CHANNEL_TYPE = new AsciiString("push:channel");
+    private static final AsciiString CHANNEL_TYPE = new AsciiString(WebLink.CHANNEL.toString());
     private final Http2FrameReader reader;
     private final ResponseHandler callback;
 

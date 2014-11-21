@@ -31,4 +31,24 @@ public interface Registration {
      */
     URI channelURI();
 
+    enum WebLink {
+        CHANNEL("push:channel"),
+        MONITOR("push:monitor");
+
+        private String type;
+
+        private WebLink(final String type) {
+            this.type = type;
+        }
+
+        @Override
+        public String toString() {
+            return type;
+        }
+
+        public String weblink(final String url) {
+            return "<" + url + ">;rel=\"" + type + "\"";
+        }
+    }
+
 }

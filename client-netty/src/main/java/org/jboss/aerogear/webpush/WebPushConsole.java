@@ -8,10 +8,66 @@ import org.jboss.aesh.console.Prompt;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class WebPushConsole {
+
+    private enum Command {
+        CONNECT("connect",
+                Optional.of("localhost:8443"),
+                "Connects to specified WebPush server on the specificed host/port."),
+        REGISTER("register",
+                Optional.<String>empty(),
+                "Registers with the WebPush server and displays the channel-url and monitor-url."),
+        CREATE_CHANNEL("create-channel",
+                Optional.of("<channel-url>"),
+                "Creates a new channel and displays the endpoint-url the channel. This can be used with the notify command "),
+        MONITOR("monitor",
+                Optional.of("<monitor-url>"),
+                "Starts monitoring for notifications"),
+        NOTIFY("notify",
+                Optional.of("<endpoint-url> <payload>"),
+                "Sends a notification to the specified endpoint-url."),
+        HELP("help",
+                Optional.<String>empty(),
+                "Displays the help for the WebPushConsole."),
+        QUIT("quit",
+                Optional.<String>empty(),
+                "Quits the WebPushConsole.");
+
+        private final String name;
+        private final Optional<String> parameters;
+        private final String description;
+
+        private Command(String name, final Optional<String> parameters, String description) {
+            this.name = name;
+            this.parameters = parameters;
+            this.description = description;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        public Optional<String> parameters() {
+            return parameters;
+        }
+
+        public String example() {
+            return parameters.isPresent() ? name + " " +  parameters.get() : name;
+        }
+
+        public void printHelp(final PrintStream out) {
+            out.println(example());
+            out.println(description);
+            out.println();
+        }
+
+    }
 
     public static void main(String[] args) throws IOException {
 
@@ -23,23 +79,26 @@ public class WebPushConsole {
         final Completion completer = co -> {
             final List<String> commands = new ArrayList<>();
             if(co.getBuffer().startsWith("co")) {
-                commands.add("connect localhost:8443");
+                commands.add(Command.CONNECT.example());
             }
             if(co.getBuffer().startsWith("re")) {
-                commands.add("register");
+                commands.add(Command.REGISTER.example());
                 co.setOffset(0);
             }
-            if(co.getBuffer().startsWith("ch")) {
-                commands.add("channel <channel-url>");
+            if(co.getBuffer().startsWith("cr")) {
+                commands.add(Command.CREATE_CHANNEL.example());
             }
             if(co.getBuffer().startsWith("m")) {
-                commands.add("monitor <monitor-url>");
+                commands.add(Command.MONITOR.example());
             }
             if(co.getBuffer().startsWith("no")) {
-                commands.add("notify <notify-url> <payload>");
+                commands.add(Command.NOTIFY.example());
             }
             if(co.getBuffer().startsWith("q")) {
-                commands.add("quit");
+                commands.add(Command.QUIT.example());
+            }
+            if(co.getBuffer().equals("h") || co.getBuffer().startsWith("he")) {
+                commands.add(Command.HELP.example());
             }
             co.setCompletionCandidates(commands);
         };
@@ -61,16 +120,18 @@ public class WebPushConsole {
                         e.printStackTrace();
                     }
                 }
-                else if (output.getBuffer().startsWith("connect")) {
+                else if (output.getBuffer().startsWith(Command.CONNECT.toString())) {
                     client = handleConnect(output, console);
-                } else if (output.getBuffer().startsWith("register")) {
+                } else if (output.getBuffer().startsWith(Command.REGISTER.toString())) {
                     handleRegister(client);
-                } else if (output.getBuffer().startsWith("monitor")) {
+                } else if (output.getBuffer().startsWith(Command.MONITOR.toString())) {
                     handleMonitor(client, getFirstArg(output.getBuffer()));
-                } else if (output.getBuffer().startsWith("channel")) {
+                } else if (output.getBuffer().startsWith(Command.CREATE_CHANNEL.toString())) {
                     handleCreateChannel(client, getFirstArg(output.getBuffer()));
-                } else if (output.getBuffer().startsWith("notify")) {
+                } else if (output.getBuffer().startsWith(Command.NOTIFY.toString())) {
                     handleNotification(client, output.getBuffer());
+                } else if (output.getBuffer().startsWith(Command.HELP.toString())) {
+                    displayHelp(console);
                 } else {
                     console.getShell().out().println("Unknown command:" + output.getBuffer());
                 }
@@ -97,7 +158,7 @@ public class WebPushConsole {
 
         @Override
         public void channelResponse(final String endpoint, final int streamId) {
-            print("Notification URL: " + endpoint, streamId);
+            print("Endpoint: " + endpoint, streamId);
         }
 
         @Override
@@ -161,6 +222,19 @@ public class WebPushConsole {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static void displayHelp(final Console console) {
+        final PrintStream out = console.getShell().out();
+        out.println("WebPushConsole commands (tab completion available)");
+        out.println();
+        Command.CONNECT.printHelp(out);
+        Command.CREATE_CHANNEL.printHelp(out);
+        Command.HELP.printHelp(out);
+        Command.NOTIFY.printHelp(out);
+        Command.MONITOR.printHelp(out);
+        Command.REGISTER.printHelp(out);
+        Command.QUIT.printHelp(out);
     }
 
     private static String getFirstArg(final String cmd) {

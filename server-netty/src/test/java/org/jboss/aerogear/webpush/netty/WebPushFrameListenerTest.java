@@ -54,10 +54,10 @@ public class WebPushFrameListenerTest {
 
         final Http2Headers responseHeaders = register(frameListener, ctx, encoder);
         assertThat(responseHeaders.status(), equalTo(asciiString("200")));
-        assertThat(responseHeaders.get(LOCATION), equalTo(asciiString("webpush/9999/monitor")));
+        assertThat(responseHeaders.get(LOCATION), equalTo(asciiString("/webpush/9999/monitor")));
         assertThat(responseHeaders.getAll(LINK), hasItems(
-                asciiString(WebLink.MONITOR.weblink("webpush/9999/monitor")),
-                asciiString(WebLink.CHANNEL.weblink("webpush/9999/channel"))));
+                asciiString(WebLink.MONITOR.weblink("/webpush/9999/monitor")),
+                asciiString(WebLink.CHANNEL.weblink("/webpush/9999/channel"))));
         assertThat(responseHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=10000")));
     }
 
@@ -128,7 +128,9 @@ public class WebPushFrameListenerTest {
                                          final ChannelHandlerContext ctx,
                                          final Http2ConnectionEncoder encoder) throws Http2Exception {
         frameListener.onHeadersRead(ctx, 3, registerHeaders(), 0, (short) 22, false, 0, true);
-        return verifyAndCapture(ctx, encoder, 1);
+        final ByteBuf empty = Unpooled.buffer();
+        frameListener.onDataRead(ctx, 3, empty, 0, true);
+        return verifyAndCapture(ctx, encoder, true, 1);
     }
 
     private static Http2Headers channel(final WebPushFrameListener frameListener,
@@ -136,8 +138,9 @@ public class WebPushFrameListenerTest {
                                        final Http2ConnectionEncoder encoder,
                                        final Http2Headers registrationHeaders) throws Http2Exception {
         final AsciiString channelUri = getLinkUri(asciiString(WebLink.CHANNEL), registrationHeaders.getAll(LINK));
-        frameListener.onHeadersRead(ctx, 3, channelHeaders(channelUri), 0, (short) 22, false, 0, true);
-        return verifyAndCapture(ctx, encoder, 2);
+        frameListener.onHeadersRead(ctx, 3, channelHeaders(channelUri), 0, (short) 22, false, 0, false);
+        frameListener.onDataRead(ctx, 3, Unpooled.buffer() , 0, true);
+        return verifyAndCapture(ctx, encoder, true, 2);
     }
 
     private static AsciiString getLinkUri(final AsciiString linkType, final List<AsciiString> links) {
@@ -167,9 +170,10 @@ public class WebPushFrameListenerTest {
 
     private static Http2Headers verifyAndCapture(final ChannelHandlerContext ctx,
                                                  final Http2ConnectionEncoder encoder,
+                                                 final boolean endStream,
                                                  final int times) {
         final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
-        verify(encoder, times(times)).writeHeaders(eq(ctx), eq(3), captor.capture(), eq(0), eq(false),
+        verify(encoder, times(times)).writeHeaders(eq(ctx), eq(3), captor.capture(), eq(0), eq(endStream),
                 any(ChannelPromise.class));
         return captor.getValue();
 
@@ -217,7 +221,10 @@ public class WebPushFrameListenerTest {
         final Endpoint local = mock(Endpoint.class);
         final Http2Stream stream = mock(Http2Stream.class);
         when(local.nextStreamId()).thenReturn(4);
-        when(stream.getProperty("webpush.path")).thenReturn("webpush/9999/endpointToken");
+        when(stream.getProperty("webpush.path"))
+                .thenReturn("/webpush/9999/register")
+                .thenReturn("/webpush/9999/channel")
+                .thenReturn("/webpush/9999/endpointToken");
         when(connection.local()).thenReturn(local);
         when(connection.stream(anyInt())).thenReturn(stream);
         when(encoder.connection()).thenReturn(connection);

@@ -94,7 +94,7 @@ public class WebPushClient {
     }
 
     public void register() throws Exception {
-        writeRequest(POST, "/webpush/register");
+        writeRequest(POST, "/webpush/register", Unpooled.buffer());
     }
 
     public void monitor(final String monitorUrl) throws Exception {
@@ -102,7 +102,7 @@ public class WebPushClient {
     }
 
     public void createChannel(final String channelUrl) throws Exception {
-        writeRequest(POST, channelUrl);
+        writeRequest(POST, channelUrl, Unpooled.buffer());
     }
 
     public void notify(final String channelUrl, final String payload) throws Exception {

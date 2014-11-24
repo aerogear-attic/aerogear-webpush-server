@@ -16,7 +16,7 @@ public class MockWebPushServerBuilder {
     private final WebPushServer webPushServer = mock(WebPushServer.class);
     private final WebPushServerConfig config = mock(WebPushServerConfig.class);
     private final Registration registration = mock(Registration.class);
-    private final String context = "webpush";
+    private final String context = "/webpush";
     private final String registrationId;
 
     private MockWebPushServerBuilder(final String registrationId) {

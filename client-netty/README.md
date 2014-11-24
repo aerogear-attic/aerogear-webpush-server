@@ -15,6 +15,7 @@ same interactions as below.
     [main] INFO org.jboss.aerogear.webpush.netty.WebPushNettyServer - WebPush server bound to localhost:8443
     
 ### Start the console
+The console support tab completion and you can type ```help``` to see the available commands.
   
     cd client-netty
     mvn exec:exec
@@ -36,8 +37,8 @@ same interactions as below.
     
 #### Create a channel
     
-    > channel webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/channel
-    < [streamid:5] Notification URL: webpush/a453gLsY5hlfXfs3TDzrIbjKUb6oKtoOIP4SX2VCYbIajei%2FaJTp7SgUGGv233sQOkY0v1peXoeun01xg9xQvMG7YAgcfTEEUZeKXS1m2CONLGZZoqfFlqthU4Owcy4MVu4sNN9YaqmI
+    > create-channel webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/channel
+    < [streamid:5] Endpoint: webpush/a453gLsY5hlfXfs3TDzrIbjKUb6oKtoOIP4SX2VCYbIajei%2FaJTp7SgUGGv233sQOkY0v1peXoeun01xg9xQvMG7YAgcfTEEUZeKXS1m2CONLGZZoqfFlqthU4Owcy4MVu4sNN9YaqmI
     >
     
 #### Monitor    

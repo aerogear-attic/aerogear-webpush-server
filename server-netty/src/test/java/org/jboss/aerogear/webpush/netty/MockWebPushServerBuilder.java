@@ -26,8 +26,9 @@ public class MockWebPushServerBuilder {
     }
 
     private void setRegistrationUrls(final String id) {
-        when(registration.monitorURI()).thenReturn(asURI(context, id, "monitor"));
-        when(registration.channelURI()).thenReturn(asURI(context, id, "channel"));
+        when(registration.monitorUri()).thenReturn(asURI(context, id, "monitor"));
+        when(registration.channelUri()).thenReturn(asURI(context, id, "channel"));
+        when(registration.aggregateUri()).thenReturn(asURI(context, id, "aggregate"));
     }
 
     public MockWebPushServerBuilder registrationMaxAge(final long maxAge) {
@@ -43,9 +44,16 @@ public class MockWebPushServerBuilder {
     public WebPushServer build() throws Exception {
         when(webPushServer.config()).thenReturn(config);
         when(webPushServer.register()).thenReturn(registration);
-        final Channel channel = mock(Channel.class);
-        when(channel.endpointToken()).thenReturn("endpointToken");
-        when(webPushServer.newChannel(registrationId)).thenReturn(channel);
+        final Channel channel1 = mock(Channel.class);
+        when(channel1.endpointToken()).thenReturn("endpoint1");
+        final Channel channel2 = mock(Channel.class);
+        when(channel2.endpointToken()).thenReturn("endpoint2");
+        final Channel aggregateChannel = mock(Channel.class);
+        when(aggregateChannel.endpointToken()).thenReturn("aggChannel");
+        when(webPushServer.newChannel(registrationId))
+                .thenReturn(channel1)
+                .thenReturn(channel2)
+                .thenReturn(aggregateChannel);
         return webPushServer;
     }
 

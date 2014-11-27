@@ -49,17 +49,24 @@ public class DefaultWebPushServer implements WebPushServer {
     public Registration register() {
         final String id = UUID.randomUUID().toString();
         final String stringId = urlEncodeId(id);
-        final DefaultRegistration reg = new DefaultRegistration(id, monitorURI(stringId), channelURI(stringId));
+        final DefaultRegistration reg = new DefaultRegistration(id,
+                monitorUri(stringId),
+                channelUri(stringId),
+                aggregateUri(stringId));
         store.saveRegistration(reg);
         return reg;
     }
 
-    private static URI monitorURI(final String id) {
+    private static URI monitorUri(final String id) {
         return webpushURI(id, "/monitor");
     }
 
-    private static URI channelURI(final String id) {
+    private static URI channelUri(final String id) {
         return webpushURI(id, "/channel");
+    }
+
+    private static URI aggregateUri(final String id) {
+        return webpushURI(id, "/aggregate");
     }
 
     private static URI webpushURI(final String id, final String postfix) {

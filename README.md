@@ -72,6 +72,12 @@ Channels can expire and this is indicated by the ```max-age``` parameter on the 
 ## Channel deletion
 This can be done by sending a DELETE to the channel URL.
 
+## Message batching/aggregation
+Allows an application to request that a web push server deliver the same message to a potentially large set of devices,
+and is a separate specification called [webpush-aggregate](http://tools.ietf.org/html/draft-thomson-webpush-aggregate-00)
+
+
+
     
 ## Prerequisites 
 * This project requires Java 8.

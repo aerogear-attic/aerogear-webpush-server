@@ -41,8 +41,9 @@ public class DefaultWebPushServerTest {
     public void register() {
         final Registration reg = server.register();
         assertThat(reg.id(), is(notNullValue()));
-        assertThat(reg.monitorURI().toString(), equalTo("webpush/" + reg.id() + "/monitor"));
-        assertThat(reg.channelURI().toString(), equalTo("webpush/" + reg.id() + "/channel"));
+        assertThat(reg.monitorUri().toString(), equalTo("webpush/" + reg.id() + "/monitor"));
+        assertThat(reg.channelUri().toString(), equalTo("webpush/" + reg.id() + "/channel"));
+        assertThat(reg.aggregateUri().toString(), equalTo("webpush/" + reg.id() + "/aggregate"));
     }
 
     @Test

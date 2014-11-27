@@ -10,9 +10,10 @@ public interface ResponseHandler {
      *
      * @param channelLink the link to be used to create channels. Currently the complete WebLink header.
      * @param monitorLink the link to be used to start monitoring. Currently the complete WebLink header.
+     * @param aggregateLink the link to be used to create aggregate/batch channels.
      * @param streamId the streamId for this response.
      */
-    void registerResponse(String channelLink, String monitorLink, int streamId);
+    void registerResponse(String channelLink, String monitorLink, String aggregateLink, int streamId);
 
     /**
      * The response from a channel creation request.

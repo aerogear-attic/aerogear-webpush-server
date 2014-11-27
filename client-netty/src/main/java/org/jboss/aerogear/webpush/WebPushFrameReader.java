@@ -21,6 +21,7 @@ import static io.netty.util.internal.ObjectUtil.checkNotNull;
 public class WebPushFrameReader implements Http2FrameReader {
 
     private static final AsciiString CHANNEL_TYPE = new AsciiString(WebLink.CHANNEL.toString());
+    private static final AsciiString AGGREGATE_TYPE = new AsciiString(WebLink.AGGREGATE.toString());
     private final Http2FrameReader reader;
     private final ResponseHandler callback;
 
@@ -55,7 +56,11 @@ public class WebPushFrameReader implements Http2FrameReader {
             private void processHeaders(final Http2Headers headers, final int streamId) {
                 if (headers.contains(LINK) && headers.contains(LOCATION)) {
                     Optional<AsciiString> channelLink = getLinkUri(CHANNEL_TYPE, headers.getAll(LINK));
-                    callback.registerResponse(channelLink.get().toString(), headers.get(LOCATION).toString(), streamId);
+                    Optional<AsciiString> aggregateLink = getLinkUri(AGGREGATE_TYPE, headers.getAll(LINK));
+                    callback.registerResponse(channelLink.get().toString(),
+                            headers.get(LOCATION).toString(),
+                            aggregateLink.get().toString(),
+                            streamId);
                 } else if (headers.contains(LOCATION)) {
                     callback.channelResponse(headers.get(LOCATION).toString(), streamId);
                 }
@@ -121,6 +126,9 @@ public class WebPushFrameReader implements Http2FrameReader {
             @Override
             public void onGoAwayRead(ChannelHandlerContext ctx, int lastStreamId, long errorCode,
                                      ByteBuf debugData) throws Http2Exception {
+                System.out.println("go away read: lastStreamId: " + lastStreamId
+                        + ", errorCode: " + errorCode
+                        + ", debugData: " + debugData.toString(CharsetUtil.UTF_8));
                 listener.onGoAwayRead(ctx, lastStreamId, errorCode, debugData);
             }
 

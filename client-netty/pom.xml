@@ -25,7 +25,7 @@
     </parent>
     <artifactId>client-netty</artifactId>
     <packaging>jar</packaging>
-    <name>WebPush Netty Client</name>
+    <name>AeroGear WebPush Netty Client</name>
 
     <url>http://aerogear.org</url>
     <licenses>
@@ -117,6 +117,10 @@
         <dependency>
             <groupId>org.jboss.aerogear</groupId>
             <artifactId>aerogear-webpush-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.aerogear</groupId>
+            <artifactId>aerogear-webpush-server-core</artifactId>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>

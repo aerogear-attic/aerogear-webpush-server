@@ -22,9 +22,12 @@ public class WebPushConsole {
         REGISTER("register",
                 Optional.<String>empty(),
                 "Registers with the WebPush server and displays the channel-url and monitor-url."),
-        CREATE_CHANNEL("create-channel",
+        CHANNEL("channel",
                 Optional.of("<channel-url>"),
                 "Creates a new channel and displays the endpoint-url the channel. This can be used with the notify command "),
+        AGGREGATE("aggregate-channel",
+                Optional.of("<aggregate-url> <channel-url>[,<channel-url>]"),
+                "Creates a new aggregate channel with the passed in channel-urls being part for the aggregate."),
         MONITOR("monitor",
                 Optional.of("<monitor-url>"),
                 "Starts monitoring for notifications"),
@@ -85,8 +88,11 @@ public class WebPushConsole {
                 commands.add(Command.REGISTER.example());
                 co.setOffset(0);
             }
-            if(co.getBuffer().startsWith("cr")) {
-                commands.add(Command.CREATE_CHANNEL.example());
+            if(co.getBuffer().startsWith("ch")) {
+                commands.add(Command.CHANNEL.example());
+            }
+            if(co.getBuffer().startsWith("ag")) {
+                commands.add(Command.AGGREGATE.example());
             }
             if(co.getBuffer().startsWith("m")) {
                 commands.add(Command.MONITOR.example());
@@ -108,8 +114,9 @@ public class WebPushConsole {
             WebPushClient client = null;
             @Override
             public int execute(ConsoleOperation output) {
+                final String buffer = output.getBuffer();
 
-                if (output.getBuffer().startsWith("quit")) {
+                if (buffer.startsWith("quit")) {
                     try {
                         if (client != null) {
                             client.disconnect();
@@ -120,20 +127,22 @@ public class WebPushConsole {
                         e.printStackTrace();
                     }
                 }
-                else if (output.getBuffer().startsWith(Command.CONNECT.toString())) {
+                else if (buffer.startsWith(Command.CONNECT.toString())) {
                     client = handleConnect(output, console);
-                } else if (output.getBuffer().startsWith(Command.REGISTER.toString())) {
+                } else if (buffer.startsWith(Command.REGISTER.toString())) {
                     handleRegister(client);
-                } else if (output.getBuffer().startsWith(Command.MONITOR.toString())) {
-                    handleMonitor(client, getFirstArg(output.getBuffer()));
-                } else if (output.getBuffer().startsWith(Command.CREATE_CHANNEL.toString())) {
-                    handleCreateChannel(client, getFirstArg(output.getBuffer()));
-                } else if (output.getBuffer().startsWith(Command.NOTIFY.toString())) {
-                    handleNotification(client, output.getBuffer());
-                } else if (output.getBuffer().startsWith(Command.HELP.toString())) {
+                } else if (buffer.startsWith(Command.MONITOR.toString())) {
+                    handleMonitor(client, getFirstArg(buffer));
+                } else if (buffer.startsWith(Command.CHANNEL.toString())) {
+                    handleCreateChannel(client, getFirstArg(buffer));
+                } else if (buffer.startsWith(Command.AGGREGATE.toString())) {
+                    handleAggregateChannel(client, buffer, console);
+                } else if (buffer.startsWith(Command.NOTIFY.toString())) {
+                    handleNotification(client, buffer);
+                } else if (buffer.startsWith(Command.HELP.toString())) {
                     displayHelp(console);
                 } else {
-                    console.getShell().out().println("Unknown command:" + output.getBuffer());
+                    console.getShell().out().println("Unknown command:" + buffer);
                 }
                 return 0;
             }
@@ -152,8 +161,12 @@ public class WebPushConsole {
         }
 
         @Override
-        public void registerResponse(final String channelLink, final String monitorLink, final int streamId) {
-            print("ChannelLink: " + channelLink + ", MonitorLink: " + monitorLink, streamId);
+        public void registerResponse(final String channelLink,
+                                     final String monitorLink,
+                                     final String aggregateLink,
+                                     final int streamId) {
+            print("channelLink: " + channelLink + ", monitorLink: " + monitorLink + ", aggregateLink: " + aggregateLink
+                    , streamId);
         }
 
         @Override
@@ -215,6 +228,19 @@ public class WebPushConsole {
         }
     }
 
+    public static void handleAggregateChannel(final WebPushClient client,
+                                              final String cmd,
+                                              final Console console) {
+        final String[] args = getFirstTwoArg(cmd);
+        try {
+            final String json = JsonMapper.toJson(new DefaultAggregateChannel(WebPushClient.asEntries(args[1].split(","))));
+            console.getShell().out().println(JsonMapper.pretty(json));
+            client.createAggregateChannel(args[0], json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void handleNotification(final WebPushClient client, final String cmd) {
         final String[] args = getFirstTwoArg(cmd);
         try {
@@ -229,7 +255,7 @@ public class WebPushConsole {
         out.println("WebPushConsole commands (tab completion available)");
         out.println();
         Command.CONNECT.printHelp(out);
-        Command.CREATE_CHANNEL.printHelp(out);
+        Command.CHANNEL.printHelp(out);
         Command.HELP.printHelp(out);
         Command.NOTIFY.printHelp(out);
         Command.MONITOR.printHelp(out);
@@ -247,5 +273,10 @@ public class WebPushConsole {
         args[0] = tmp.substring(0, tmp.indexOf(" "));
         args[1] = tmp.substring(tmp.indexOf(" ") + 1, tmp.length());
         return args;
+    }
+
+    private static String[] getArgumentsList(final String cmd) {
+        String tmp = cmd.substring(cmd.indexOf(" ") + 1, cmd.length());
+        return tmp.split(",");
     }
 }

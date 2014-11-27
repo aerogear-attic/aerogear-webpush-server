@@ -84,4 +84,10 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpRes
         }
         */
     }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        super.exceptionCaught(ctx, cause);
+    }
 }

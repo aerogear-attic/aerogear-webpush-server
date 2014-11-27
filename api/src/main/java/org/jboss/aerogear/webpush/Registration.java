@@ -22,18 +22,29 @@ public interface Registration {
      *
      * @return {@link URI} which will be returned to the calling client, most often as HTTP Location Header value.
      */
-    URI monitorURI();
+    URI monitorUri();
 
     /**
      * The {@link URI} used by devices to create new channels
      *
      * @return {@link URI} to be used to create new channels.
      */
-    URI channelURI();
+    URI channelUri();
+
+    /**
+     * The {@link URI} used by devices to create aggreate/batch channels.
+     * <p>
+     * This allows an application to request that a web push server deliver the same message to
+     * a potentially large set of devices.
+     *
+     * @return {@link URI} to be used to create new aggregate/batch channels.
+     */
+    URI aggregateUri();
 
     enum WebLink {
         CHANNEL("push:channel"),
-        MONITOR("push:monitor");
+        MONITOR("push:monitor"),
+        AGGREGATE("push:aggregate");
 
         private String type;
 

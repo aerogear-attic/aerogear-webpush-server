@@ -5,13 +5,15 @@ import java.net.URI;
 public class DefaultRegistration implements Registration {
 
     private final String id;
-    private final URI monitorURI;
-    private final URI channelURI;
+    private final URI monitorUri;
+    private final URI channelUri;
+    private final URI aggregateUri;
 
-    public DefaultRegistration(final String id, final URI monitorURI, final URI channelURI) {
+    public DefaultRegistration(final String id, final URI monitorUri, final URI channelUri, final URI aggregateUri) {
         this.id = id;
-        this.monitorURI = monitorURI;
-        this.channelURI = channelURI;
+        this.monitorUri = monitorUri;
+        this.channelUri = channelUri;
+        this.aggregateUri = aggregateUri;
     }
 
     @Override
@@ -20,17 +22,25 @@ public class DefaultRegistration implements Registration {
     }
 
     @Override
-    public URI monitorURI() {
-        return monitorURI;
+    public URI monitorUri() {
+        return monitorUri;
     }
 
     @Override
-    public URI channelURI() {
-        return channelURI;
+    public URI channelUri() {
+        return channelUri;
+    }
+
+    @Override
+    public URI aggregateUri() {
+        return aggregateUri;
     }
 
     @Override
     public String toString() {
-        return "DefautRegistration[id=" + id + ", monitorURI=" + monitorURI + ", channelURI=" + channelURI + "]";
+        return "DefautRegistration[id=" + id +
+                ", monitorUri=" + monitorUri +
+                ", channelUri=" + channelUri +
+                ", aggregateUri=" + aggregateUri + "]";
     }
 }

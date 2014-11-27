@@ -178,6 +178,11 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
             }
         }
 
+        @Override
+        public void onException(ChannelHandlerContext ctx, Throwable cause) {
+            //cause.printStackTrace();
+            super.onException(ctx, cause);
+        }
     }
 
 

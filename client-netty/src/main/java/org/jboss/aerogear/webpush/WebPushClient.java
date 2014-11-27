@@ -39,16 +39,24 @@ import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.util.CharsetUtil;
+import org.jboss.aerogear.webpush.AggregateChannel.Entry;
+import org.jboss.aerogear.webpush.DefaultAggregateChannel.DefaultEntry;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import static io.netty.buffer.Unpooled.copiedBuffer;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.PUT;
+import static io.netty.util.CharsetUtil.UTF_8;
+import static org.jboss.aerogear.webpush.JsonMapper.toJson;
 
 public class WebPushClient {
 
@@ -105,8 +113,20 @@ public class WebPushClient {
         writeRequest(POST, channelUrl, Unpooled.buffer());
     }
 
+    public void createAggregateChannel(final String aggregateUrl, final String json) throws Exception {
+        writeRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
+    }
+
+    public static Set<Entry> asEntries(final String[] channelUrls) {
+        final Set<Entry> entries = new HashSet<>(channelUrls.length);
+        for (String url: channelUrls) {
+            entries.add(new DefaultEntry(url, Optional.of(0L)));
+        }
+        return entries;
+    }
+
     public void notify(final String channelUrl, final String payload) throws Exception {
-        writeRequest(PUT, channelUrl, Unpooled.copiedBuffer(payload, CharsetUtil.UTF_8));
+        writeRequest(PUT, channelUrl, copiedBuffer(payload, UTF_8));
     }
 
     private void writeRequest(final HttpMethod method, final String url) throws Exception {
@@ -122,7 +142,7 @@ public class WebPushClient {
     }
 
     private Http2Headers http2Headers(final HttpMethod method, final String url) {
-        final URI hostUri = URI.create("https://" + host + ":" + port + url);
+        final URI hostUri = URI.create("https://" + host + ":" + port + "/" + url);
         final Http2Headers headers = new DefaultHttp2Headers(false).method(asciiString(method.name()));
         headers.path(asciiString(url));
         headers.authority(asciiString(hostUri.getAuthority()));

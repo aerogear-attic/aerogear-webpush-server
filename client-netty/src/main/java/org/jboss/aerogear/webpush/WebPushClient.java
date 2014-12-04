@@ -200,7 +200,7 @@ public class WebPushClient {
         private final String host;
         private int port = 8080;
         private boolean ssl;
-        private List<String> protocols = new ArrayList<>();
+        private final List<String> protocols = new ArrayList<>();
         private ResponseHandler handler;
 
         public Builder(final String host) {

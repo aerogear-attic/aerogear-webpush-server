@@ -306,7 +306,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         private final ChannelHandlerContext ctx;
         private final Http2ConnectionEncoder encoder;
         private final int streamId;
-        private AtomicBoolean headersSent = new AtomicBoolean(false);
+        private final AtomicBoolean headersSent = new AtomicBoolean(false);
 
         Client(final ChannelHandlerContext ctx, final int streamId, final Http2ConnectionEncoder encoder) {
             this.ctx = ctx;

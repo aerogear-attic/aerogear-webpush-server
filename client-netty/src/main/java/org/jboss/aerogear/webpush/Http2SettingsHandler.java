@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Http2SettingsHandler extends SimpleChannelInboundHandler<Http2Settings> {
 
-    private ChannelPromise promise;
+    private final ChannelPromise promise;
 
     /**
      * Create new instance

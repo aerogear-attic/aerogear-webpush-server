@@ -103,7 +103,7 @@ public class DefaultWebPushServer implements WebPushServer {
 
     @Override
     public Optional<String> getMessage(final String endpointToken) {
-        return getChannel(endpointToken).map(ch -> ch.message());
+        return getChannel(endpointToken).map(Channel::message);
     }
 
     @Override

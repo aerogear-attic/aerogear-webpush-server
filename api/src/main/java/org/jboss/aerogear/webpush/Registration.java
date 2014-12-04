@@ -46,7 +46,7 @@ public interface Registration {
         MONITOR("push:monitor"),
         AGGREGATE("push:aggregate");
 
-        private String type;
+        private final String type;
 
         private WebLink(final String type) {
             this.type = type;

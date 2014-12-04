@@ -114,8 +114,8 @@ public final class JsonMapper {
             for (Entry entry: aggregateChannel.channels()) {
                 jgen.writeStartObject();
                 jgen.writeObjectFieldStart(entry.endpoint());
-                entry.expires().ifPresent(l -> writeLongField("expires", l, jgen));
-                entry.pubkey().ifPresent(b -> writeBinaryField("pubkey", b, jgen));
+                entry.expires().ifPresent(l -> writeExpiresField(l, jgen));
+                entry.pubkey().ifPresent(b -> writePubkeyField(b, jgen));
                 jgen.writeEndObject();
                 jgen.writeEndObject();
             }
@@ -123,17 +123,17 @@ public final class JsonMapper {
         }
     }
 
-    private static void writeLongField(final String name, final long value, final JsonGenerator gen) {
+    private static void writeExpiresField(final long value, final JsonGenerator gen) {
         try {
-            gen.writeNumberField(name, value);
+            gen.writeNumberField("expires", value);
         } catch(Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void writeBinaryField(final String name, final byte[] value, final JsonGenerator gen) {
+    private static void writePubkeyField(final byte[] value, final JsonGenerator gen) {
         try {
-            gen.writeBinaryField(name, value);
+            gen.writeBinaryField("pubkey", value);
         } catch(Exception e) {
             throw new RuntimeException(e);
         }

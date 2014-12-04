@@ -170,7 +170,7 @@ public class WebPushConsole {
     private static class CallbackHandler implements ResponseHandler {
 
         private final Console console;
-        private Prompt inbound = new Prompt("< ");
+        private final Prompt inbound = new Prompt("< ");
 
         CallbackHandler(final Console console) {
             this.console = console;

@@ -16,7 +16,7 @@
  */
 package org.jboss.aerogear.webpush;
 
-import org.jboss.aerogear.webpush.datastore.RegistrationNotFoundException;
+import java.util.Optional;
 
 /**
  * A Java implementation of <a href="http://tools.ietf.org/html/draft-thomson-webpush-http2-01">WebPush</a> Server.
@@ -40,14 +40,21 @@ public interface WebPushServer {
      *
      * @param registrationId the registration id for which this new channel belongs to.
      */
-    Channel newChannel(String registrationId) throws RegistrationNotFoundException;
+    Optional<Channel> newChannel(String registrationId);
+
+    /**
+     * Retrieves a channels.
+     *
+     * @param path
+     */
+    Optional<Channel> getChannel(String path);
 
     /**
      * Removes the specified channel
      *
      * @param channel the channel to be removed.
      */
-    void removeChannel(Channel channel) throws RegistrationNotFoundException;
+    void removeChannel(Channel channel);
 
     /**
      * Handles the retrieval of a channnel's message.
@@ -56,7 +63,7 @@ public interface WebPushServer {
      * @param endpointToken the endpoint token for the channel.
      * @return {code String} the latest notification/message for the specified channel.
      */
-    String getMessage(String endpointToken);
+    Optional<String> getMessage(String endpointToken);
 
     /**
      * Set the notifcation/message for a channel.

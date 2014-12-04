@@ -63,6 +63,8 @@ public class WebPushFrameReader implements Http2FrameReader {
                             streamId);
                 } else if (headers.contains(LOCATION)) {
                     callback.channelResponse(headers.get(LOCATION).toString(), streamId);
+                } else {
+                    callback.channelStatus(headers.status().toString(), streamId);
                 }
             }
 

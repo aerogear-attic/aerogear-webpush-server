@@ -113,6 +113,10 @@ public class WebPushClient {
         writeRequest(POST, channelUrl, Unpooled.buffer());
     }
 
+    public void channelStatus(final String channelUrl) throws Exception {
+        writeRequest(GET, channelUrl);
+    }
+
     public void createAggregateChannel(final String aggregateUrl, final String json) throws Exception {
         writeRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
     }

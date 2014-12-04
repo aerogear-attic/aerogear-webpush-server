@@ -19,6 +19,7 @@ package org.jboss.aerogear.webpush.datastore;
 import static org.jboss.aerogear.webpush.util.ArgumentUtil.checkNotNull;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,9 +33,8 @@ import org.slf4j.LoggerFactory;
  */
 public class InMemoryDataStore implements DataStore {
 
-    private final ConcurrentMap<String, Registration> registrations = new ConcurrentHashMap<String, Registration>();
-    private final ConcurrentMap<String, Set<Channel>> channels = new ConcurrentHashMap<String, Set<Channel>>();
-    private final Logger logger = LoggerFactory.getLogger(InMemoryDataStore.class);
+    private final ConcurrentMap<String, Registration> registrations = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Set<Channel>> channels = new ConcurrentHashMap<>();
 
     private byte[] salt;
 
@@ -60,18 +60,14 @@ public class InMemoryDataStore implements DataStore {
     }
 
     @Override
-    public Registration getRegistration(final String id) throws RegistrationNotFoundException {
-        final Registration registration = registrations.get(id);
-        if (registration == null) {
-            throw new RegistrationNotFoundException("No Registration for [" + id + "] was found", id);
-        }
-        return registration;
+    public Optional<Registration> getRegistration(final String id) {
+        return Optional.ofNullable(registrations.get(id));
     }
 
     @Override
     public void saveChannel(final Channel channel) {
         final String id = channel.registrationId();
-        final Set<Channel> newChannels = Collections.newSetFromMap(new ConcurrentHashMap<Channel, Boolean>());
+        final Set<Channel> newChannels = Collections.newSetFromMap(new ConcurrentHashMap<>());
         newChannels.add(channel);
         while (true) {
             final Set<Channel> currentChannels = channels.get(id);
@@ -102,7 +98,7 @@ public class InMemoryDataStore implements DataStore {
             if (currentChannels == null || currentChannels.isEmpty()) {
                 break;
             }
-            final Set<Channel> newChannels = Collections.newSetFromMap(new ConcurrentHashMap<Channel, Boolean>());
+            final Set<Channel> newChannels = Collections.newSetFromMap(new ConcurrentHashMap<>());
             boolean added = newChannels.addAll(currentChannels);
             if (!added){
                 break;

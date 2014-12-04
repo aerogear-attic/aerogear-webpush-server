@@ -30,4 +30,12 @@ public interface ResponseHandler {
      * @param streamId the streamId for this notification.
      */
     void notification(String data, int streamId);
+
+    /**
+     * The status of a channel
+     *
+     * @param statusCode the status code returned from the server.
+     */
+    void channelStatus(final String statusCode, int streamId);
+
 }

@@ -7,6 +7,7 @@ import org.jboss.aerogear.webpush.WebPushServerConfig;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -51,9 +52,10 @@ public class MockWebPushServerBuilder {
         final Channel aggregateChannel = mock(Channel.class);
         when(aggregateChannel.endpointToken()).thenReturn("aggChannel");
         when(webPushServer.newChannel(registrationId))
-                .thenReturn(channel1)
-                .thenReturn(channel2)
-                .thenReturn(aggregateChannel);
+                .thenReturn(Optional.of(channel1))
+                .thenReturn(Optional.of(channel2))
+                .thenReturn(Optional.of(aggregateChannel));
+        when(webPushServer.getChannel("endpoint1")).thenReturn(Optional.of(channel1));
         return webPushServer;
     }
 

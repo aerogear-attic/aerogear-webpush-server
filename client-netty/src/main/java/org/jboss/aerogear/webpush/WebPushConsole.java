@@ -25,6 +25,9 @@ public class WebPushConsole {
         CHANNEL("channel",
                 Optional.of("<channel-url>"),
                 "Creates a new channel and displays the endpoint-url the channel. This can be used with the notify command "),
+        STATUS("status",
+                Optional.of("<channel-url>"),
+                "Checks to see if a channel exist for the specified channel-url"),
         AGGREGATE("aggregate-channel",
                 Optional.of("<aggregate-url> <channel-url>[,<channel-url>]"),
                 "Creates a new aggregate channel with the passed in channel-urls being part for the aggregate."),
@@ -91,6 +94,9 @@ public class WebPushConsole {
             if(co.getBuffer().startsWith("ch")) {
                 commands.add(Command.CHANNEL.example());
             }
+            if(co.getBuffer().startsWith("st")) {
+                commands.add(Command.STATUS.example());
+            }
             if(co.getBuffer().startsWith("ag")) {
                 commands.add(Command.AGGREGATE.example());
             }
@@ -135,6 +141,8 @@ public class WebPushConsole {
                     handleMonitor(client, getFirstArg(buffer));
                 } else if (buffer.startsWith(Command.CHANNEL.toString())) {
                     handleCreateChannel(client, getFirstArg(buffer));
+                } else if (buffer.startsWith(Command.STATUS.toString())) {
+                    handleChannelStatus(client, getFirstArg(buffer));
                 } else if (buffer.startsWith(Command.AGGREGATE.toString())) {
                     handleAggregateChannel(client, buffer, console);
                 } else if (buffer.startsWith(Command.NOTIFY.toString())) {
@@ -177,6 +185,11 @@ public class WebPushConsole {
         @Override
         public void notification(final String data, final int streamId) {
             print(data, streamId);
+        }
+
+        @Override
+        public void channelStatus(final String statusCode, final int streamId) {
+            print("ChannelStatus: " + statusCode, streamId);
         }
 
         private void print(final String message, final int streamId) {
@@ -223,6 +236,14 @@ public class WebPushConsole {
     public static void handleCreateChannel(final WebPushClient client, final String url) {
         try {
             client.createChannel(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void handleChannelStatus(final WebPushClient client, final String url) {
+        try {
+            client.channelStatus(url);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -275,8 +296,4 @@ public class WebPushConsole {
         return args;
     }
 
-    private static String[] getArgumentsList(final String cmd) {
-        String tmp = cmd.substring(cmd.indexOf(" ") + 1, cmd.length());
-        return tmp.split(",");
-    }
 }

@@ -16,6 +16,7 @@
  */
 package org.jboss.aerogear.webpush.datastore;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -54,7 +55,7 @@ public interface DataStore {
      *
      * @param registrationId the registration identifier to retreive.
      */
-    Registration getRegistration(String registrationId) throws RegistrationNotFoundException;
+    Optional<Registration> getRegistration(String registrationId);
 
     /**
      * Saves a {@link Channel} to the underlying storage system.

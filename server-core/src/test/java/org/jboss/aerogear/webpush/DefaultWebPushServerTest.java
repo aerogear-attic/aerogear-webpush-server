@@ -22,6 +22,8 @@ import org.jboss.aerogear.webpush.datastore.RegistrationNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Optional;
+
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
@@ -49,27 +51,29 @@ public class DefaultWebPushServerTest {
     @Test
     public void newChannel() throws RegistrationNotFoundException {
         final Registration reg = server.register();
-        final Channel ch = server.newChannel(reg.id());
-        assertThat(ch.registrationId(), equalTo(reg.id()));
-        assertThat(ch.message(), equalTo(DefaultChannel.NONE));
+        final Optional<Channel> ch = server.newChannel(reg.id());
+        assertThat(ch.isPresent(), equalTo(true));
+        assertThat(ch.get().registrationId(), equalTo(reg.id()));
+        assertThat(ch.get().message(), equalTo(DefaultChannel.NONE));
     }
 
     @Test
     public void removeChannel() throws RegistrationNotFoundException {
         final Registration reg = server.register();
-        final Channel ch = server.newChannel(reg.id());
-        assertThat(ch.registrationId(), equalTo(reg.id()));
-        server.removeChannel(ch);
-        //TODO: add asserts
+        final Optional<Channel> ch = server.newChannel(reg.id());
+        assertThat(ch.isPresent(), equalTo(true));
+        assertThat(ch.get().registrationId(), equalTo(reg.id()));
+        server.removeChannel(ch.get());
     }
 
     @Test
     public void setAndGetMessage() throws RegistrationNotFoundException {
         final Registration reg = server.register();
-        final Channel ch = server.newChannel(reg.id());
-        server.setMessage(ch.endpointToken(), "some message");
-        final String message = server.getMessage(ch.endpointToken());
-        assertThat(message, equalTo("some message"));
+        final Optional<Channel> ch = server.newChannel(reg.id());
+        assertThat(ch.isPresent(), equalTo(true));
+        server.setMessage(ch.get().endpointToken(), "some message");
+        final Optional<String> message = server.getMessage(ch.get().endpointToken());
+        assertThat(message.get(), equalTo("some message"));
     }
 
 }

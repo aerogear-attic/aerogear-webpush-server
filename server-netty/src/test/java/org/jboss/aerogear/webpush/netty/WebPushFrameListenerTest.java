@@ -97,6 +97,26 @@ public class WebPushFrameListenerTest {
     }
 
     @Test
+    public void channelStatus() throws Exception {
+        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
+                .withRegistrationid("9999")
+                .registrationMaxAge(10000L)
+                .channelMaxAge(50000L)
+                .build());
+        final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn("webpush/9999/register")
+                .thenReturn("webpush/9999/channel"));
+        frameListener.encoder(encoder);
+
+        final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
+        final Http2Headers channelResponseHeaders = channel(frameListener, ctx, registrationHeaders, encoder);
+        assertThat(channelResponseHeaders.status(), equalTo(asciiString("201")));
+        final Http2Headers channelStatusHeaders = channelStatus(frameListener, ctx, channelResponseHeaders, encoder);
+        System.out.println(channelStatusHeaders);
+        assertThat(channelStatusHeaders.status(), equalTo(asciiString("200")));
+    }
+
+    @Test
     public void monitor() throws Exception {
         final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
@@ -273,6 +293,15 @@ public class WebPushFrameListenerTest {
         frameListener.onDataRead(ctx, 3, data , 0, true);
     }
 
+    private static Http2Headers channelStatus(final WebPushFrameListener frameListener,
+                               final ChannelHandlerContext ctx,
+                               final Http2Headers channelHeaders,
+                               final Http2ConnectionEncoder encoder) throws Http2Exception {
+        final AsciiString location = channelHeaders.get(LOCATION);
+        frameListener.onHeadersRead(ctx, 3, channelStatusHeaders(location), 0, (short) 22, false, 0, false);
+        return verifyAndCapture(ctx, encoder);
+    }
+
     private static Http2Headers verifyAndCapture(final ChannelHandlerContext ctx,
                                                  final Http2ConnectionEncoder encoder) {
         final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
@@ -314,6 +343,13 @@ public class WebPushFrameListenerTest {
     private static Http2Headers notifyHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
         requestHeaders.method(asciiString(HttpMethod.PUT.name()));
+        requestHeaders.path(resourceUrl);
+        return requestHeaders;
+    }
+
+    private static Http2Headers channelStatusHeaders(final AsciiString resourceUrl) {
+        final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
+        requestHeaders.method(asciiString(HttpMethod.GET.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }

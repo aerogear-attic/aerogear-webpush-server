@@ -18,12 +18,12 @@ package org.jboss.aerogear.webpush;
 
 import org.jboss.aerogear.crypto.Random;
 import org.jboss.aerogear.webpush.datastore.DataStore;
-import org.jboss.aerogear.webpush.datastore.RegistrationNotFoundException;
 import org.jboss.aerogear.webpush.util.CryptoUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -82,42 +82,40 @@ public class DefaultWebPushServer implements WebPushServer {
     }
 
     @Override
-    public Channel newChannel(final String registrationId) throws RegistrationNotFoundException {
-        final Registration registration = store.getRegistration(registrationId);
-        final String channelId = UUID.randomUUID().toString();
-        final String endpointToken = generateEndpointToken(registration.id(), channelId);
-        final DefaultChannel newChannel = new DefaultChannel(registration.id(), channelId, endpointToken);
-        store.saveChannel(newChannel);
-        return newChannel;
+    public Optional<Channel> newChannel(final String registrationId) {
+        final Optional<Registration> registration = store.getRegistration(registrationId);
+        return registration.map(r -> {
+            final String channelId = UUID.randomUUID().toString();
+            final String endpointToken = generateEndpointToken(r.id(), channelId);
+            final DefaultChannel newChannel = new DefaultChannel(r.id(), channelId, endpointToken);
+            store.saveChannel(newChannel);
+            return newChannel;
+        });
     }
 
     @Override
-    public void removeChannel(Channel channel) throws RegistrationNotFoundException {
+    public void removeChannel(Channel channel) {
         store.removeChannel(channel);
     }
 
     @Override
-    public String getMessage(final String endpointToken) {
-        return getChannel(endpointToken).message();
+    public Optional<String> getMessage(final String endpointToken) {
+        return getChannel(endpointToken).map(ch -> ch.message());
     }
 
     @Override
     public void setMessage(String endpointToken, String content) {
-        final Channel channel = getChannel(endpointToken);
-        store.saveChannel(new DefaultChannel(channel.registrationId(), channel.channelId(), endpointToken, content));
+        getChannel(endpointToken).ifPresent(ch ->
+            store.saveChannel(new DefaultChannel(ch.registrationId(), ch.channelId(), endpointToken, content))
+        );
     }
 
-    private Channel getChannel(final String endpointToken) {
+    public Optional<Channel> getChannel(final String endpointToken) {
         try {
             final String decrypt = CryptoUtil.decrypt(privateKey, endpointToken);
             final String[] tokens = decrypt.split("\\.");
             final Set<Channel> channels = store.getChannels(tokens[0]);
-            for (Channel channel : channels) {
-                if (channel.channelId().equals(tokens[1])) {
-                    return channel;
-                }
-            }
-            throw new RuntimeException("No channel for endpoint found");
+            return channels.stream().filter(c -> c.channelId().equals(tokens[1])).findAny();
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }

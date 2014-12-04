@@ -16,17 +16,15 @@
  */
 package org.jboss.aerogear.webpush.datastore;
 
-import static org.jboss.aerogear.webpush.util.ArgumentUtil.checkNotNull;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.jboss.aerogear.webpush.Channel;
 import org.jboss.aerogear.webpush.Registration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A {@link DataStore} implementation that stores all information in memory.
@@ -55,7 +53,7 @@ public class InMemoryDataStore implements DataStore {
 
     @Override
     public boolean saveRegistration(final Registration registration) {
-        checkNotNull(registration, "registration");
+        Objects.requireNonNull(registration, "registration must not be null");
         return registrations.putIfAbsent(registration.id(), registration) == null;
     }
 
@@ -92,7 +90,7 @@ public class InMemoryDataStore implements DataStore {
 
     @Override
     public void removeChannel(final Channel channel) {
-        checkNotNull(channel, "channel");
+        Objects.requireNonNull(channel, "channel must not be null");
         while (true) {
             final Set<Channel> currentChannels = channels.get(channel.registrationId());
             if (currentChannels == null || currentChannels.isEmpty()) {

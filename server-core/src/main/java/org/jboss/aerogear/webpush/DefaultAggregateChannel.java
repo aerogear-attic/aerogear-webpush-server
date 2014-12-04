@@ -1,10 +1,9 @@
 package org.jboss.aerogear.webpush;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.jboss.aerogear.webpush.util.ArgumentUtil.checkNotNull;
 
 public class DefaultAggregateChannel implements AggregateChannel {
 
@@ -39,9 +38,9 @@ public class DefaultAggregateChannel implements AggregateChannel {
         }
 
         public DefaultEntry(final String endpoint, final Optional<Long> expires, final Optional<byte[]> pubkey) {
-            checkNotNull(endpoint, "endpoint");
-            checkNotNull(expires, "expires");
-            checkNotNull(pubkey, "pubkey");
+            Objects.requireNonNull(endpoint, "endpoint must not be null");
+            Objects.requireNonNull(expires, "expires must not be null");
+            Objects.requireNonNull(pubkey, "pubkey must not be null");
             this.endpoint = endpoint;
             this.expires = expires;
             this.pubkey = pubkey;

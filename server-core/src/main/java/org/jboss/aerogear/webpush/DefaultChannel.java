@@ -1,6 +1,6 @@
 package org.jboss.aerogear.webpush;
 
-import org.jboss.aerogear.webpush.util.ArgumentUtil;
+import java.util.Objects;
 
 public class DefaultChannel implements Channel {
 
@@ -16,10 +16,10 @@ public class DefaultChannel implements Channel {
     }
 
     public DefaultChannel(final String regstrationId, final String channelId, String endpointToken, final String message) {
-        ArgumentUtil.checkNotNull(regstrationId, "registrationid");
-        ArgumentUtil.checkNotNull(channelId, "channelId");
-        ArgumentUtil.checkNotNullAndNotEmpty(endpointToken, "endpointToken");
-        ArgumentUtil.checkNotNull(message, "message");
+        Objects.requireNonNull(regstrationId, "registrationId must not be null");
+        Objects.requireNonNull(channelId, "channelId must not be null");
+        Objects.requireNonNull(endpointToken, "endpointToken must not be null");
+        Objects.requireNonNull(message, "message must not be null");
         this.channelId = channelId;
         this.endpointToken = endpointToken;
         this.regstrationId = regstrationId;

@@ -33,11 +33,11 @@ import org.jboss.aerogear.webpush.Channel;
 import org.jboss.aerogear.webpush.Registration;
 import org.jboss.aerogear.webpush.Registration.WebLink;
 import org.jboss.aerogear.webpush.WebPushServer;
-import org.jboss.aerogear.webpush.util.ArgumentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -69,7 +69,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private Http2ConnectionEncoder encoder;
 
     public WebPushFrameListener(final WebPushServer webpushServer) {
-        ArgumentUtil.checkNotNull(webpushServer, "webpushServer");
+        Objects.requireNonNull(webpushServer, "webpushServer must not be null");
         this.webpushServer = webpushServer;
     }
 

@@ -19,6 +19,8 @@ package org.jboss.aerogear.webpush;
 import org.jboss.aerogear.crypto.Random;
 import org.jboss.aerogear.webpush.datastore.DataStore;
 import org.jboss.aerogear.webpush.util.CryptoUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -29,6 +31,7 @@ import java.util.UUID;
 
 public class DefaultWebPushServer implements WebPushServer {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultWebPushServer.class);
     private final DataStore store;
     private final WebPushServerConfig config;
     private final byte[] privateKey;
@@ -106,7 +109,7 @@ public class DefaultWebPushServer implements WebPushServer {
     @Override
     public void setMessage(String endpointToken, String content) {
         getChannel(endpointToken).ifPresent(ch ->
-            store.saveChannel(new DefaultChannel(ch.registrationId(), ch.channelId(), endpointToken, content))
+                        store.saveChannel(new DefaultChannel(ch.registrationId(), ch.channelId(), endpointToken, content))
         );
     }
 
@@ -117,8 +120,9 @@ public class DefaultWebPushServer implements WebPushServer {
             final Set<Channel> channels = store.getChannels(tokens[0]);
             return channels.stream().filter(c -> c.channelId().equals(tokens[1])).findAny();
         } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
         }
+        return Optional.empty();
     }
 
     @Override

@@ -28,6 +28,9 @@ public class WebPushConsole {
         STATUS("status",
                 Optional.of("<channel-url>"),
                 "Checks to see if a channel exist for the specified channel-url"),
+        DELETE("delete",
+                Optional.of("<channel-url>"),
+                "Deletes the specified channel."),
         AGGREGATE("aggregate-channel",
                 Optional.of("<aggregate-url> <channel-url>[,<channel-url>]"),
                 "Creates a new aggregate channel with the passed in channel-urls being part for the aggregate."),
@@ -97,6 +100,9 @@ public class WebPushConsole {
             if(co.getBuffer().startsWith("st")) {
                 commands.add(Command.STATUS.example());
             }
+            if(co.getBuffer().startsWith("de")) {
+                commands.add(Command.DELETE.example());
+            }
             if(co.getBuffer().startsWith("ag")) {
                 commands.add(Command.AGGREGATE.example());
             }
@@ -143,6 +149,8 @@ public class WebPushConsole {
                     handleCreateChannel(client, getFirstArg(buffer));
                 } else if (buffer.startsWith(Command.STATUS.toString())) {
                     handleChannelStatus(client, getFirstArg(buffer));
+                } else if (buffer.startsWith(Command.DELETE.toString())) {
+                    handleChannelDelete(client, getFirstArg(buffer));
                 } else if (buffer.startsWith(Command.AGGREGATE.toString())) {
                     handleAggregateChannel(client, buffer, console);
                 } else if (buffer.startsWith(Command.NOTIFY.toString())) {
@@ -189,7 +197,7 @@ public class WebPushConsole {
 
         @Override
         public void channelStatus(final String statusCode, final int streamId) {
-            print("ChannelStatus: " + statusCode, streamId);
+            print("StatusCode: " + statusCode, streamId);
         }
 
         private void print(final String message, final int streamId) {
@@ -244,6 +252,14 @@ public class WebPushConsole {
     public static void handleChannelStatus(final WebPushClient client, final String url) {
         try {
             client.channelStatus(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void handleChannelDelete(final WebPushClient client, final String url) {
+        try {
+            client.channelDelete(url);
         } catch (Exception e) {
             e.printStackTrace();
         }

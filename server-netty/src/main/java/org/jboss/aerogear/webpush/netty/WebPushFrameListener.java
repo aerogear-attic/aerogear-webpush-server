@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static io.netty.util.CharsetUtil.UTF_8;
@@ -102,6 +103,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 if (path.contains("aggregate")) {
                     verifyAggregateMimeType(headers);
                 }
+                break;
             case "DELETE":
                 handleChannelRemoval(ctx, path, streamId);
                 break;
@@ -240,7 +242,21 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private void handleChannelRemoval(final ChannelHandlerContext ctx, final String path, final int streamId) {
-        //TODO: implement removal.
+        final String endpointToken = extractEndpointToken(path);
+        final Optional<Channel> channel = webpushServer.getChannel(endpointToken);
+        if (channel.isPresent()) {
+            webpushServer.removeChannel(channel.get());
+            notificationStreams.remove(endpointToken);
+            final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
+                    .status(OK.codeAsText())
+                    .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
+            encoder.writeHeaders(ctx, streamId, responseHeaders, 0, true, ctx.newPromise());
+        } else {
+            final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
+                    .status(NOT_FOUND.codeAsText())
+                    .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
+            encoder.writeHeaders(ctx, streamId, responseHeaders, 0, true, ctx.newPromise());
+        }
     }
 
     /*
@@ -262,16 +278,22 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private void handleChannelStatus(final ChannelHandlerContext ctx, final String path, final int streamId) {
         final String endpointToken = extractEndpointToken(path);
         final Optional<Channel> channel = webpushServer.getChannel(endpointToken);
-        LOGGER.info("Channel {}", channel);
-        final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
-                .status(OK.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
-                .set(ACCESS_CONTROL_EXPOSE_HEADERS, CONTENT_TYPE);
-        encoder.writeHeaders(ctx, streamId, responseHeaders, 0, true, ctx.newPromise());
+        if (channel.isPresent()) {
+            LOGGER.info("Channel {}", channel);
+            final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
+                    .status(OK.codeAsText())
+                    .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
+            encoder.writeHeaders(ctx, streamId, responseHeaders, 0, true, ctx.newPromise());
+        } else {
+            final Http2Headers responseHeaders = new DefaultHttp2Headers(false)
+                    .status(NOT_FOUND.codeAsText())
+                    .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
+            encoder.writeHeaders(ctx, streamId, responseHeaders, 0, true, ctx.newPromise());
+        }
     }
 
     private static String extractRegistrationId(final String path, final String segment) {
-        final String subpath = path.substring(0, path.indexOf(segment) -1);
+        final String subpath = path.substring(0, path.indexOf(segment) - 1);
         return subpath.subSequence(subpath.lastIndexOf('/') + 1, subpath.length()).toString();
     }
 

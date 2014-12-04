@@ -38,14 +38,12 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.util.CharsetUtil;
 import org.jboss.aerogear.webpush.AggregateChannel.Entry;
 import org.jboss.aerogear.webpush.DefaultAggregateChannel.DefaultEntry;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -55,8 +53,8 @@ import static io.netty.buffer.Unpooled.copiedBuffer;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.PUT;
+import static io.netty.handler.codec.http.HttpMethod.DELETE;
 import static io.netty.util.CharsetUtil.UTF_8;
-import static org.jboss.aerogear.webpush.JsonMapper.toJson;
 
 public class WebPushClient {
 
@@ -115,6 +113,10 @@ public class WebPushClient {
 
     public void channelStatus(final String channelUrl) throws Exception {
         writeRequest(GET, channelUrl);
+    }
+
+    public void channelDelete(final String channelUrl) throws Exception {
+        writeRequest(DELETE, channelUrl);
     }
 
     public void createAggregateChannel(final String aggregateUrl, final String json) throws Exception {

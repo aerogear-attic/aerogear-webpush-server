@@ -35,6 +35,7 @@ public interface ResponseHandler {
      * The status of a channel
      *
      * @param statusCode the status code returned from the server.
+     * @param streamId the streamId for this notification.
      */
     void channelStatus(final String statusCode, int streamId);
 

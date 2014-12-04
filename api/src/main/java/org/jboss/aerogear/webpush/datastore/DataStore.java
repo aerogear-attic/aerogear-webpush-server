@@ -18,7 +18,6 @@ package org.jboss.aerogear.webpush.datastore;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 import org.jboss.aerogear.webpush.Channel;
 import org.jboss.aerogear.webpush.Registration;

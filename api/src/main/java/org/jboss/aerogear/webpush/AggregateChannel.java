@@ -1,7 +1,6 @@
 package org.jboss.aerogear.webpush;
 
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.Set;
 
 public interface AggregateChannel {

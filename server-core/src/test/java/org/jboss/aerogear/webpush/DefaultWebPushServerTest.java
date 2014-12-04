@@ -18,7 +18,6 @@ package org.jboss.aerogear.webpush;
 
 import org.jboss.aerogear.webpush.datastore.DataStore;
 import org.jboss.aerogear.webpush.datastore.InMemoryDataStore;
-import org.jboss.aerogear.webpush.datastore.RegistrationNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,7 +48,7 @@ public class DefaultWebPushServerTest {
     }
 
     @Test
-    public void newChannel() throws RegistrationNotFoundException {
+    public void newChannel() throws Exception {
         final Registration reg = server.register();
         final Optional<Channel> ch = server.newChannel(reg.id());
         assertThat(ch.isPresent(), equalTo(true));
@@ -58,7 +57,7 @@ public class DefaultWebPushServerTest {
     }
 
     @Test
-    public void removeChannel() throws RegistrationNotFoundException {
+    public void removeChannel() throws Exception {
         final Registration reg = server.register();
         final Optional<Channel> ch = server.newChannel(reg.id());
         assertThat(ch.isPresent(), equalTo(true));
@@ -67,7 +66,7 @@ public class DefaultWebPushServerTest {
     }
 
     @Test
-    public void setAndGetMessage() throws RegistrationNotFoundException {
+    public void setAndGetMessage() throws Exception {
         final Registration reg = server.register();
         final Optional<Channel> ch = server.newChannel(reg.id());
         assertThat(ch.isPresent(), equalTo(true));

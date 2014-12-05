@@ -55,16 +55,11 @@ public class WebPushFrameReader implements Http2FrameReader {
 
             private void processHeaders(final Http2Headers headers, final int streamId) {
                 if (headers.contains(LINK) && headers.contains(LOCATION)) {
-                    Optional<AsciiString> channelLink = getLinkUri(CHANNEL_TYPE, headers.getAll(LINK));
-                    Optional<AsciiString> aggregateLink = getLinkUri(AGGREGATE_TYPE, headers.getAll(LINK));
-                    callback.registerResponse(channelLink.get().toString(),
-                            headers.get(LOCATION).toString(),
-                            aggregateLink.get().toString(),
-                            streamId);
+                    callback.registerResponse(headers, streamId);
                 } else if (headers.contains(LOCATION)) {
-                    callback.channelResponse(headers.get(LOCATION).toString(), streamId);
+                    callback.channelResponse(headers, streamId);
                 } else {
-                    callback.channelStatus(headers.status().toString(), streamId);
+                    callback.channelStatus(headers, streamId);
                 }
             }
 

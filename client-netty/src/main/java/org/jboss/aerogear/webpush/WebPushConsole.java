@@ -1,5 +1,6 @@
 package org.jboss.aerogear.webpush;
 
+import io.netty.handler.codec.http2.Http2Headers;
 import org.jboss.aesh.complete.Completion;
 import org.jboss.aesh.console.AeshConsoleCallback;
 import org.jboss.aesh.console.Console;
@@ -177,17 +178,13 @@ public class WebPushConsole {
         }
 
         @Override
-        public void registerResponse(final String channelLink,
-                                     final String monitorLink,
-                                     final String aggregateLink,
-                                     final int streamId) {
-            print("channelLink: " + channelLink + ", monitorLink: " + monitorLink + ", aggregateLink: " + aggregateLink
-                    , streamId);
+        public void registerResponse(final Http2Headers headers, final int streamId) {
+            print(headers.toString(), streamId);
         }
 
         @Override
-        public void channelResponse(final String endpoint, final int streamId) {
-            print("Endpoint: " + endpoint, streamId);
+        public void channelResponse(final Http2Headers headers, final int streamId) {
+            print(headers.toString(), streamId);
         }
 
         @Override
@@ -196,8 +193,8 @@ public class WebPushConsole {
         }
 
         @Override
-        public void channelStatus(final String statusCode, final int streamId) {
-            print("StatusCode: " + statusCode, streamId);
+        public void channelStatus(final Http2Headers headers, final int streamId) {
+            print(headers.toString(), streamId);
         }
 
         private void print(final String message, final int streamId) {

@@ -29,6 +29,7 @@ if ('serviceWorker' in navigator) {
           });
     } else {
         serviceWorkerRegistration.pushRegistrationManager.register().then(function( pushRegistration ) {
+            console.log("pushRegistrationManager supported.");
             console.log("registrationId: ", pushRegistration.registrationId);
             console.log("endpoint: ", pushRegistration.endpoint);
           }, function(error) {

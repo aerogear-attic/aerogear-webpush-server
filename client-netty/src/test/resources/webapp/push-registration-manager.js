@@ -29,7 +29,7 @@ PushRegistrationManager.prototype.connect = function() {
                     for (var i = 0; i < webLinks.length; i++) {
                         if (webLinks[i].type === '"push:monitor"') {
                             _this.monitorUrl = webLinks[i].url;
-                        } else {
+                        } else if (webLinks[i].type ==='"push:channel"') {
                             _this.channelUrl = webLinks[i].url;
                         }
                     }

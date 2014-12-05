@@ -321,5 +321,11 @@
       </build>
     </profile>
   </profiles>
-
+  <repositories>
+    <repository>
+      <id>clinker-netty-snapshots-repo</id>
+      <name>netty-snapshots-repo</name>
+      <url>http://clinker.netty.io/nexus/content/repositories/snapshots/</url>
+    </repository>
+  </repositories>
 </project>

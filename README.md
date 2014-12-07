@@ -1,4 +1,4 @@
-# Aerogear WebPush Server 
+# Aerogear WebPush Server [![Build Status](https://travis-ci.org/aerogear/aerogear-webpush-server.png)](https://travis-ci.org/aerogear/aerogear-webpush-server)
 This project is a proof of concept implementation of the 
 [WebPush Protocol](http://tools.ietf.org/html/draft-thomson-webpush-http2-02) specification with the purpose of gaining
 a better understanding of the specification.

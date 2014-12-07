@@ -82,11 +82,6 @@ and is a separate specification called [webpush-aggregate](http://tools.ietf.org
 ## Prerequisites 
 * This project requires Java 8.
 
-* This project depends on [Netty](http://netty.io/)'s HTTP/2 support which is currently scheduled for Netty 5. 
-This means that a local bulid of Netty's [master](https://github.com/netty/netty) branch is required to build 
-and run this project.
-
-
 AeroGear WebPush consists of the following modules:
 
 * [common](./common)  

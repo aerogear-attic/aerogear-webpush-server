@@ -194,7 +194,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 .set(LINK, asLink(registration.monitorUri(), WebLink.MONITOR.toString()),
                         asLink(registration.channelUri(), WebLink.CHANNEL.toString()),
                         asLink(registration.aggregateUri(), WebLink.AGGREGATE.toString()))
-                .set(CACHE_CONTROL, new AsciiString("private, max-age=" + webpushServer.config().registrationMaxAge()));
+                .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().registrationMaxAge()));
 
         LOGGER.debug(responseHeaders.getAll(LINK).toString());
         encoder.writeHeaders(ctx, streamId, responseHeaders, 0, true, ctx.newPromise());
@@ -215,7 +215,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                     .set(LOCATION, new AsciiString("webpush/" + ch.endpointToken()))
                     .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                     .set(ACCESS_CONTROL_EXPOSE_HEADERS, new AsciiString("Location"))
-                    .set(CACHE_CONTROL, new AsciiString("private, max-age=" + webpushServer.config().channelMaxAge()));
+                    .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().channelMaxAge()));
             encoder.writeHeaders(ctx, streamId, responseHeaders, 0, true, ctx.newPromise());
         });
     }
@@ -236,9 +236,19 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                     .set(LOCATION, new AsciiString("webpush/" + ch.endpointToken()))
                     .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                     .set(ACCESS_CONTROL_EXPOSE_HEADERS, new AsciiString("Location"))
-                    .set(CACHE_CONTROL, new AsciiString("private, max-age=" + webpushServer.config().channelMaxAge()));
+                    .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().channelMaxAge()));
             encoder.writeHeaders(ctx, streamId, responseHeaders, 0, true, ctx.newPromise());
         });
+    }
+
+    /**
+     * Returns a cache-control value with this private and has the specified maxAge.
+     *
+     * @param maxAge the max age in seconds.
+     * @return {@link AsciiString} the value for a cache-control header.
+     */
+    private static AsciiString privateCacheWithMaxAge(final long maxAge) {
+        return new AsciiString("private, max-age=" + maxAge);
     }
 
     private void handleChannelRemoval(final ChannelHandlerContext ctx, final String path, final int streamId) {

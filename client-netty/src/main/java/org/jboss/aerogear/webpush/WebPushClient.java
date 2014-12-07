@@ -149,7 +149,7 @@ public class WebPushClient {
 
     private Http2Headers http2Headers(final HttpMethod method, final String url) {
         final URI hostUri = URI.create("https://" + host + ":" + port + "/" + url);
-        final Http2Headers headers = new DefaultHttp2Headers(false).method(asciiString(method.name()));
+        final Http2Headers headers = new DefaultHttp2Headers(false).method(method.name());
         headers.path(asciiString(url));
         headers.authority(asciiString(hostUri.getAuthority()));
         headers.scheme(asciiString(hostUri.getScheme()));

@@ -356,42 +356,42 @@ public class WebPushFrameListenerTest {
 
     private static Http2Headers registerHeaders() {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(asciiString(HttpMethod.POST.name()));
+        requestHeaders.method(HttpMethod.POST.name());
         requestHeaders.path(asciiString("/webpush/register"));
         return requestHeaders;
     }
 
     private static Http2Headers channelHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(asciiString(HttpMethod.POST.name()));
+        requestHeaders.method(HttpMethod.POST.name());
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
     private static Http2Headers monitorHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(asciiString(HttpMethod.GET.name()));
+        requestHeaders.method(HttpMethod.GET.name());
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
     private static Http2Headers notifyHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(asciiString(HttpMethod.PUT.name()));
+        requestHeaders.method(HttpMethod.PUT.name());
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
     private static Http2Headers channelStatusHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(asciiString(HttpMethod.GET.name()));
+        requestHeaders.method(HttpMethod.GET.name());
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
     private static Http2Headers channelDeleteHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(asciiString(HttpMethod.DELETE.name()));
+        requestHeaders.method(HttpMethod.DELETE.name());
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }

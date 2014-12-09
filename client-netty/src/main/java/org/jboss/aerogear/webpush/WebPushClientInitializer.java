@@ -29,8 +29,6 @@ import io.netty.handler.codec.http.HttpClientUpgradeHandler;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
 import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
 import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
-import io.netty.handler.codec.http2.DefaultHttp2InboundFlowController;
-import io.netty.handler.codec.http2.DefaultHttp2OutboundFlowController;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
 import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Connection;
@@ -39,8 +37,6 @@ import io.netty.handler.codec.http2.Http2ConnectionHandler;
 import io.netty.handler.codec.http2.Http2FrameListener;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
-import io.netty.handler.codec.http2.Http2InboundFlowController;
-import io.netty.handler.codec.http2.Http2OutboundFlowController;
 import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
 import io.netty.handler.ssl.SslContext;
 
@@ -71,8 +67,6 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
         connectionHandler = new WebPushToHttp2ConnectionHandler(connection,
                 frameReader,
                 frameWriter,
-                new DefaultHttp2InboundFlowController(connection, frameWriter),
-                new DefaultHttp2OutboundFlowController(connection, frameWriter),
                 new DelegatingDecompressorFrameListener(connection,
                         new InboundHttp2ToHttpAdapter.Builder(connection).maxContentLength(maxContentLength).build()));
         responseHandler = new HttpResponseHandler();
@@ -151,10 +145,8 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
         public WebPushToHttp2ConnectionHandler(final Http2Connection connection,
                                                final Http2FrameReader frameReader,
                                                final Http2FrameWriter frameWriter,
-                                               final Http2InboundFlowController inboundFlow,
-                                               final Http2OutboundFlowController outboundFlow,
                                                final Http2FrameListener listener) {
-            super(connection, frameReader, frameWriter, inboundFlow, outboundFlow, listener);
+            super(connection, frameReader, frameWriter, listener);
         }
 
         @Override

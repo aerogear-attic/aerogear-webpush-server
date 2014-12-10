@@ -1,21 +1,23 @@
 package org.jboss.aerogear.webpush;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class DefaultChannel implements Channel {
 
-    public static final String NONE = "none";
-
     private final String regstrationId;
-    private final String message;
+    private final Optional<String> message;
     private final String channelId;
     private final String endpointToken;
 
     public DefaultChannel(final String regstrationId, final String channelId, final String endpointToken) {
-        this(regstrationId, channelId, endpointToken, NONE);
+        this(regstrationId, channelId, endpointToken, Optional.empty());
     }
 
-    public DefaultChannel(final String regstrationId, final String channelId, String endpointToken, final String message) {
+    public DefaultChannel(final String regstrationId,
+                          final String channelId,
+                          String endpointToken,
+                          final Optional<String> message) {
         Objects.requireNonNull(regstrationId, "registrationId must not be null");
         Objects.requireNonNull(channelId, "channelId must not be null");
         Objects.requireNonNull(endpointToken, "endpointToken must not be null");
@@ -42,7 +44,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public String message() {
+    public Optional<String> message() {
         return message;
     }
 

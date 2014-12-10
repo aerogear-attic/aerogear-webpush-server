@@ -1,5 +1,7 @@
 package org.jboss.aerogear.webpush;
 
+import java.util.Optional;
+
 public interface Channel {
 
     /**
@@ -28,8 +30,8 @@ public interface Channel {
     /**
      * The notification/message for this channelURI.
      *
-     * @return {@link String} the notification/message for this channelURI.
+     * @return {@link Optional} the notification/message for this channelURI.
      */
-    String message();
+    Optional<String> message();
 
 }

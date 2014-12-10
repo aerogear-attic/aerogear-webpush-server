@@ -71,7 +71,7 @@ public interface WebPushServer {
      * @param endpointToken that identifies the channel.
      * @param content the new content.
      */
-    void setMessage(String endpointToken, String content);
+    void setMessage(String endpointToken, Optional<String> content);
 
     /**
      * Handles device monitorURI requests which are a signal to the server to begin delivering

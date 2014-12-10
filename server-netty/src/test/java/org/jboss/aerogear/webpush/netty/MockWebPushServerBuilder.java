@@ -47,8 +47,10 @@ public class MockWebPushServerBuilder {
         when(webPushServer.register()).thenReturn(registration);
         final Channel channel1 = mock(Channel.class);
         when(channel1.endpointToken()).thenReturn("endpoint1");
+        when(channel1.message()).thenReturn(Optional.of("message1")).thenReturn(Optional.<String>empty());
         final Channel channel2 = mock(Channel.class);
         when(channel2.endpointToken()).thenReturn("endpoint2");
+        when(channel2.message()).thenReturn(Optional.of("message2"));
         final Channel aggregateChannel = mock(Channel.class);
         when(aggregateChannel.endpointToken()).thenReturn("aggChannel");
         when(webPushServer.newChannel(registrationId))

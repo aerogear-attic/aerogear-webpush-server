@@ -7,6 +7,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2Connection.Endpoint;
@@ -14,7 +15,6 @@ import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
-import io.netty.util.CharsetUtil;
 import org.jboss.aerogear.webpush.AggregateChannel;
 import org.jboss.aerogear.webpush.AggregateChannel.Entry;
 import org.jboss.aerogear.webpush.DefaultAggregateChannel;
@@ -31,8 +31,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static io.netty.buffer.Unpooled.copiedBuffer;
 import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
+import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.util.CharsetUtil.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.*;
@@ -69,7 +74,7 @@ public class WebPushFrameListenerTest {
         frameListener.encoder(encoder);
 
         final Http2Headers responseHeaders = register(frameListener, ctx, encoder);
-        assertThat(responseHeaders.status(), equalTo(asciiString("200")));
+        assertThat(responseHeaders.status(), equalTo(OK.codeAsText()));
         assertThat(responseHeaders.get(LOCATION), equalTo(asciiString("/webpush/9999/monitor")));
         assertThat(responseHeaders.getAll(LINK), hasItems(
                 asciiString(MONITOR.weblink("/webpush/9999/monitor")),
@@ -79,7 +84,7 @@ public class WebPushFrameListenerTest {
     }
 
     @Test
-    public void channelCreation() throws Exception {
+    public void channel() throws Exception {
         final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                 .withRegistrationid("9999")
@@ -92,13 +97,13 @@ public class WebPushFrameListenerTest {
 
         final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
         final Http2Headers channelResponseHeaders = channel(frameListener, ctx, registrationHeaders, encoder);
-        assertThat(channelResponseHeaders.status(), equalTo(asciiString("201")));
+        assertThat(channelResponseHeaders.status(), equalTo(CREATED.codeAsText()));
         assertThat(channelResponseHeaders.get(LOCATION), equalTo(asciiString("webpush/endpoint1")));
         assertThat(channelResponseHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=50000")));
     }
 
     @Test
-    public void channelStatus() throws Exception {
+    public void channelStatusNoMessage() throws Exception {
         final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                 .withRegistrationid("9999")
@@ -111,9 +116,43 @@ public class WebPushFrameListenerTest {
 
         final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
         final Http2Headers channelResponseHeaders = channel(frameListener, ctx, registrationHeaders, encoder);
-        assertThat(channelResponseHeaders.status(), equalTo(asciiString("201")));
-        final Http2Headers channelStatusHeaders = channelStatus(frameListener, ctx, channelResponseHeaders, encoder);
-        assertThat(channelStatusHeaders.status(), equalTo(asciiString("200")));
+        assertThat(channelResponseHeaders.status(), equalTo(CREATED.codeAsText()));
+        final Http2Headers channelStatusHeaders = channelStatus(frameListener, ctx, channelResponseHeaders, encoder,
+                false);
+        assertThat(channelStatusHeaders.status(), equalTo(OK.codeAsText()));
+        final ByteBuf byteBuf = verifyAndCaptureData(ctx, encoder);
+        assertThat(byteBuf.toString(UTF_8), equalTo("message1"));
+        final Http2Headers channelStatusHeaders2 = channelStatus(frameListener, ctx, channelResponseHeaders, encoder,
+                true);
+        assertThat(channelStatusHeaders2.status(), equalTo(NO_CONTENT.codeAsText()));
+    }
+
+    @Test
+    public void channelStatusMessage() throws Exception {
+        final ByteBuf data = copiedBuffer("message1", UTF_8);
+        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
+                .withRegistrationid("9999")
+                .registrationMaxAge(10000L)
+                .channelMaxAge(50000L)
+                .build());
+        final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn("webpush/9999/register")
+                .thenReturn("webpush/9999/channel"));
+        frameListener.encoder(encoder);
+
+        final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
+        final Http2Headers channelResponseHeaders = channel(frameListener, ctx, registrationHeaders, encoder);
+        assertThat(channelResponseHeaders.status(), equalTo(CREATED.codeAsText()));
+        notify(frameListener, ctx, encoder, channelResponseHeaders, data);
+
+        final Http2Headers channelStatusHeaders = channelStatus(frameListener, ctx, channelResponseHeaders, encoder,
+                false);
+        assertThat(channelStatusHeaders.status(), equalTo(OK.codeAsText()));
+        final ByteBuf byteBuf = verifyAndCaptureData(ctx, encoder);
+        assertThat(byteBuf.toString(UTF_8), equalTo("message1"));
+        final Http2Headers channelStatusHeaders2 = channelStatus(frameListener, ctx, channelResponseHeaders, encoder,
+                true);
+        assertThat(channelStatusHeaders2.status(), equalTo(NO_CONTENT.codeAsText()));
     }
 
     @Test
@@ -132,14 +171,15 @@ public class WebPushFrameListenerTest {
 
         final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
         final Http2Headers channelResponseHeaders = channel(frameListener, ctx, registrationHeaders, encoder);
-        assertThat(channelResponseHeaders.status(), equalTo(asciiString("201")));
+        assertThat(channelResponseHeaders.status(), equalTo(CREATED.codeAsText()));
 
         final Http2Headers channelDeleteHeaders = channelDelete(frameListener, ctx, channelResponseHeaders, encoder);
-        assertThat(channelDeleteHeaders.status(), equalTo(asciiString("200")));
+        assertThat(channelDeleteHeaders.status(), equalTo(OK.codeAsText()));
 
         when(webPushServer.getChannel("endpoint1")).thenReturn(Optional.empty());
-        final Http2Headers channelStatusHeaders = channelStatus(frameListener, ctx, channelResponseHeaders, encoder);
-        assertThat(channelStatusHeaders.status(), equalTo(asciiString("404")));
+        final Http2Headers channelStatusHeaders = channelStatus(frameListener, ctx, channelResponseHeaders, encoder,
+                true);
+        assertThat(channelStatusHeaders.status(), equalTo(HttpResponseStatus.NOT_FOUND.codeAsText()));
     }
 
     @Test
@@ -173,7 +213,6 @@ public class WebPushFrameListenerTest {
                 .thenReturn("webpush/9999/channel")
                 .thenReturn("webpush/9999/aggregate"));
         frameListener.encoder(encoder);
-
         final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
         final String endpoint1 = channel(frameListener, ctx, registrationHeaders, encoder).get(LOCATION).toString();
         final String endpoint2 = channel(frameListener, ctx, registrationHeaders, encoder).get(LOCATION).toString();
@@ -181,20 +220,15 @@ public class WebPushFrameListenerTest {
                 new DefaultEntry(endpoint1, Optional.of(5000L)),
                 new DefaultEntry(endpoint2));
         aggregateChannel(frameListener, ctx, registrationHeaders, toJson(aggregateChannel), encoder);
-        final Http2Headers aggregateResponseHeaders = verifyAndCapture(ctx, encoder);
-        assertThat(aggregateResponseHeaders.status(), equalTo(asciiString("201")));
+        final Http2Headers aggregateResponseHeaders = verifyAndCapture(ctx, encoder, true);
+        assertThat(aggregateResponseHeaders.status(), equalTo(CREATED.codeAsText()));
         assertThat(aggregateResponseHeaders.get(LOCATION), equalTo(asciiString("webpush/aggChannel")));
         assertThat(aggregateResponseHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=50000")));
     }
 
-    private static AggregateChannel asAggregateChannel(final Entry... entries) {
-        final LinkedHashSet<Entry> channels = new LinkedHashSet<>(Arrays.asList(entries));
-        return new DefaultAggregateChannel(channels);
-    }
-
     @Test
     public void notification() throws Exception {
-        final ByteBuf data = Unpooled.copiedBuffer("some payload", CharsetUtil.UTF_8);
+        final ByteBuf data = copiedBuffer("some payload", UTF_8);
         final int pushStreamId = 4;
         try {
             final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
@@ -210,12 +244,12 @@ public class WebPushFrameListenerTest {
 
             final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
             final Http2Headers channelHeaders = channel(frameListener, ctx, registrationHeaders, encoder);
-            assertThat(channelHeaders.status(), equalTo(asciiString("201")));
+            assertThat(channelHeaders.status(), equalTo(CREATED.codeAsText()));
             monitor(frameListener, ctx, registrationHeaders);
             verify(encoder).writePushPromise(eq(ctx), eq(3), eq(pushStreamId), any(Http2Headers.class), eq(0),
                     any(ChannelPromise.class));
 
-            notify(frameListener, ctx, channelHeaders, data);
+            notify(frameListener, ctx, encoder, channelHeaders, data);
             verify(encoder).writeData(eq(ctx), eq(pushStreamId), eq(data), eq(0), eq(false), any(ChannelPromise.class));
         } finally {
             data.release();
@@ -223,8 +257,33 @@ public class WebPushFrameListenerTest {
     }
 
     @Test
+    public void notificationStoreMessage() throws Exception {
+        final ByteBuf data = copiedBuffer("some payload", UTF_8);
+        try {
+            final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+            final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
+                    .withRegistrationid("9999")
+                    .registrationMaxAge(10000L)
+                    .channelMaxAge(50000L)
+                    .build());
+            final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn("webpush/9999/register")
+                    .thenReturn("webpush/9999/channel")
+                    .thenReturn("webpush/9999/endpoint1"));
+            frameListener.encoder(encoder);
+
+            final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
+            final Http2Headers channelHeaders = channel(frameListener, ctx, registrationHeaders, encoder);
+            assertThat(channelHeaders.status(), equalTo(CREATED.codeAsText()));
+            final Http2Headers notifyHeaders = notify(frameListener, ctx, encoder, channelHeaders, data);
+            assertThat(notifyHeaders.status(), equalTo(HttpResponseStatus.ACCEPTED.codeAsText()));
+        } finally {
+            data.release();
+        }
+    }
+
+    @Test
     public void aggregateChannelNotification() throws Exception {
-        final ByteBuf data = Unpooled.copiedBuffer("aggregate payload", CharsetUtil.UTF_8);
+        final ByteBuf data = copiedBuffer("aggregate payload", UTF_8);
         try {
             final int pushStreamId = 4;
             final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
@@ -257,7 +316,7 @@ public class WebPushFrameListenerTest {
             verify(encoder).writePushPromise(eq(ctx), eq(3), eq(pushStreamId), any(Http2Headers.class), eq(0),
                     any(ChannelPromise.class));
 
-            notify(frameListener, ctx, aggregateChannelHeaders, data);
+            notify(frameListener, ctx, encoder, aggregateChannelHeaders, data);
             verify(encoder, times(2)).writeData(eq(ctx), eq(pushStreamId), eq(data), eq(0), eq(false), any(ChannelPromise.class));
         } finally {
             data.release();
@@ -270,7 +329,7 @@ public class WebPushFrameListenerTest {
         frameListener.onHeadersRead(ctx, 3, registerHeaders(), 0, (short) 22, false, 0, true);
         final ByteBuf empty = Unpooled.buffer();
         frameListener.onDataRead(ctx, 3, empty, 0, true);
-        return verifyAndCapture(ctx, encoder);
+        return verifyAndCapture(ctx, encoder, true);
     }
 
     private static Http2Headers channel(final WebPushFrameListener frameListener,
@@ -280,7 +339,7 @@ public class WebPushFrameListenerTest {
         final AsciiString channelUri = getLinkUri(asciiString(CHANNEL), registrationHeaders.getAll(LINK));
         frameListener.onHeadersRead(ctx, 3, channelHeaders(channelUri), 0, (short) 22, false, 0, false);
         frameListener.onDataRead(ctx, 3, Unpooled.buffer(), 0, true);
-        return verifyAndCapture(ctx, encoder);
+        return verifyAndCapture(ctx, encoder, true);
     }
 
     private static Http2Headers aggregateChannel(final WebPushFrameListener frameListener,
@@ -290,8 +349,8 @@ public class WebPushFrameListenerTest {
                                                  final Http2ConnectionEncoder encoder) throws Http2Exception {
         final AsciiString channelUri = getLinkUri(asciiString(AGGREGATE), registrationHeaders.getAll(LINK));
         frameListener.onHeadersRead(ctx, 3, channelHeaders(channelUri), 0, (short) 22, false, 0, false);
-        frameListener.onDataRead(ctx, 3, Unpooled.copiedBuffer(json, CharsetUtil.UTF_8), 0, true);
-        return verifyAndCapture(ctx, encoder);
+        frameListener.onDataRead(ctx, 3, copiedBuffer(json, UTF_8), 0, true);
+        return verifyAndCapture(ctx, encoder, true);
     }
 
     private static AsciiString getLinkUri(final AsciiString linkType, final List<AsciiString> links) {
@@ -310,22 +369,25 @@ public class WebPushFrameListenerTest {
         frameListener.onHeadersRead(ctx, 3, monitorHeaders(location), 0, (short) 22, false, 0, true);
     }
 
-    private static void notify(final WebPushFrameListener frameListener,
+    private static Http2Headers notify(final WebPushFrameListener frameListener,
                                 final ChannelHandlerContext ctx,
+                                final Http2ConnectionEncoder encoder,
                                 final Http2Headers channelHeaders,
                                 final ByteBuf data) throws Http2Exception {
         final AsciiString location = channelHeaders.get(LOCATION);
         frameListener.onHeadersRead(ctx, 3, notifyHeaders(location), 0, (short) 22, false, 0, false);
-        frameListener.onDataRead(ctx, 3, data , 0, true);
+        frameListener.onDataRead(ctx, 3, data, 0, true);
+        return verifyAndCapture(ctx, encoder, true);
     }
 
     private static Http2Headers channelStatus(final WebPushFrameListener frameListener,
                                final ChannelHandlerContext ctx,
                                final Http2Headers channelHeaders,
-                               final Http2ConnectionEncoder encoder) throws Http2Exception {
+                               final Http2ConnectionEncoder encoder,
+                               final boolean endstream) throws Http2Exception {
         final AsciiString location = channelHeaders.get(LOCATION);
         frameListener.onHeadersRead(ctx, 3, channelStatusHeaders(location), 0, (short) 22, false, 0, false);
-        return verifyAndCapture(ctx, encoder);
+        return verifyAndCapture(ctx, encoder, endstream);
     }
 
     private static Http2Headers channelDelete(final WebPushFrameListener frameListener,
@@ -334,16 +396,24 @@ public class WebPushFrameListenerTest {
                                               final Http2ConnectionEncoder encoder) throws Http2Exception {
         final AsciiString location = channelHeaders.get(LOCATION);
         frameListener.onHeadersRead(ctx, 3, channelDeleteHeaders(location), 0, (short) 22, false, 0, false);
-        return verifyAndCapture(ctx, encoder);
+        return verifyAndCapture(ctx, encoder, true);
     }
 
     private static Http2Headers verifyAndCapture(final ChannelHandlerContext ctx,
-                                                 final Http2ConnectionEncoder encoder) {
+                                                 final Http2ConnectionEncoder encoder,
+                                                 final boolean endstream) {
         final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
-        verify(encoder, atLeastOnce()).writeHeaders(eq(ctx), eq(3), captor.capture(), eq(0), eq(true),
+        verify(encoder, atLeastOnce()).writeHeaders(eq(ctx), eq(3), captor.capture(), eq(0), eq(endstream),
                 any(ChannelPromise.class));
         return captor.getValue();
+    }
 
+    private static ByteBuf verifyAndCaptureData(final ChannelHandlerContext ctx,
+                                                 final Http2ConnectionEncoder encoder) {
+        final ArgumentCaptor<ByteBuf> captor = ArgumentCaptor.forClass(ByteBuf.class);
+        verify(encoder, atLeastOnce()).writeData(eq(ctx), eq(3), captor.capture(), eq(0), eq(false),
+                any(ChannelPromise.class));
+        return captor.getValue();
     }
 
     private static AsciiString asciiString(final String str) {
@@ -413,6 +483,11 @@ public class WebPushFrameListenerTest {
         when(encoder.writeData(any(ChannelHandlerContext.class), anyInt(), any(ByteBuf.class), anyInt(),
                 anyBoolean(), any(ChannelPromise.class))).thenReturn(channelFuture);
         return encoder;
+    }
+
+    private static AggregateChannel asAggregateChannel(final Entry... entries) {
+        final LinkedHashSet<Entry> channels = new LinkedHashSet<>(Arrays.asList(entries));
+        return new DefaultAggregateChannel(channels);
     }
 
 }

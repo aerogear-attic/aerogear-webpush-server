@@ -103,13 +103,16 @@ public class DefaultWebPushServer implements WebPushServer {
 
     @Override
     public Optional<String> getMessage(final String endpointToken) {
-        return getChannel(endpointToken).map(Channel::message);
+        return getChannel(endpointToken).flatMap(Channel::message);
     }
 
     @Override
-    public void setMessage(String endpointToken, String content) {
+    public void setMessage(final String endpointToken, final Optional<String> content) {
         getChannel(endpointToken).ifPresent(ch ->
-                        store.saveChannel(new DefaultChannel(ch.registrationId(), ch.channelId(), endpointToken, content))
+            store.saveChannel(new DefaultChannel(ch.registrationId(),
+                    ch.channelId(),
+                    endpointToken,
+                    content))
         );
     }
 

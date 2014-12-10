@@ -53,7 +53,7 @@ public class DefaultWebPushServerTest {
         final Optional<Channel> ch = server.newChannel(reg.id());
         assertThat(ch.isPresent(), equalTo(true));
         assertThat(ch.get().registrationId(), equalTo(reg.id()));
-        assertThat(ch.get().message(), equalTo(DefaultChannel.NONE));
+        assertThat(ch.get().message(), equalTo(Optional.empty()));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class DefaultWebPushServerTest {
         final Registration reg = server.register();
         final Optional<Channel> ch = server.newChannel(reg.id());
         assertThat(ch.isPresent(), equalTo(true));
-        server.setMessage(ch.get().endpointToken(), "some message");
+        server.setMessage(ch.get().endpointToken(), Optional.of("some message"));
         final Optional<String> message = server.getMessage(ch.get().endpointToken());
         assertThat(message.get(), equalTo("some message"));
     }

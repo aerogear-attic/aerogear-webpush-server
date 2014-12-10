@@ -196,8 +196,15 @@ public class WebPushFrameListenerTest {
 
         final Http2Headers registrationHeaders = register(frameListener, ctx, encoder);
         monitor(frameListener, ctx, registrationHeaders);
-        verify(encoder).writePushPromise(eq(ctx), eq(3), eq(4), any(Http2Headers.class), eq(0),
+        final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
+        verify(encoder).writePushPromise(eq(ctx), eq(3), eq(4), captor.capture(), eq(0),
                 any(ChannelPromise.class));
+        final Http2Headers monitorHeaders = captor.getValue();
+        assertThat(monitorHeaders.status(), equalTo(OK.codeAsText()));
+        assertThat(monitorHeaders.getAll(LINK), hasItems(
+                asciiString(CHANNEL.weblink("/webpush/9999/channel")),
+                asciiString(AGGREGATE.weblink("/webpush/9999/aggregate"))));
+        assertThat(monitorHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=10000")));
     }
 
     @Test

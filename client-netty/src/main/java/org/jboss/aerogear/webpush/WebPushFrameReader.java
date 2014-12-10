@@ -10,18 +10,12 @@ import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.util.CharsetUtil;
-import org.jboss.aerogear.webpush.Registration.WebLink;
-
-import java.util.List;
-import java.util.Optional;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
 import static io.netty.util.internal.ObjectUtil.checkNotNull;
 
 public class WebPushFrameReader implements Http2FrameReader {
 
-    private static final AsciiString CHANNEL_TYPE = new AsciiString(WebLink.CHANNEL.toString());
-    private static final AsciiString AGGREGATE_TYPE = new AsciiString(WebLink.AGGREGATE.toString());
     private final Http2FrameReader reader;
     private final ResponseHandler callback;
 
@@ -61,15 +55,6 @@ public class WebPushFrameReader implements Http2FrameReader {
                 } else {
                     callback.channelStatus(headers, streamId);
                 }
-            }
-
-            private Optional<AsciiString> getLinkUri(final AsciiString linkType, final List<AsciiString> links) {
-                for (AsciiString link : links) {
-                    if (link.contains(linkType)) {
-                        return Optional.of(link.subSequence(1, link.indexOf(";") - 1));
-                    }
-                }
-                return Optional.empty();
             }
 
             @Override
@@ -117,6 +102,7 @@ public class WebPushFrameReader implements Http2FrameReader {
             @Override
             public void onPushPromiseRead(ChannelHandlerContext ctx, int streamId,
                                           int promisedStreamId, Http2Headers headers, int padding) throws Http2Exception {
+                callback.channelStatus(headers, streamId);
                 listener.onPushPromiseRead(ctx, streamId, promisedStreamId, headers, padding);
             }
 

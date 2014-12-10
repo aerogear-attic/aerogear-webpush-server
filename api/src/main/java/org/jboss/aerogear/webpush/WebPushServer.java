@@ -36,6 +36,14 @@ public interface WebPushServer {
     Registration register();
 
     /**
+     * Returns the {@link Registration} for the specified id.
+     *
+     * @param id the registration identifier.
+     * @return {@code Optional} {@link Registration} with the registration or {@code Optional.empty}.
+     */
+    Optional<Registration> registration(final String id);
+
+    /**
      * Handles the creation of new channels for a registration.
      *
      * @param registrationId the registration id for which this new channel belongs to.

@@ -216,11 +216,10 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private void handleChannelCreation(final ChannelHandlerContext ctx, final String path, final int streamId) {
-        final String registrationId = extractRegistrationId(path, "channel");
-        final Optional<Channel> channel = webpushServer.newChannel(registrationId);
+        final Optional<Channel> channel = extractRegistrationId(path, "channel").flatMap(webpushServer::newChannel);
         channel.ifPresent(ch -> {
             LOGGER.info("Created channel {} " + ch);
-            notificationStreams.put(ch.endpointToken(), registrationId);
+            notificationStreams.put(ch.endpointToken(), ch.registrationId());
             encoder.writeHeaders(ctx, streamId, createdHeaders(ch), 0, true, ctx.newPromise());
         });
     }
@@ -249,9 +248,8 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                                                 final int streamId,
                                                 final ByteBuf data) {
         LOGGER.info("Aggregate payload={}", data.toString(UTF_8));
-        final String registrationId = extractRegistrationId(path, "aggregate");
+        final Optional<Channel> channel = extractRegistrationId(path, "aggregate").flatMap(webpushServer::newChannel);
         final AggregateChannel aggregateChannel = fromJson(data.toString(UTF_8), AggregateChannel.class);
-        final Optional<Channel> channel = webpushServer.newChannel(registrationId);
         channel.ifPresent(ch -> {
             LOGGER.info("Created aggregate channel {} " + ch);
             aggregateChannels.put(ch.endpointToken(), aggregateChannel);
@@ -295,11 +293,13 @@ public class WebPushFrameListener extends Http2FrameAdapter {
       previous client-initiated request (the monitor request)
      */
     private void handleMonitor(final ChannelHandlerContext ctx, final String path, final int streamId) {
-        final String registrationId = extractRegistrationId(path, "monitor");
-        final int pushStreamId = encoder.connection().local().nextStreamId();
-        monitoredStreams.put(registrationId, Optional.of(new Client(ctx, pushStreamId, encoder)));
-        LOGGER.info("Monitor ctx={}, registrationId={}, pushPromiseStreamId={}", ctx, registrationId, pushStreamId);
-        encoder.writePushPromise(ctx, streamId, pushStreamId, okHeaders(), 0, ctx.newPromise());
+        final Optional<Registration> registration = extractRegistrationId(path, "monitor").flatMap(webpushServer::registration);
+        registration.ifPresent(reg -> {
+            final int pushStreamId = encoder.connection().local().nextStreamId();
+            monitoredStreams.put(reg.id(), Optional.of(new Client(ctx, pushStreamId, encoder)));
+            encoder.writePushPromise(ctx, streamId, pushStreamId, monitorHeaders(reg), 0, ctx.newPromise());
+            LOGGER.info("Monitor ctx={}, registrationId={}, pushPromiseStreamId={}, headers={}", ctx, reg.id(), pushStreamId, monitorHeaders(reg));
+        });
     }
 
     private void handleChannelStatus(final ChannelHandlerContext ctx,
@@ -334,6 +334,16 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
     }
 
+    private Http2Headers monitorHeaders(final Registration registration) {
+        return new DefaultHttp2Headers(false)
+                .status(OK.codeAsText())
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
+                .set(ACCESS_CONTROL_EXPOSE_HEADERS, new AsciiString("Link, Cache-Control"))
+                .set(LINK, asLink(registration.channelUri(), WebLink.CHANNEL.toString()),
+                        asLink(registration.aggregateUri(), WebLink.AGGREGATE.toString()))
+                .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().registrationMaxAge()));
+    }
+
     private static Http2Headers okHeaders() {
         return new DefaultHttp2Headers(false)
                 .status(OK.codeAsText())
@@ -342,9 +352,13 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
 
-    private static String extractRegistrationId(final String path, final String segment) {
-        final String subpath = path.substring(0, path.indexOf(segment) - 1);
-        return subpath.subSequence(subpath.lastIndexOf('/') + 1, subpath.length()).toString();
+    private static Optional<String> extractRegistrationId(final String path, final String segment) {
+        try {
+            final String subpath = path.substring(0, path.indexOf(segment) - 1);
+            return Optional.of(subpath.subSequence(subpath.lastIndexOf('/') + 1, subpath.length()).toString());
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     private static String extractEndpointToken(final String path) {

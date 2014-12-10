@@ -60,6 +60,11 @@ public class DefaultWebPushServer implements WebPushServer {
         return reg;
     }
 
+    @Override
+    public Optional<Registration> registration(final String id) {
+        return store.getRegistration(id);
+    }
+
     private static URI monitorUri(final String id) {
         return webpushURI(id, "/monitor");
     }

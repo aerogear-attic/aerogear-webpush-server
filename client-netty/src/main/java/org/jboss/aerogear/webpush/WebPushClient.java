@@ -103,8 +103,12 @@ public class WebPushClient {
         writeRequest(POST, "/webpush/register", Unpooled.buffer());
     }
 
-    public void monitor(final String monitorUrl) throws Exception {
-        writeRequest(GET, monitorUrl);
+    public void monitor(final String monitorUrl, final boolean now) throws Exception {
+        final Http2Headers headers = http2Headers(GET, monitorUrl);
+        if (now) {
+            headers.add(new AsciiString("prefer"), new AsciiString("wait=0"));
+        }
+        writeRequest(headers);
     }
 
     public void createChannel(final String channelUrl) throws Exception {
@@ -137,6 +141,10 @@ public class WebPushClient {
 
     private void writeRequest(final HttpMethod method, final String url) throws Exception {
         final Http2Headers headers = http2Headers(method, url);
+        writeRequest(headers);
+    }
+
+    private void writeRequest(final Http2Headers headers) throws Exception {
         ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers)).sync();
         requestFuture.sync();
     }

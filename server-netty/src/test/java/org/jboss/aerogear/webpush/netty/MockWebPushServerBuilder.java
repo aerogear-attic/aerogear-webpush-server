@@ -4,10 +4,12 @@ import org.jboss.aerogear.webpush.Channel;
 import org.jboss.aerogear.webpush.Registration;
 import org.jboss.aerogear.webpush.WebPushServer;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
+import org.mockito.stubbing.OngoingStubbing;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -17,7 +19,7 @@ public class MockWebPushServerBuilder {
     private final WebPushServer webPushServer = mock(WebPushServer.class);
     private final WebPushServerConfig config = mock(WebPushServerConfig.class);
     private final Registration registration = mock(Registration.class);
-    private final String context = "/webpush";
+    private static final String context = "/webpush";
     private final String registrationId;
 
     private MockWebPushServerBuilder(final String registrationId) {
@@ -42,25 +44,21 @@ public class MockWebPushServerBuilder {
         return this;
     }
 
+    public MockWebPushServerBuilder addChannel(final Channel channel) {
+        when(webPushServer.getChannel(channel.endpointToken())).thenReturn(Optional.of(channel));
+        when(webPushServer.newChannel(registrationId)).thenReturn(Optional.of(channel));
+        return this;
+    }
+
+    public MockWebPushServerBuilder channelOrder(final Consumer<OngoingStubbing<Optional<Channel>>> consumer) {
+        consumer.accept(when(webPushServer.newChannel(registrationId)));
+        return this;
+    }
+
     public WebPushServer build() throws Exception {
         when(webPushServer.config()).thenReturn(config);
         when(webPushServer.register()).thenReturn(registration);
-        final Channel channel1 = mock(Channel.class);
-        when(channel1.endpointToken()).thenReturn("endpoint1");
-        when(channel1.registrationId()).thenReturn(registrationId);
-        when(channel1.message()).thenReturn(Optional.of("message1")).thenReturn(Optional.<String>empty());
-        final Channel channel2 = mock(Channel.class);
-        when(channel2.endpointToken()).thenReturn("endpoint2");
-        when(channel2.registrationId()).thenReturn(registrationId);
-        when(channel2.message()).thenReturn(Optional.of("message2"));
-        final Channel aggregateChannel = mock(Channel.class);
-        when(aggregateChannel.endpointToken()).thenReturn("aggChannel");
-        when(webPushServer.newChannel(registrationId))
-                .thenReturn(Optional.of(channel1))
-                .thenReturn(Optional.of(channel2))
-                .thenReturn(Optional.of(aggregateChannel));
-        when(webPushServer.getChannel("endpoint1")).thenReturn(Optional.of(channel1));
-        when(webPushServer.registration("9999")).thenReturn(Optional.of(registration));
+        when(webPushServer.registration(registrationId)).thenReturn(Optional.of(registration));
         return webPushServer;
     }
 

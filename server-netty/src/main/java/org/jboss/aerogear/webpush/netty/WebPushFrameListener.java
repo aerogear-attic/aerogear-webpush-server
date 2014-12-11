@@ -40,7 +40,6 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static io.netty.buffer.Unpooled.copiedBuffer;
@@ -102,7 +101,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         switch (headers.method().toString()) {
             case GET:
                 if (path.contains("monitor")) {
-                    handleMonitor(ctx, path, streamId);
+                    handleMonitor(ctx, path, streamId, padding, headers);
                 } else {
                     handleChannelStatus(ctx, path, streamId, padding);
                 }
@@ -152,6 +151,13 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         return super.onDataRead(ctx, streamId, data, padding, endOfStream);
     }
 
+    public void shutdown() {
+        monitoredStreams.entrySet().stream().forEach(kv -> kv.getValue().ifPresent(client -> client.ctx.close()));
+        monitoredStreams.clear();
+        aggregateChannels.clear();
+        notificationStreams.clear();
+    }
+
     private void handleNotification(final ChannelHandlerContext ctx,
                                     final int streamId,
                                     final ByteBuf data,
@@ -164,6 +170,12 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         Optional.ofNullable(aggregateChannels.get(endpointToken)).ifPresent(agg ->
             agg.channels().stream().forEach(entry ->  handleNotify(entry.endpoint(), data, padding, e -> {} ))
         );
+    }
+    private void handleNotify(final String endpoint,
+                              final String data,
+                              final int padding,
+                              final Consumer<Http2ConnectionEncoder> consumer) {
+        handleNotify(endpoint, copiedBuffer(data, UTF_8), padding, consumer);
     }
 
     private void handleNotify(final String endpoint,
@@ -183,6 +195,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 }
                 client.encoder.writeData(client.ctx, client.streamId, data.retain(), padding, false, client.ctx.newPromise())
                         .addListener(WebPushFrameListener::logFutureError);
+                webpushServer.setMessage(endpoint, Optional.empty());
             } else {
                 webpushServer.setMessage(endpoint, Optional.of(data.toString(CharsetUtil.UTF_8)));
                 consumer.accept(encoder);
@@ -260,7 +273,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private Http2Headers createdHeaders(final Channel channel) {
         return new DefaultHttp2Headers(false)
                 .status(CREATED.codeAsText())
-                .set(LOCATION, new AsciiString("webpush/" + channel.endpointToken()))
+                .set(LOCATION, new AsciiString("/webpush/" + channel.endpointToken()))
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(ACCESS_CONTROL_EXPOSE_HEADERS, new AsciiString("Location"))
                 .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().channelMaxAge()));
@@ -292,13 +305,27 @@ public class WebPushFrameListener extends Http2FrameAdapter {
       A monitor request is responded to with a push promise. A push promise is associated with a
       previous client-initiated request (the monitor request)
      */
-    private void handleMonitor(final ChannelHandlerContext ctx, final String path, final int streamId) {
+    private void handleMonitor(final ChannelHandlerContext ctx,
+                               final String path,
+                               final int streamId,
+                               final int padding,
+                               final Http2Headers headers) {
         final Optional<Registration> registration = extractRegistrationId(path, "monitor").flatMap(webpushServer::registration);
         registration.ifPresent(reg -> {
             final int pushStreamId = encoder.connection().local().nextStreamId();
-            monitoredStreams.put(reg.id(), Optional.of(new Client(ctx, pushStreamId, encoder)));
+            final Client client = new Client(ctx, pushStreamId, encoder);
+            monitoredStreams.put(reg.id(), Optional.of(client));
             encoder.writePushPromise(ctx, streamId, pushStreamId, monitorHeaders(reg), 0, ctx.newPromise());
             LOGGER.info("Monitor ctx={}, registrationId={}, pushPromiseStreamId={}, headers={}", ctx, reg.id(), pushStreamId, monitorHeaders(reg));
+            final Optional<AsciiString> wait = Optional.ofNullable(headers.get(new AsciiString("prefer"))).filter(val -> val.toString().equals("wait=0"));
+            wait.ifPresent(s ->
+                notificationStreams.entrySet().stream().filter(kv -> kv.getValue().equals(reg.id())).forEach(e -> {
+                    final String endpoint = e.getKey();
+                    final Optional<Channel> channel = webpushServer.getChannel(endpoint).filter(ch -> ch.message().isPresent());
+                    channel.ifPresent(ch -> handleNotify(endpoint, ch.message().get(), padding, q -> {
+                    }));
+                })
+            );
         });
     }
 
@@ -310,11 +337,12 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final Optional<Channel> channel = webpushServer.getChannel(endpointToken);
         if (channel.isPresent()) {
             LOGGER.info("Channel {}", channel);
-            final Optional<String> message = channel.get().message();
+            final Channel ch = channel.get();
+            final Optional<String> message = ch.message();
             if (message.isPresent()) {
                 encoder.writeHeaders(ctx, streamId, okHeaders(), 0, false, ctx.newPromise());
                 encoder.writeData(ctx, streamId, copiedBuffer(message.get(), UTF_8), padding, false, ctx.newPromise());
-                webpushServer.setMessage(endpointToken, Optional.empty());
+                webpushServer.setMessage(ch.endpointToken(), Optional.empty());
             } else {
                 encoder.writeHeaders(ctx, streamId, noContentHeaders(), 0, true, ctx.newPromise());
             }
@@ -322,6 +350,19 @@ public class WebPushFrameListener extends Http2FrameAdapter {
             encoder.writeHeaders(ctx, streamId, notFoundHeaders(), 0, true, ctx.newPromise());
         }
     }
+
+    private boolean notifyChannel(final ChannelHandlerContext ctx, final Channel channel, final int streamId, final int padding) {
+        final Optional<String> optionalMessage = channel.message();
+        if (optionalMessage.isPresent()) {
+            encoder.writeHeaders(ctx, streamId, okHeaders(), 0, false, ctx.newPromise());
+            encoder.writeData(ctx, streamId, copiedBuffer(optionalMessage.get(), UTF_8), padding, false, ctx.newPromise());
+            webpushServer.setMessage(channel.endpointToken(), Optional.empty());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     private static Http2Headers noContentHeaders() {
         return new DefaultHttp2Headers(false)
                 .status(NO_CONTENT.codeAsText())
@@ -370,7 +411,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         private final ChannelHandlerContext ctx;
         private final Http2ConnectionEncoder encoder;
         private final int streamId;
-        private final AtomicBoolean headersSent = new AtomicBoolean(false);
+        private volatile boolean headersSent;
 
         Client(final ChannelHandlerContext ctx, final int streamId, final Http2ConnectionEncoder encoder) {
             this.ctx = ctx;
@@ -379,16 +420,16 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         }
 
         boolean isHeadersSent() {
-            return headersSent.get();
+            return headersSent;
         }
 
         void headersSent() {
-            headersSent.set(true);
+            headersSent = true;
         }
 
         @Override
         public String toString() {
-            return "Client[streamid=" + streamId + ", ctx=" + ctx + ", headersSent=" + headersSent.get() + "]";
+            return "Client[streamid=" + streamId + ", ctx=" + ctx + ", headersSent=" + headersSent + "]";
         }
 
     }

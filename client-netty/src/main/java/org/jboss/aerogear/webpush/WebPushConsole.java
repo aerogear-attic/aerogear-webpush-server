@@ -36,8 +36,8 @@ public class WebPushConsole {
                 Optional.of("<aggregate-url> <channel-url>[,<channel-url>]"),
                 "Creates a new aggregate channel with the passed in channel-urls being part for the aggregate."),
         MONITOR("monitor",
-                Optional.of("<monitor-url>"),
-                "Starts monitoring for notifications"),
+                Optional.of("<monitor-url> nowait"),
+                "Starts monitoring for notifications. Adding nowait will send a Prefer: wait=0 header."),
         NOTIFY("notify",
                 Optional.of("<endpoint-url> <payload>"),
                 "Sends a notification to the specified endpoint-url."),
@@ -145,7 +145,7 @@ public class WebPushConsole {
                 } else if (buffer.startsWith(Command.REGISTER.toString())) {
                     handleRegister(client);
                 } else if (buffer.startsWith(Command.MONITOR.toString())) {
-                    handleMonitor(client, getFirstArg(buffer));
+                    handleMonitor(client, buffer);
                 } else if (buffer.startsWith(Command.CHANNEL.toString())) {
                     handleCreateChannel(client, getFirstArg(buffer));
                 } else if (buffer.startsWith(Command.STATUS.toString())) {
@@ -230,9 +230,11 @@ public class WebPushConsole {
         }
     }
 
-    private static void handleMonitor(final WebPushClient client, final String url) {
+    private static void handleMonitor(final WebPushClient client, final String buffer) {
+        final String[] args = getFirstTwoArg(buffer);
+        final boolean nowait = args[1] != null;
         try {
-            client.monitor(url);
+            client.monitor(args[0], nowait);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -305,7 +307,9 @@ public class WebPushConsole {
         final String[] args = new String[2];
         String tmp = cmd.substring(cmd.indexOf(" ") + 1, cmd.length());
         args[0] = tmp.substring(0, tmp.indexOf(" "));
-        args[1] = tmp.substring(tmp.indexOf(" ") + 1, tmp.length());
+        if (tmp.indexOf(" ") != -1) {
+            args[1] = tmp.substring(tmp.indexOf(" ") + 1, tmp.length());
+        }
         return args;
     }
 

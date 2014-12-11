@@ -69,4 +69,5 @@ public class Http2OrHttpHandler extends Http2OrHttpChooser {
             ctx.fireExceptionCaught(cause);
         }
     }
+
 }

@@ -231,10 +231,10 @@ public class WebPushConsole {
     }
 
     private static void handleMonitor(final WebPushClient client, final String buffer) {
-        final String[] args = getFirstTwoArg(buffer);
-        final boolean nowait = args[1] != null;
+        final String[] args = getArgs(buffer);
+        final boolean nowait = args.length == 3 && args[3] != null;
         try {
-            client.monitor(args[0], nowait);
+            client.monitor(args[1], nowait);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -267,20 +267,20 @@ public class WebPushConsole {
     public static void handleAggregateChannel(final WebPushClient client,
                                               final String cmd,
                                               final Console console) {
-        final String[] args = getFirstTwoArg(cmd);
+        final String[] args = getArgs(cmd);
         try {
-            final String json = JsonMapper.toJson(new DefaultAggregateChannel(WebPushClient.asEntries(args[1].split(","))));
+            final String json = JsonMapper.toJson(new DefaultAggregateChannel(WebPushClient.asEntries(args[2].split(","))));
             console.getShell().out().println(JsonMapper.pretty(json));
-            client.createAggregateChannel(args[0], json);
+            client.createAggregateChannel(args[1], json);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private static void handleNotification(final WebPushClient client, final String cmd) {
-        final String[] args = getFirstTwoArg(cmd);
+        final String[] args = getArgs(cmd);
         try {
-            client.notify(args[0], args[1]);
+            client.notify(args[1], args[2]);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -303,14 +303,8 @@ public class WebPushConsole {
         return cmd.substring(cmd.indexOf(" ") + 1, cmd.length());
     }
 
-    private static String[] getFirstTwoArg(final String cmd) {
-        final String[] args = new String[2];
-        String tmp = cmd.substring(cmd.indexOf(" ") + 1, cmd.length());
-        args[0] = tmp.substring(0, tmp.indexOf(" "));
-        if (tmp.indexOf(" ") != -1) {
-            args[1] = tmp.substring(tmp.indexOf(" ") + 1, tmp.length());
-        }
-        return args;
+    private static String[] getArgs(final String cmd) {
+        return cmd.split(" ");
     }
 
 }

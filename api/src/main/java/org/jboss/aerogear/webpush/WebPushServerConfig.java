@@ -84,4 +84,9 @@ public interface WebPushServerConfig {
      */
     long channelMaxAge();
 
+    /**
+     * Returns the maximum age that a message will be stored for.
+     */
+    long messageMaxAge();
+
 }

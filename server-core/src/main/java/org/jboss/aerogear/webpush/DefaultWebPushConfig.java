@@ -26,6 +26,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     private final int endpointPort;
     private final long registrationMaxAge;
     private final long channelMaxAge;
+    private final long messageMaxAge;
     private final Protocol protocol;
 
     private DefaultWebPushConfig(final Builder builder) {
@@ -38,6 +39,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         registrationMaxAge = builder.registrationMaxAge;
         channelMaxAge = builder.channelMaxAge;
         protocol = builder.protocol;
+        messageMaxAge = builder.messageMaxAge;
     }
 
     @Override
@@ -85,6 +87,11 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         return protocol;
     }
 
+    @Override
+    public long messageMaxAge() {
+        return messageMaxAge;
+    }
+
     public String toString() {
         return new StringBuilder("WebPushConfig[host=").append(host)
                 .append(", port=").append(port)
@@ -92,6 +99,9 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
                 .append(", endpointPort=").append(endpointPort)
                 .append(", endpointTls=").append(endpointTls)
                 .append(", protocol=").append(protocol)
+                .append(", registrationMaxAge=").append(registrationMaxAge)
+                .append(", channelMaxAge=").append(channelMaxAge)
+                .append(", messageMaxAge=").append(messageMaxAge)
                 .append("]").toString();
     }
 
@@ -112,6 +122,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private int endpointPort;
         private long registrationMaxAge = 604800000L;
         private long channelMaxAge = 604800000L;
+        private long messageMaxAge = 0L;
         private Protocol protocol = Protocol.ALPN;
 
         public Builder host(final String host) {
@@ -162,6 +173,13 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
 
         public Builder protocol(final Protocol protocol) {
             this.protocol = protocol;
+            return this;
+        }
+
+        public Builder messageMaxAge(final Long maxAge) {
+            if (maxAge != null) {
+                this.messageMaxAge = maxAge;
+            }
             return this;
         }
 

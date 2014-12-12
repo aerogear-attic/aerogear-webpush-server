@@ -253,7 +253,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         return new DefaultHttp2Headers(false)
                 .status(ACCEPTED.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
-                .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().registrationMaxAge()));
+                .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().messageMaxAge()));
     }
 
     private void handleAggregateChannelCreation(final ChannelHandlerContext ctx,

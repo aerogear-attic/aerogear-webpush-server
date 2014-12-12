@@ -77,6 +77,11 @@ public class ConfigReaderTest {
     }
 
     @Test
+    public void messageMaxAge() {
+        assertThat(webPushServerConfig.messageMaxAge(), is(0L));
+    }
+
+    @Test
     public void protocol() {
         assertThat(webPushServerConfig.protocol(), is(Protocol.NPN));
     }

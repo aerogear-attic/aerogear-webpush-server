@@ -17,7 +17,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.aerogear.webpush.DefaultWebPushConfig;
@@ -71,8 +70,6 @@ public class ConfigReader {
         try {
             final JsonNode json = OM.readTree(in);
             return parseWebPushProperties(json);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -97,10 +94,6 @@ public class ConfigReader {
         final JsonNode endpointTls = json.get("endpoint-tls");
         if (endpointTls != null) {
             builder.endpointTls(endpointTls.asBoolean());
-        }
-        final JsonNode endpointPrefix = json.get("endpoint-prefix");
-        if (endpointPrefix != null) {
-            builder.endpointPrefix(endpointPrefix.asText());
         }
         final JsonNode registrationMaxAge = json.get("registration-max-age");
         if (registrationMaxAge != null) {

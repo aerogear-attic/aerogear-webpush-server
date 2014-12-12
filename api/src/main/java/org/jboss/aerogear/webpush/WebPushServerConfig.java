@@ -26,13 +26,6 @@ public interface WebPushServerConfig {
     }
 
     /**
-     * The default prefix for the the notification endpoint url. This
-     * prefix will be used and returned to the client to enable the
-     * client to PUT notifications.
-     */
-    String DEFAULT_ENDPOINT_URL_PREFIX = "/update";
-
-    /**
      * The host that this server will bind to.
      *
      * @return {@code String} the host.
@@ -66,23 +59,6 @@ public interface WebPushServerConfig {
      * @return {@code String[]} password used for generating the server's private key.
      */
     String password();
-
-    /**
-     * Returns the endpoint url prefix for this WebPush server.
-     * This will get the channelId appended to it.
-     *
-     * @return {@code String} the endpoint url prefix.
-     */
-    String endpointPrefix();
-
-    /**
-     * Returns the notification endpoint url prefix for this WebPush server.
-     * This will be the in the format:
-     * protocol://endpointHost:endpointPort/endpointPrefix
-     *
-     * @return {@code String} the notification url.
-     */
-    String endpointUrl();
 
     /**
      * The externally available host that this server is reachable by.

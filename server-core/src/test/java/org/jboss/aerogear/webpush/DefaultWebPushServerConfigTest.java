@@ -21,40 +21,27 @@ import org.junit.Test;
 public class DefaultWebPushServerConfigTest {
 
     @Test
-    public void endpointUrl() {
-        final WebPushServerConfig config = DefaultWebPushConfig.create().endpointPrefix("ep").password("dummy").build();
-        assertThat(config.endpointPrefix(), equalTo("/ep"));
-        assertThat(config.endpointUrl(), equalTo("http://127.0.0.1:7777/ep"));
-    }
-
-    @Test
     public void endpointHost() {
         final WebPushServerConfig config = DefaultWebPushConfig.create()
-                .endpointPrefix("ep")
                 .endpointHost("localhost")
                 .password("dummy").build();
         assertThat(config.endpointHost(), equalTo("localhost"));
-        assertThat(config.endpointUrl(), equalTo("http://localhost:7777/ep"));
     }
 
     @Test
     public void endpointPort() {
         final WebPushServerConfig config = DefaultWebPushConfig.create()
-                .endpointPrefix("ep")
                 .endpointPort(8888)
                 .password("dummy").build();
         assertThat(config.endpointPort(), is(8888));
-        assertThat(config.endpointUrl(), equalTo("http://127.0.0.1:8888/ep"));
     }
 
     @Test
     public void endpointPortNegative() {
         final WebPushServerConfig config = DefaultWebPushConfig.create()
-                .endpointPrefix("ep")
                 .endpointPort(-8888)
                 .password("dummy").build();
         assertThat(config.endpointPort(), is(7777));
-        assertThat(config.endpointUrl(), equalTo("http://127.0.0.1:7777/ep"));
     }
 
 }

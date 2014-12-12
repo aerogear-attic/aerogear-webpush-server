@@ -22,8 +22,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     private final int port;
     private final boolean endpointTls;
     private final String password;
-    private final String endpointPrefix;
-    private final String endpointUrl;
     private final String endpointHost;
     private final int endpointPort;
     private final long registrationMaxAge;
@@ -36,19 +34,10 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         endpointHost = builder.endpointHost == null ? host : builder.endpointHost;
         endpointPort = builder.endpointPort <= 0 ? port : builder.endpointPort;
         endpointTls = builder.endpointTls;
-        endpointPrefix = builder.endpointPrefix.startsWith("/") ? builder.endpointPrefix : "/" + builder.endpointPrefix;
-        endpointUrl = makeEndpointUrl(endpointHost, endpointPort, endpointPrefix, endpointTls);
         password = builder.password;
         registrationMaxAge = builder.registrationMaxAge;
         channelMaxAge = builder.channelMaxAge;
         protocol = builder.protocol;
-    }
-
-    private static String makeEndpointUrl(final String endpointHost, final int endpointPort, final String prefix, final boolean tls) {
-        return new StringBuilder(tls ? "https://" : "http://")
-            .append(endpointHost).append(":").append(endpointPort)
-            .append(prefix)
-            .toString();
     }
 
     @Override
@@ -69,16 +58,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     @Override
     public boolean useEndpointTls() {
         return endpointTls;
-    }
-
-    @Override
-    public String endpointUrl() {
-        return endpointUrl;
-    }
-
-    @Override
-    public String endpointPrefix() {
-        return endpointPrefix;
     }
 
     @Override
@@ -112,8 +91,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
                 .append(", endpointHost=").append(endpointHost)
                 .append(", endpointPort=").append(endpointPort)
                 .append(", endpointTls=").append(endpointTls)
-                .append(", endpointUrlPrefix=").append(endpointPrefix)
-                .append(", endpointUrl=").append(endpointUrl)
                 .append(", protocol=").append(protocol)
                 .append("]").toString();
     }
@@ -131,7 +108,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private int port;
         private String password;
         private boolean endpointTls;
-        private String endpointPrefix = DEFAULT_ENDPOINT_URL_PREFIX;
         private String endpointHost;
         private int endpointPort;
         private long registrationMaxAge = 604800000L;
@@ -162,13 +138,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
 
         public Builder endpointHost(final String endpointHost) {
             this.endpointHost = endpointHost;
-            return this;
-        }
-
-        public Builder endpointPrefix(final String endpointPrefix) {
-            if (endpointPrefix != null) {
-                this.endpointPrefix = endpointPrefix;
-            }
             return this;
         }
 

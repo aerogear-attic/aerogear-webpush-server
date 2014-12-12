@@ -62,11 +62,6 @@ public class ConfigReaderTest {
     }
 
     @Test
-    public void endpointPrefix() {
-        assertThat(webPushServerConfig.endpointPrefix(), equalTo("/endpoint"));
-    }
-
-    @Test
     public void endpointTls() {
         assertThat(webPushServerConfig.useEndpointTls(), is(true));
     }

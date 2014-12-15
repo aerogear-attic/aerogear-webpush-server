@@ -389,7 +389,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     private static Optional<String> extractRegistrationId(final String path, final String segment) {
         try {
-            final String subpath = path.substring(0, path.indexOf(segment) - 1);
+            final String subpath = path.substring(path.indexOf(segment) + segment.length() + 1);
             return Optional.of(subpath.subSequence(subpath.lastIndexOf('/') + 1, subpath.length()).toString());
         } catch (Exception e) {
             return Optional.empty();

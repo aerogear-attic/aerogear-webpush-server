@@ -283,7 +283,7 @@ public class WebPushFrameListenerTest {
 
             final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(registerPath(regId))
                     .thenReturn(subscribePath(regId))
-                    .thenReturn(webpushPath(regId, endpoint))
+                    .thenReturn(webpushPath(endpoint, regId))
                     .thenReturn(registrationPath(regId)));
             frameListener.encoder(encoder);
 
@@ -357,7 +357,7 @@ public class WebPushFrameListenerTest {
                     .build());
             final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(registerPath(regId))
                     .thenReturn(subscribePath(regId))
-                    .thenReturn(webpushPath(regId, endpoint)));
+                    .thenReturn(endpointPath(endpoint)));
             frameListener.encoder(encoder);
 
             final Http2Headers regHeaders = register(frameListener, ctx, encoder);
@@ -391,7 +391,7 @@ public class WebPushFrameListenerTest {
                     .build());
             final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(registerPath(regId))
                     .thenReturn(subscribePath(regId))
-                    .thenReturn(webpushPath(regId, endpoint)));
+                    .thenReturn(endpointPath(endpoint)));
             frameListener.encoder(encoder);
 
             final Http2Headers regHeaders = register(frameListener, ctx, encoder);
@@ -636,23 +636,27 @@ public class WebPushFrameListenerTest {
     }
 
     private static String registrationPath(final String registrationId) {
-        return webpushPath(registrationId, Resource.REGISTRATION.resourceName());
+        return webpushPath(Resource.REGISTRATION.resourceName(), registrationId);
     }
 
     private static String subscribePath(final String registrationId) {
-        return webpushPath(registrationId, Resource.SUBSCRIBE.resourceName());
+        return webpushPath(Resource.SUBSCRIBE.resourceName(), registrationId);
     }
 
     private static String aggregatePath(final String registrationId) {
-        return webpushPath(registrationId, Resource.AGGREGATE.resourceName());
+        return webpushPath(Resource.AGGREGATE.resourceName(), registrationId);
     }
 
     private static String registerPath(final String registrationId) {
-        return webpushPath(registrationId, Resource.REGISTER.resourceName());
+        return webpushPath(Resource.REGISTER.resourceName(), registrationId);
     }
 
-    private static String webpushPath(final String registrationId, final String path) {
-        return webpushPath(registrationId + "/" + path);
+    private static String webpushPath(final String path, final String registrationId) {
+        return webpushPath(path + "/" + registrationId);
+    }
+
+    private static String endpointPath(final String path) {
+        return "/" + path;
     }
 
     private static String webpushPath(final String path) {

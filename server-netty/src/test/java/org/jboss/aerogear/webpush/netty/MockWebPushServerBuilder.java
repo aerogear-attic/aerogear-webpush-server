@@ -30,9 +30,9 @@ public class MockWebPushServerBuilder {
     }
 
     private void setRegistrationUrls(final String id) {
-        when(registration.uri()).thenReturn(asURI(context, id, Resource.REGISTRATION.resourceName()));
-        when(registration.subscribeUri()).thenReturn(asURI(context, id, Resource.SUBSCRIBE.resourceName()));
-        when(registration.aggregateUri()).thenReturn(asURI(context, id, Resource.AGGREGATE.resourceName()));
+        when(registration.uri()).thenReturn(asURI(context, Resource.REGISTRATION.resourceName(), id));
+        when(registration.subscribeUri()).thenReturn(asURI(context, Resource.SUBSCRIBE.resourceName(), id));
+        when(registration.aggregateUri()).thenReturn(asURI(context, Resource.AGGREGATE.resourceName(), id));
     }
 
     public MockWebPushServerBuilder registrationMaxAge(final long maxAge) {
@@ -67,11 +67,11 @@ public class MockWebPushServerBuilder {
         return new MockWebPushServerBuilder(id);
     }
 
-    private static URI asURI(final String context, final String id, final String path) {
+    private static URI asURI(final String context, final String resource, final String id) {
         try {
-            return new URI(context + "/" + id + "/" + path);
+            return new URI(context + "/" + resource + "/" + id);
         } catch (final URISyntaxException e) {
-            throw new RuntimeException("String [" + path + " is not a valid URI", e);
+            throw new RuntimeException("String [" + resource + " is not a valid URI", e);
         }
     }
 }

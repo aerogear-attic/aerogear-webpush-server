@@ -78,8 +78,8 @@ public class DefaultWebPushServer implements WebPushServer {
         return webpushURI(id, Resource.AGGREGATE.resourceName());
     }
 
-    private static URI webpushURI(final String id, final String postfix) {
-        return URI.create("webpush/" + id + "/" + postfix);
+    private static URI webpushURI(final String registrationId, final String resource) {
+        return URI.create("webpush/" + resource + "/" + registrationId);
     }
 
     private static String urlEncodeId(final String id) {

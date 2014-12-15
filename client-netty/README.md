@@ -29,7 +29,7 @@ The console support tab completion and you can type ```help``` to see the availa
 #### Register 
 
     > register
-    < [streamid:3] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, Location, cache-control: private, max-age=604800000, link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/aggregate>;rel="urn:ietf:params:push:aggregate", link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/reg>;rel="urn:ietf:params:push:reg", link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/subscribe>;rel="urn:ietf:params:push:sub", location: webpush/97e360b2-383d-4de5-bf28-8956977599e9/reg]
+    < [streamid:3] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, Location, cache-control: private, max-age=604800000, link: <webpush/aggregate/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:aggregate", link: <webpush/reg/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:reg", link: <webpush/subscribe/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:sub", location: webpush/reg/97e360b2-383d-4de5-bf28-8956977599e9]
     >
     
 #### Create a subscription
@@ -41,7 +41,7 @@ The console support tab completion and you can type ```help``` to see the availa
 #### Monitor    
 
     > monitor webpush/97e360b2-383d-4de5-bf28-8956977599e9/reg
-    < [streamid:7] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, cache-control: private, max-age=604800000, link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/aggregate>;rel="urn:ietf:params:push:aggregate", link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/subscribe>;rel="urn:ietf:params:push:sub"]
+    < [streamid:7] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, cache-control: private, max-age=604800000, link: <webpush/aggregate/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:aggregate", link: <webpush/subscribe/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:sub"]
     
 #### Send notification
 

@@ -94,9 +94,9 @@ public final class CryptoUtil {
         }
     }
 
-    public static String endpointToken(final String uaid, final String channelId, final byte[] key) {
+    public static String endpointToken(final String uaid, final String subscriptionId, final byte[] key) {
         try {
-            final String path = uaid + "." + channelId;
+            final String path = uaid + "." + subscriptionId;
             return encrypt(key, path);
         } catch (final Exception e) {
             throw new RuntimeException(e);

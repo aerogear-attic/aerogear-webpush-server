@@ -4,9 +4,6 @@
 ## Using the WebPush console
 A very basic console/command line application is available to assist in development and testing of the server. 
 
-The following [screen cast](https://drive.google.com/file/d/0B2E1HZ1JnrJfYW90eVBTaGkzSkU/view?usp=sharing) shows the 
-same interactions as below.
- 
 ### Start the server
 
     cd server-netty
@@ -32,28 +29,29 @@ The console support tab completion and you can type ```help``` to see the availa
 #### Register 
 
     > register
-    < [streamid:3] ChannelLink: webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/channel, MonitorLink: webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/monitor
+    < [streamid:3] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, Location, cache-control: private, max-age=604800000, link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/aggregate>;rel="urn:ietf:params:push:aggregate", link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/reg>;rel="urn:ietf:params:push:reg", link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/subscribe>;rel="urn:ietf:params:push:sub", location: webpush/97e360b2-383d-4de5-bf28-8956977599e9/reg]
     >
     
-#### Create a channel
+#### Create a subscription
     
-    > create-channel webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/channel
-    < [streamid:5] Endpoint: webpush/a453gLsY5hlfXfs3TDzrIbjKUb6oKtoOIP4SX2VCYbIajei%2FaJTp7SgUGGv233sQOkY0v1peXoeun01xg9xQvMG7YAgcfTEEUZeKXS1m2CONLGZZoqfFlqthU4Owcy4MVu4sNN9YaqmI
+    > subscribe webpush/97e360b2-383d-4de5-bf28-8956977599e9/subscribe
+    < [streamid:5] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/Lc7OqncNa7b0v%2FRAoOp8sA0Z3t74IAN0RGHQ%2Bf%2BxLRWOTwnmDjOuzlWmSOvHqD93s%2B5Nm8lx7AeCheRKfxxqc%2BpSLfE79xymKiDwtTBgaIHRQNeD5e6WBSIvWJEzDndou3l7OLZ5lCkF]
     >
     
 #### Monitor    
-    > monitor webpush/d55f7b70-763c-480e-a043-0806fbcbe4f1/monitor
-    >
+
+    > monitor webpush/97e360b2-383d-4de5-bf28-8956977599e9/reg
+    < [streamid:7] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, cache-control: private, max-age=604800000, link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/aggregate>;rel="urn:ietf:params:push:aggregate", link: <webpush/97e360b2-383d-4de5-bf28-8956977599e9/subscribe>;rel="urn:ietf:params:push:sub"]
     
 #### Send notification
-    > notify webpush/a453gLsY5hlfXfs3TDzrIbjKUb6oKtoOIP4SX2VCYbIajei%2FaJTp7SgUGGv233sQOkY0v1peXoeun01xg9xQvMG7YAgcfTEEUZeKXS1m2CONLGZZoqfFlqthU4Owcy4MVu4sNN9YaqmI hello
+
+    > notify /webpush/Lc7OqncNa7b0v%2FRAoOp8sA0Z3t74IAN0RGHQ%2Bf%2BxLRWOTwnmDjOuzlWmSOvHqD93s%2B5Nm8lx7AeCheRKfxxqc%2BpSLfE79xymKiDwtTBgaIHRQNeD5e6WBSIvWJEzDndou3l7OLZ5lCkF hello
     < [streamid:2] hello
     >
     
 #### Exit the console
     
     > quit
-    
     
 
 

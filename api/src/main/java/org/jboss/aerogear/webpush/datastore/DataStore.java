@@ -19,63 +19,63 @@ package org.jboss.aerogear.webpush.datastore;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jboss.aerogear.webpush.Channel;
+import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.Registration;
 
 /**
- * Handles the storing of channels for a WebPush Server implementation.
+ * Handles the storing of subscriptions for a WebPush Server implementation.
  */
 public interface DataStore {
 
     /**
      * Saves the server's private key salt.
      *
-     * @param salt the server's private key salt.
+     * @param salt the server's private key salt
      */
     void savePrivateKeySalt(byte[] salt);
 
     /**
      * Returns the server's private key salt.
      *
-     * @return {@code byte[]} the server's private key salt if one has previously been saved, or an empty byte array.
+     * @return {@code byte[]} the server's private key salt if one has previously been saved, or an empty byte array
      */
     byte[] getPrivateKeySalt();
 
     /**
      * Saves a {@link Registration} to the underlying storage system.
      *
-     * @param registration the channelURI to be stored.
-     * @return {@code true} if storage was successful.
+     * @param registration the registration to store
+     * @return {@code true} if storage was successful
      */
     boolean saveRegistration(Registration registration);
 
     /**
      * Returns the {@link Registration} for the passed-in id.
      *
-     * @param registrationId the registration identifier to retreive.
+     * @param registrationId the registration identifier to retreive
      */
     Optional<Registration> getRegistration(String registrationId);
 
     /**
-     * Saves a {@link Channel} to the underlying storage system.
+     * Saves a {@link Subscription} to the underlying storage system.
      *
-     * @param channel the channel to store.
+     * @param subscription the subscription to store
      */
-    void saveChannel(Channel channel);
+    void saveChannel(Subscription subscription);
 
     /**
-     * Remove a {@link Channel} from the underlying storage system.
+     * Remove a {@link Subscription} from the underlying storage system.
      *
-     * @param channel the channel to remove
+     * @param subscription the subscription to remove
      */
-    void removeChannel(Channel channel);
+    void removeChannel(Subscription subscription);
 
     /**
      * Returns registrations for a certain registration.
      *
      * @param registrationId the registration identifier.
-     * @return {@code Set<Channel>} the registered channelURI uri's.
+     * @return {@code Set<Channel>} the registration id
      */
-    Set<Channel> getChannels(String registrationId);
+    Set<Subscription> getSubscriptions(String registrationId);
 
 }

@@ -25,7 +25,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     private final String endpointHost;
     private final int endpointPort;
     private final long registrationMaxAge;
-    private final long channelMaxAge;
+    private final long subscriptionMaxAge;
     private final long messageMaxAge;
     private final Protocol protocol;
 
@@ -37,7 +37,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         endpointTls = builder.endpointTls;
         password = builder.password;
         registrationMaxAge = builder.registrationMaxAge;
-        channelMaxAge = builder.channelMaxAge;
+        subscriptionMaxAge = builder.subscriptionMaxAge;
         protocol = builder.protocol;
         messageMaxAge = builder.messageMaxAge;
     }
@@ -78,8 +78,8 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     }
 
     @Override
-    public long channelMaxAge() {
-        return channelMaxAge;
+    public long subscriptionMaxAge() {
+        return subscriptionMaxAge;
     }
 
     @Override
@@ -100,7 +100,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
                 .append(", endpointTls=").append(endpointTls)
                 .append(", protocol=").append(protocol)
                 .append(", registrationMaxAge=").append(registrationMaxAge)
-                .append(", channelMaxAge=").append(channelMaxAge)
+                .append(", subscriptionMaxAge=").append(subscriptionMaxAge)
                 .append(", messageMaxAge=").append(messageMaxAge)
                 .append("]").toString();
     }
@@ -121,7 +121,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private String endpointHost;
         private int endpointPort;
         private long registrationMaxAge = 604800000L;
-        private long channelMaxAge = 604800000L;
+        private long subscriptionMaxAge = 604800000L;
         private long messageMaxAge = 0L;
         private Protocol protocol = Protocol.ALPN;
 
@@ -164,9 +164,9 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             return this;
         }
 
-        public Builder channelMaxAge(final Long maxAge) {
+        public Builder subscriptionMaxAge(final Long maxAge) {
             if (maxAge != null) {
-                this.channelMaxAge = maxAge;
+                this.subscriptionMaxAge = maxAge;
             }
             return this;
         }

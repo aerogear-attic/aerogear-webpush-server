@@ -30,9 +30,9 @@ import static org.mockito.Mockito.when;
 public class InMemoryDataStoreTest {
 
     @Test
-    public void saveChannel() {
+    public void saveSubscription() {
         final InMemoryDataStore store = new InMemoryDataStore();
-        final Registration registration = mockRegistration(UUID.randomUUID().toString(), asURI("monitorURI"), asURI("channelURI"));
+        final Registration registration = mockRegistration(UUID.randomUUID().toString(), asURI("regURI"), asURI("subscribeURI"));
         final boolean saved = store.saveRegistration(registration);
         assertThat(saved, is(true));
     }
@@ -41,11 +41,11 @@ public class InMemoryDataStoreTest {
         return URI.create(uri);
     }
 
-    private Registration mockRegistration(final String id, final URI monitorURI, final URI channelURI) {
+    private Registration mockRegistration(final String id, final URI monitorURI, final URI subscribeUri) {
         final Registration r = mock(Registration.class);
         when(r.id()).thenReturn(id);
-        when(r.monitorUri()).thenReturn(monitorURI);
-        when(r.channelUri()).thenReturn(channelURI);
+        when(r.uri()).thenReturn(monitorURI);
+        when(r.subscribeUri()).thenReturn(subscribeUri);
         return r;
     }
 

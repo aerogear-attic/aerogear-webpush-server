@@ -80,9 +80,9 @@ public interface WebPushServerConfig {
     long registrationMaxAge();
 
     /**
-     * Returns the maximum age for a channel.
+     * Returns the maximum age for a subscription.
      */
-    long channelMaxAge();
+    long subscriptionMaxAge();
 
     /**
      * Returns the maximum age that a message will be stored for.

@@ -99,9 +99,9 @@ public class ConfigReader {
         if (registrationMaxAge != null) {
             builder.registrationMaxAge(registrationMaxAge.asLong());
         }
-        final JsonNode channelMaxAge = json.get("channel-max-age");
-        if (channelMaxAge != null) {
-            builder.channelMaxAge(channelMaxAge.asLong());
+        final JsonNode subscriptionMaxAge = json.get("subscription-max-age");
+        if (subscriptionMaxAge != null) {
+            builder.subscriptionMaxAge(subscriptionMaxAge.asLong());
         }
         final JsonNode protocol = json.get("protocol");
         if (protocol != null) {

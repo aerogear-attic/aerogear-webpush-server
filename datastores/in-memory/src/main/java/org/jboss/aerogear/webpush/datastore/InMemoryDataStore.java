@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.jboss.aerogear.webpush.Channel;
+import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.Registration;
 
 /**
@@ -32,7 +32,7 @@ import org.jboss.aerogear.webpush.Registration;
 public class InMemoryDataStore implements DataStore {
 
     private final ConcurrentMap<String, Registration> registrations = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, Set<Channel>> channels = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Set<Subscription>> subscriptions = new ConcurrentHashMap<>();
 
     private byte[] salt;
 
@@ -63,25 +63,25 @@ public class InMemoryDataStore implements DataStore {
     }
 
     @Override
-    public void saveChannel(final Channel channel) {
-        final String id = channel.registrationId();
-        final Set<Channel> newChannels = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        newChannels.add(channel);
+    public void saveChannel(final Subscription subscription) {
+        final String id = subscription.registrationId();
+        final Set<Subscription> newSubscriptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        newSubscriptions.add(subscription);
         while (true) {
-            final Set<Channel> currentChannels = channels.get(id);
-            if (currentChannels == null) {
-                final Set<Channel> previous = channels.putIfAbsent(id, newChannels);
+            final Set<Subscription> currentSubscriptions = subscriptions.get(id);
+            if (currentSubscriptions == null) {
+                final Set<Subscription> previous = subscriptions.putIfAbsent(id, newSubscriptions);
                 if (previous != null) {
-                    newChannels.addAll(previous);
-                    if (channels.replace(id, previous, newChannels)) {
+                    newSubscriptions.addAll(previous);
+                    if (subscriptions.replace(id, previous, newSubscriptions)) {
                         break;
                     }
                 } else {
                     break;
                 }
             } else {
-                newChannels.addAll(currentChannels);
-                if (channels.replace(id, currentChannels, newChannels)) {
+                newSubscriptions.addAll(currentSubscriptions);
+                if (subscriptions.replace(id, currentSubscriptions, newSubscriptions)) {
                     break;
                 }
             }
@@ -89,22 +89,22 @@ public class InMemoryDataStore implements DataStore {
     }
 
     @Override
-    public void removeChannel(final Channel channel) {
-        Objects.requireNonNull(channel, "channel must not be null");
+    public void removeChannel(final Subscription subscription) {
+        Objects.requireNonNull(subscription, "subscription must not be null");
         while (true) {
-            final Set<Channel> currentChannels = channels.get(channel.registrationId());
-            if (currentChannels == null || currentChannels.isEmpty()) {
+            final Set<Subscription> currentSubscriptions = subscriptions.get(subscription.registrationId());
+            if (currentSubscriptions == null || currentSubscriptions.isEmpty()) {
                 break;
             }
-            final Set<Channel> newChannels = Collections.newSetFromMap(new ConcurrentHashMap<>());
-            boolean added = newChannels.addAll(currentChannels);
+            final Set<Subscription> newSubscriptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+            boolean added = newSubscriptions.addAll(currentSubscriptions);
             if (!added){
                 break;
             }
 
-            boolean removed = newChannels.remove(channel);
+            boolean removed = newSubscriptions.remove(subscription);
             if (removed) {
-                if (channels.replace(channel.registrationId(), currentChannels, newChannels)) {
+                if (subscriptions.replace(subscription.registrationId(), currentSubscriptions, newSubscriptions)) {
                     break;
                 }
             }
@@ -112,12 +112,12 @@ public class InMemoryDataStore implements DataStore {
     }
 
     @Override
-    public Set<Channel> getChannels(final String registrationId) {
-        final Set<Channel> channels = this.channels.get(registrationId);
-        if (channels == null) {
+    public Set<Subscription> getSubscriptions(final String registrationId) {
+        final Set<Subscription> subscriptions = this.subscriptions.get(registrationId);
+        if (subscriptions == null) {
             return Collections.emptySet();
         }
-        return Collections.unmodifiableSet(channels);
+        return Collections.unmodifiableSet(subscriptions);
     }
 
 }

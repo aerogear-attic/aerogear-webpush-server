@@ -16,12 +16,12 @@ public interface ResponseHandler {
     void registerResponse(final Http2Headers headers, int streamId);
 
     /**
-     * The response from a channel creation request.
+     * The response from a subscription creation request.
      *
      * @param headers the headers returned from the register request.
      * @param streamId the streamId for this response.
      */
-    void channelResponse(Http2Headers headers, int streamId);
+    void subscribeResponse(Http2Headers headers, int streamId);
 
     /**
      * Notifications send from the WebPush server
@@ -32,11 +32,11 @@ public interface ResponseHandler {
     void notification(String data, int streamId);
 
     /**
-     * The status of a channel
+     * The status of a subscription
      *
      * @param headers the headers returned from the register request.
      * @param streamId the streamId for this notification.
      */
-    void channelStatus(Http2Headers headers, int streamId);
+    void status(Http2Headers headers, int streamId);
 
 }

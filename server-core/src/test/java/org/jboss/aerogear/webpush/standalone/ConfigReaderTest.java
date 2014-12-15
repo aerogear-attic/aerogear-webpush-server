@@ -72,8 +72,8 @@ public class ConfigReaderTest {
     }
 
     @Test
-    public void channelMaxAge() {
-        assertThat(webPushServerConfig.channelMaxAge(), is(4000L));
+    public void subscriptionMaxAge() {
+        assertThat(webPushServerConfig.subscriptionMaxAge(), is(4000L));
     }
 
     @Test

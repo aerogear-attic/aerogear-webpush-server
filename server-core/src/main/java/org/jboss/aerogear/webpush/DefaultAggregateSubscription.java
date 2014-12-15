@@ -5,22 +5,22 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-public class DefaultAggregateChannel implements AggregateChannel {
+public class DefaultAggregateSubscription implements AggregateSubscription {
 
-    private final Set<Entry> channels;
+    private final Set<Entry> subscriptions;
 
-    public DefaultAggregateChannel(final Set<Entry> channels) {
-        this.channels = channels;
+    public DefaultAggregateSubscription(final Set<Entry> subscriptions) {
+        this.subscriptions = subscriptions;
     }
 
     @Override
-    public Set<Entry> channels() {
-        return channels;
+    public Set<Entry> subscriptions() {
+        return subscriptions;
     }
 
     @Override
     public String toString() {
-        return "DefaulEntry[channels=" + channels + "]";
+        return "DefaulEntry[subscriptions=" + subscriptions + "]";
     }
 
     public static final class DefaultEntry implements Entry {

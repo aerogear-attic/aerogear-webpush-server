@@ -29,9 +29,9 @@ public interface WebPushServer {
      * the specification.
      * <p>
      * This establishes a shared session between the device and the server.
-     * A new registration does not have any channels associated with it.
+     * A new registration does not have any subscriptions associated with it.
      *
-     * @return {@link Registration} the response for this registration.
+     * @return {@link Registration} the response for this registration
      */
     Registration register();
 
@@ -39,56 +39,57 @@ public interface WebPushServer {
      * Returns the {@link Registration} for the specified id.
      *
      * @param id the registration identifier.
-     * @return {@code Optional} {@link Registration} with the registration or {@code Optional.empty}.
+     * @return {@code Optional} {@link Registration} with the registration or {@code Optional.empty}
      */
     Optional<Registration> registration(final String id);
 
     /**
-     * Handles the creation of new channels for a registration.
+     * Handles the creation of new subscriptions for a registration.
      *
-     * @param registrationId the registration id for which this new channel belongs to.
+     * @param registrationId the registration id that this new subscription belongs to
      */
-    Optional<Channel> newChannel(String registrationId);
+    Optional<Subscription> newSubscription(String registrationId);
 
     /**
-     * Retrieves a channels.
+     * Retrieves a subscriptions.
      *
-     * @param path
+     * @param endpoint the endpoint to retrieve
+     * @return {@code Optional} an {@link Optional} {@link Subscription}
      */
-    Optional<Channel> getChannel(String path);
+    Optional<Subscription> subscription(String endpoint);
 
     /**
-     * Removes the specified channel
+     * Removes the specified subscription.
      *
-     * @param channel the channel to be removed.
+     * @param subscription the subscription to be removed
      */
-    void removeChannel(Channel channel);
+    void removeSubscription(Subscription subscription);
 
     /**
-     * Handles the retrieval of a channnel's message.
+     * Handles the retrieval of a subscriptions's message.
      * This enables clients to query the server for the latest notification/message.
      *
-     * @param endpointToken the endpoint token for the channel.
-     * @return {code String} the latest notification/message for the specified channel.
+     * @param endpoint the endpoint for the subscriptoin
+     * @return {code String} the latest notification/message for the specified subscription
      */
-    Optional<String> getMessage(String endpointToken);
+    Optional<String> getMessage(String endpoint);
 
     /**
-     * Set the notifcation/message for a channel.
+     * Set the notifcation/message for a subscription.
      *
-     * @param endpointToken that identifies the channel.
+     * @param endpoint that identifies the subscription.
      * @param content the new content.
      */
-    void setMessage(String endpointToken, Optional<String> content);
+    void setMessage(String endpoint, Optional<String> content);
 
     /**
      * Handles device monitorURI requests which are a signal to the server to begin delivering
      * push notification/messages to the client.
      *
      * @param registrationId the id of the registration.
-     * @param channelUri the channelURI uri to monitorURI.
+     * @param endpoint the endpoint
      */
-    void monitor(String registrationId, String channelUri);
+    void monitor(String registrationId, String endpoint);
 
     /**
      * Returns the configuration for this WebPush server.

@@ -51,9 +51,9 @@ public class WebPushFrameReader implements Http2FrameReader {
                 if (headers.contains(LINK) && headers.contains(LOCATION)) {
                     callback.registerResponse(headers, streamId);
                 } else if (headers.contains(LOCATION)) {
-                    callback.channelResponse(headers, streamId);
+                    callback.subscribeResponse(headers, streamId);
                 } else {
-                    callback.channelStatus(headers, streamId);
+                    callback.status(headers, streamId);
                 }
             }
 
@@ -102,7 +102,7 @@ public class WebPushFrameReader implements Http2FrameReader {
             @Override
             public void onPushPromiseRead(ChannelHandlerContext ctx, int streamId,
                                           int promisedStreamId, Http2Headers headers, int padding) throws Http2Exception {
-                callback.channelStatus(headers, streamId);
+                callback.status(headers, streamId);
                 listener.onPushPromiseRead(ctx, streamId, promisedStreamId, headers, padding);
             }
 

@@ -38,7 +38,7 @@ The port that the server will bind to.
 
 #### password
 This should be a password that will be used to generate the server private key which is used for  encryption/decryption
-of the endpoint URLs that are returned to clients upon successful channel registration.
+of the endpoint URLs that are returned to clients upon successful subscriptions.
 
 #### endpoint-host
 The allows the configuration of the host name that will be exposed for the endpoint that clients use to send notifications.
@@ -50,7 +50,7 @@ The allows the configuration of the port that will be exposed for the endpoint t
 This enables an externally exposed port to be specified which differs from the host that the server binds to.
 
 #### endpoint-tls
-Configures Transport Layer Security (TLS) for the notification endpointUrl that is returned when a UserAgent/client registers a channel. 
+Configures Transport Layer Security (TLS) for the notification endpointUrl that is returned for subscription locations.
 Setting this to _true_ will return a url with _https_ as the protocol.
 
 #### endpoint-prefix  

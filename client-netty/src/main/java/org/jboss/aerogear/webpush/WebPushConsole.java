@@ -22,21 +22,21 @@ public class WebPushConsole {
                 "Connects to specified WebPush server on the specificed host/port."),
         REGISTER("register",
                 Optional.<String>empty(),
-                "Registers with the WebPush server and displays the channel-url and monitor-url."),
-        CHANNEL("channel",
-                Optional.of("<channel-url>"),
-                "Creates a new channel and displays the endpoint-url the channel. This can be used with the notify command "),
+                "Registers with the WebPush server and displays the subscribe-url and monitor-url."),
+        SUBSCRIBE("subscribe",
+                Optional.of("<subscribe-url>"),
+                "Creates a new subscription and displays the endpoint-url the subscription. This can be used with the notify command "),
         STATUS("status",
-                Optional.of("<channel-url>"),
-                "Checks to see if a channel exist for the specified channel-url"),
+                Optional.of("<endpoint-url>"),
+                "Checks the status of the subscription and returns the latest message if the server has any undelivered messages for the subscription"),
         DELETE("delete",
-                Optional.of("<channel-url>"),
-                "Deletes the specified channel."),
-        AGGREGATE("aggregate-channel",
-                Optional.of("<aggregate-url> <channel-url>[,<channel-url>]"),
-                "Creates a new aggregate channel with the passed in channel-urls being part for the aggregate."),
+                Optional.of("<endpoint-url>"),
+                "Deletes the specified subscription."),
+        AGGREGATE("aggregate-subscription",
+                Optional.of("<aggregate-url> <endpoint-url>[,<endpoint-url>]"),
+                "Creates a new aggregate subscription with the passed in endpoint-urls being part for the aggregate."),
         MONITOR("monitor",
-                Optional.of("<monitor-url> nowait"),
+                Optional.of("<reg-url> nowait"),
                 "Starts monitoring for notifications. Adding nowait will send a Prefer: wait=0 header."),
         NOTIFY("notify",
                 Optional.of("<endpoint-url> <payload>"),
@@ -95,8 +95,8 @@ public class WebPushConsole {
                 commands.add(Command.REGISTER.example());
                 co.setOffset(0);
             }
-            if(co.getBuffer().startsWith("ch")) {
-                commands.add(Command.CHANNEL.example());
+            if(co.getBuffer().startsWith("su")) {
+                commands.add(Command.SUBSCRIBE.example());
             }
             if(co.getBuffer().startsWith("st")) {
                 commands.add(Command.STATUS.example());
@@ -146,14 +146,14 @@ public class WebPushConsole {
                     handleRegister(client);
                 } else if (buffer.startsWith(Command.MONITOR.toString())) {
                     handleMonitor(client, buffer);
-                } else if (buffer.startsWith(Command.CHANNEL.toString())) {
-                    handleCreateChannel(client, getFirstArg(buffer));
+                } else if (buffer.startsWith(Command.SUBSCRIBE.toString())) {
+                    handleSubscribe(client, getFirstArg(buffer));
                 } else if (buffer.startsWith(Command.STATUS.toString())) {
-                    handleChannelStatus(client, getFirstArg(buffer));
+                    handleStatus(client, getFirstArg(buffer));
                 } else if (buffer.startsWith(Command.DELETE.toString())) {
-                    handleChannelDelete(client, getFirstArg(buffer));
+                    handleSubscriptionDelete(client, getFirstArg(buffer));
                 } else if (buffer.startsWith(Command.AGGREGATE.toString())) {
-                    handleAggregateChannel(client, buffer, console);
+                    handleAggregateSubscription(client, buffer, console);
                 } else if (buffer.startsWith(Command.NOTIFY.toString())) {
                     handleNotification(client, buffer);
                 } else if (buffer.startsWith(Command.HELP.toString())) {
@@ -183,7 +183,7 @@ public class WebPushConsole {
         }
 
         @Override
-        public void channelResponse(final Http2Headers headers, final int streamId) {
+        public void subscribeResponse(final Http2Headers headers, final int streamId) {
             print(headers.toString(), streamId);
         }
 
@@ -193,7 +193,7 @@ public class WebPushConsole {
         }
 
         @Override
-        public void channelStatus(final Http2Headers headers, final int streamId) {
+        public void status(final Http2Headers headers, final int streamId) {
             print(headers.toString(), streamId);
         }
 
@@ -232,7 +232,7 @@ public class WebPushConsole {
 
     private static void handleMonitor(final WebPushClient client, final String buffer) {
         final String[] args = getArgs(buffer);
-        final boolean nowait = args.length == 3 && args[3] != null;
+        final boolean nowait = args.length == 3 && args[2] != null;
         try {
             client.monitor(args[1], nowait);
         } catch (Exception e) {
@@ -240,38 +240,38 @@ public class WebPushConsole {
         }
     }
 
-    public static void handleCreateChannel(final WebPushClient client, final String url) {
+    public static void handleSubscribe(final WebPushClient client, final String url) {
         try {
-            client.createChannel(url);
+            client.createSubscription(url);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void handleChannelStatus(final WebPushClient client, final String url) {
+    public static void handleStatus(final WebPushClient client, final String url) {
         try {
-            client.channelStatus(url);
+            client.status(url);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void handleChannelDelete(final WebPushClient client, final String url) {
+    public static void handleSubscriptionDelete(final WebPushClient client, final String url) {
         try {
-            client.channelDelete(url);
+            client.deleteSubscription(url);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void handleAggregateChannel(final WebPushClient client,
-                                              final String cmd,
-                                              final Console console) {
+    public static void handleAggregateSubscription(final WebPushClient client,
+                                                   final String cmd,
+                                                   final Console console) {
         final String[] args = getArgs(cmd);
         try {
-            final String json = JsonMapper.toJson(new DefaultAggregateChannel(WebPushClient.asEntries(args[2].split(","))));
+            final String json = JsonMapper.toJson(new DefaultAggregateSubscription(WebPushClient.asEntries(args[2].split(","))));
             console.getShell().out().println(JsonMapper.pretty(json));
-            client.createAggregateChannel(args[1], json);
+            client.createAggregateSubscription(args[1], json);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -291,7 +291,7 @@ public class WebPushConsole {
         out.println("WebPushConsole commands (tab completion available)");
         out.println();
         Command.CONNECT.printHelp(out);
-        Command.CHANNEL.printHelp(out);
+        Command.SUBSCRIBE.printHelp(out);
         Command.HELP.printHelp(out);
         Command.NOTIFY.printHelp(out);
         Command.MONITOR.printHelp(out);

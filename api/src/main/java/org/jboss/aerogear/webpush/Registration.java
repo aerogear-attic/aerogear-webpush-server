@@ -16,35 +16,35 @@ public interface Registration {
     String id();
 
     /**
-     * The {@link URI} describing how a device is expected to monitor for incoming push messages.
+     * The {@link URI} representing this registration.
      * <p>
-     * The monitoring URI is used by a device to setup a push stream.
      *
      * @return {@link URI} which will be returned to the calling client, most often as HTTP Location Header value.
      */
-    URI monitorUri();
+    URI uri();
 
     /**
-     * The {@link URI} used by devices to create new channels
+     * The {@link URI} used by devices to create new subscriptions
      *
-     * @return {@link URI} to be used to create new channels.
+     * @return {@link URI} to be used to create new subscriptions
      */
-    URI channelUri();
+    URI subscribeUri();
 
     /**
-     * The {@link URI} used by devices to create aggreate/batch channels.
+     * The {@link URI} used by devices to create aggreate/batch subscriptions.
      * <p>
      * This allows an application to request that a web push server deliver the same message to
      * a potentially large set of devices.
      *
-     * @return {@link URI} to be used to create new aggregate/batch channels.
+     * @return {@link URI} to be used to create new aggregate/batch subscriptions.
      */
     URI aggregateUri();
 
     enum WebLink {
-        CHANNEL("push:channel"),
-        MONITOR("push:monitor"),
-        AGGREGATE("push:aggregate");
+        SUBSCRIBE("urn:ietf:params:push:sub"),
+        AGGREGATE("urn:ietf:params:push:aggregate"),
+        REGISTRATION("urn:ietf:params:push:reg"),
+        SUBSCRIPTION("urn:ietf:params:push");
 
         private final String type;
 
@@ -59,6 +59,24 @@ public interface Registration {
 
         public String weblink(final String url) {
             return "<" + url + ">;rel=\"" + type + "\"";
+        }
+
+    }
+
+    enum Resource {
+        REGISTER("register"),
+        AGGREGATE("aggregate"),
+        SUBSCRIBE("subscribe"),
+        REGISTRATION("reg");
+
+        private final String resourceName;
+
+        private Resource(final String resourceName) {
+            this.resourceName = resourceName;
+        }
+
+        public String resourceName() {
+            return resourceName;
         }
     }
 

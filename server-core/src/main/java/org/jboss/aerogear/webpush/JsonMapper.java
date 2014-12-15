@@ -10,8 +10,8 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.jboss.aerogear.webpush.AggregateChannel.Entry;
-import org.jboss.aerogear.webpush.DefaultAggregateChannel.DefaultEntry;
+import org.jboss.aerogear.webpush.AggregateSubscription.Entry;
+import org.jboss.aerogear.webpush.DefaultAggregateSubscription.DefaultEntry;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;
@@ -26,8 +26,8 @@ public final class JsonMapper {
     private static ObjectMapper createObjectMapper() {
         om = new ObjectMapper();
         final SimpleModule module = new SimpleModule("Module", new Version(1, 0, 0, null, "aerogear", "webpush"));
-        module.addDeserializer(AggregateChannel.class, new AggregateChannelDeserializer());
-        module.addSerializer(AggregateChannel.class, new AggregateChannelSerializer());
+        module.addDeserializer(AggregateSubscription.class, new AggregateChannelDeserializer());
+        module.addSerializer(AggregateSubscription.class, new AggregateChannelSerializer());
         om.registerModule(module);
         return om;
     }
@@ -73,25 +73,25 @@ public final class JsonMapper {
         }
     }
 
-    private static class AggregateChannelDeserializer extends JsonDeserializer<AggregateChannel> {
+    private static class AggregateChannelDeserializer extends JsonDeserializer<AggregateSubscription> {
 
         @Override
-        public AggregateChannel deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
+        public AggregateSubscription deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
             final ObjectCodec oc = jp.getCodec();
             final JsonNode tree = oc.readTree(jp);
-            final Set<Entry> channels = new LinkedHashSet<>();
+            final Set<Entry> subscriptions = new LinkedHashSet<>();
             if (tree.isArray()) {
                 tree.forEach(node -> {
                     final Map.Entry<String, JsonNode> entry = node.fields().next();
                     final JsonNode objectNode = entry.getValue();
                     final Optional<JsonNode> expires = Optional.ofNullable(objectNode.get("expires"));
                     final Optional<JsonNode> pubkey = Optional.ofNullable(objectNode.get("pubkey"));
-                    channels.add(new DefaultEntry(entry.getKey(),
+                    subscriptions.add(new DefaultEntry(entry.getKey(),
                             expires.map(n -> n.asLong(0)),
                             pubkey.map(JsonMapper::parseBinaryValue)));
                 });
             }
-            return new DefaultAggregateChannel(channels);
+            return new DefaultAggregateSubscription(subscriptions);
         }
     }
 
@@ -103,15 +103,15 @@ public final class JsonMapper {
         }
     }
 
-    private static class AggregateChannelSerializer extends JsonSerializer<AggregateChannel> {
+    private static class AggregateChannelSerializer extends JsonSerializer<AggregateSubscription> {
 
         @Override
-        public void serialize(final AggregateChannel aggregateChannel,
+        public void serialize(final AggregateSubscription aggregateSubscription,
                               final JsonGenerator jgen,
                               final SerializerProvider provider) throws IOException {
 
             jgen.writeStartArray();
-            for (Entry entry: aggregateChannel.channels()) {
+            for (Entry entry: aggregateSubscription.subscriptions()) {
                 jgen.writeStartObject();
                 jgen.writeObjectFieldStart(entry.endpoint());
                 entry.expires().ifPresent(l -> writeExpiresField(l, jgen));

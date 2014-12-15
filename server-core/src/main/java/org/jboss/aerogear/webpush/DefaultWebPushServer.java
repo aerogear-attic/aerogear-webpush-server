@@ -17,6 +17,7 @@
 package org.jboss.aerogear.webpush;
 
 import org.jboss.aerogear.crypto.Random;
+import org.jboss.aerogear.webpush.Registration.Resource;
 import org.jboss.aerogear.webpush.datastore.DataStore;
 import org.jboss.aerogear.webpush.util.CryptoUtil;
 import org.slf4j.Logger;
@@ -53,8 +54,8 @@ public class DefaultWebPushServer implements WebPushServer {
         final String id = UUID.randomUUID().toString();
         final String stringId = urlEncodeId(id);
         final DefaultRegistration reg = new DefaultRegistration(id,
-                monitorUri(stringId),
-                channelUri(stringId),
+                regUri(stringId),
+                subscribeUri(stringId),
                 aggregateUri(stringId));
         store.saveRegistration(reg);
         return reg;
@@ -65,20 +66,20 @@ public class DefaultWebPushServer implements WebPushServer {
         return store.getRegistration(id);
     }
 
-    private static URI monitorUri(final String id) {
-        return webpushURI(id, "/monitor");
+    private static URI regUri(final String id) {
+        return webpushURI(id, Resource.REGISTRATION.resourceName());
     }
 
-    private static URI channelUri(final String id) {
-        return webpushURI(id, "/channel");
+    private static URI subscribeUri(final String id) {
+        return webpushURI(id, Resource.SUBSCRIBE.resourceName());
     }
 
     private static URI aggregateUri(final String id) {
-        return webpushURI(id, "/aggregate");
+        return webpushURI(id, Resource.AGGREGATE.resourceName());
     }
 
     private static URI webpushURI(final String id, final String postfix) {
-        return URI.create("webpush/" + id + postfix);
+        return URI.create("webpush/" + id + "/" + postfix);
     }
 
     private static String urlEncodeId(final String id) {
@@ -90,43 +91,43 @@ public class DefaultWebPushServer implements WebPushServer {
     }
 
     @Override
-    public Optional<Channel> newChannel(final String registrationId) {
+    public Optional<Subscription> newSubscription(final String registrationId) {
         final Optional<Registration> registration = store.getRegistration(registrationId);
         return registration.map(r -> {
-            final String channelId = UUID.randomUUID().toString();
-            final String endpointToken = generateEndpointToken(r.id(), channelId);
-            final DefaultChannel newChannel = new DefaultChannel(r.id(), channelId, endpointToken);
+            final String id = UUID.randomUUID().toString();
+            final String endpoint = generateEndpointToken(r.id(), id);
+            final DefaultSubscription newChannel = new DefaultSubscription(r.id(), id, endpoint);
             store.saveChannel(newChannel);
             return newChannel;
         });
     }
 
     @Override
-    public void removeChannel(Channel channel) {
-        store.removeChannel(channel);
+    public void removeSubscription(Subscription subscription) {
+        store.removeChannel(subscription);
     }
 
     @Override
     public Optional<String> getMessage(final String endpointToken) {
-        return getChannel(endpointToken).flatMap(Channel::message);
+        return subscription(endpointToken).flatMap(Subscription::message);
     }
 
     @Override
     public void setMessage(final String endpointToken, final Optional<String> content) {
-        getChannel(endpointToken).ifPresent(ch ->
-            store.saveChannel(new DefaultChannel(ch.registrationId(),
-                    ch.channelId(),
-                    endpointToken,
-                    content))
+        subscription(endpointToken).ifPresent(ch ->
+                        store.saveChannel(new DefaultSubscription(ch.registrationId(),
+                                ch.id(),
+                                endpointToken,
+                                content))
         );
     }
 
-    public Optional<Channel> getChannel(final String endpointToken) {
+    public Optional<Subscription> subscription(final String endpointToken) {
         try {
             final String decrypt = CryptoUtil.decrypt(privateKey, endpointToken);
             final String[] tokens = decrypt.split("\\.");
-            final Set<Channel> channels = store.getChannels(tokens[0]);
-            return channels.stream().filter(c -> c.channelId().equals(tokens[1])).findAny();
+            final Set<Subscription> subscriptions = store.getSubscriptions(tokens[0]);
+            return subscriptions.stream().filter(c -> c.id().equals(tokens[1])).findAny();
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -151,8 +152,8 @@ public class DefaultWebPushServer implements WebPushServer {
         return CryptoUtil.secretKey(config.password(), keySalt);
     }
 
-    private String generateEndpointToken(final String uaid, final String channelId) {
-        return CryptoUtil.endpointToken(uaid, channelId, privateKey);
+    private String generateEndpointToken(final String uaid, final String subscriptionId) {
+        return CryptoUtil.endpointToken(uaid, subscriptionId, privateKey);
     }
 
 }

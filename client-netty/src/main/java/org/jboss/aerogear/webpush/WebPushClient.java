@@ -38,8 +38,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import org.jboss.aerogear.webpush.AggregateChannel.Entry;
-import org.jboss.aerogear.webpush.DefaultAggregateChannel.DefaultEntry;
+import org.jboss.aerogear.webpush.AggregateSubscription.Entry;
+import org.jboss.aerogear.webpush.DefaultAggregateSubscription.DefaultEntry;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
@@ -111,32 +111,32 @@ public class WebPushClient {
         writeRequest(headers);
     }
 
-    public void createChannel(final String channelUrl) throws Exception {
-        writeRequest(POST, channelUrl, Unpooled.buffer());
+    public void createSubscription(final String subscribeUrl) throws Exception {
+        writeRequest(POST, subscribeUrl, Unpooled.buffer());
     }
 
-    public void channelStatus(final String channelUrl) throws Exception {
-        writeRequest(GET, channelUrl);
+    public void status(final String endpointUrl) throws Exception {
+        writeRequest(GET, endpointUrl);
     }
 
-    public void channelDelete(final String channelUrl) throws Exception {
-        writeRequest(DELETE, channelUrl);
+    public void deleteSubscription(final String endpointUrl) throws Exception {
+        writeRequest(DELETE, endpointUrl);
     }
 
-    public void createAggregateChannel(final String aggregateUrl, final String json) throws Exception {
+    public void createAggregateSubscription(final String aggregateUrl, final String json) throws Exception {
         writeRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
     }
 
-    public static Set<Entry> asEntries(final String[] channelUrls) {
-        final Set<Entry> entries = new HashSet<>(channelUrls.length);
-        for (String url: channelUrls) {
+    public static Set<Entry> asEntries(final String[] endpointUrls) {
+        final Set<Entry> entries = new HashSet<>(endpointUrls.length);
+        for (String url: endpointUrls) {
             entries.add(new DefaultEntry(url, Optional.of(0L)));
         }
         return entries;
     }
 
-    public void notify(final String channelUrl, final String payload) throws Exception {
-        writeRequest(PUT, channelUrl, copiedBuffer(payload, UTF_8));
+    public void notify(final String endpointUrl, final String payload) throws Exception {
+        writeRequest(PUT, endpointUrl, copiedBuffer(payload, UTF_8));
     }
 
     private void writeRequest(final HttpMethod method, final String url) throws Exception {

@@ -1,7 +1,8 @@
 package org.jboss.aerogear.webpush.netty;
 
-import org.jboss.aerogear.webpush.Channel;
+import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.Registration;
+import org.jboss.aerogear.webpush.Registration.Resource;
 import org.jboss.aerogear.webpush.WebPushServer;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
 import org.mockito.stubbing.OngoingStubbing;
@@ -29,9 +30,9 @@ public class MockWebPushServerBuilder {
     }
 
     private void setRegistrationUrls(final String id) {
-        when(registration.monitorUri()).thenReturn(asURI(context, id, "monitor"));
-        when(registration.channelUri()).thenReturn(asURI(context, id, "channel"));
-        when(registration.aggregateUri()).thenReturn(asURI(context, id, "aggregate"));
+        when(registration.uri()).thenReturn(asURI(context, id, Resource.REGISTRATION.resourceName()));
+        when(registration.subscribeUri()).thenReturn(asURI(context, id, Resource.SUBSCRIBE.resourceName()));
+        when(registration.aggregateUri()).thenReturn(asURI(context, id, Resource.AGGREGATE.resourceName()));
     }
 
     public MockWebPushServerBuilder registrationMaxAge(final long maxAge) {
@@ -39,19 +40,19 @@ public class MockWebPushServerBuilder {
         return this;
     }
 
-    public MockWebPushServerBuilder channelMaxAge(final long maxAge) {
-        when(config.channelMaxAge()).thenReturn(maxAge);
+    public MockWebPushServerBuilder subscriptionMaxAge(final long maxAge) {
+        when(config.subscriptionMaxAge()).thenReturn(maxAge);
         return this;
     }
 
-    public MockWebPushServerBuilder addChannel(final Channel channel) {
-        when(webPushServer.getChannel(channel.endpointToken())).thenReturn(Optional.of(channel));
-        when(webPushServer.newChannel(registrationId)).thenReturn(Optional.of(channel));
+    public MockWebPushServerBuilder addSubscription(final Subscription subscription) {
+        when(webPushServer.subscription(subscription.endpoint())).thenReturn(Optional.of(subscription));
+        when(webPushServer.newSubscription(registrationId)).thenReturn(Optional.of(subscription));
         return this;
     }
 
-    public MockWebPushServerBuilder channelOrder(final Consumer<OngoingStubbing<Optional<Channel>>> consumer) {
-        consumer.accept(when(webPushServer.newChannel(registrationId)));
+    public MockWebPushServerBuilder subscriptionOrder(final Consumer<OngoingStubbing<Optional<Subscription>>> consumer) {
+        consumer.accept(when(webPushServer.newSubscription(registrationId)));
         return this;
     }
 

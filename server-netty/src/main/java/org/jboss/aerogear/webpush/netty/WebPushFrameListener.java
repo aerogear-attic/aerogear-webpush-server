@@ -49,7 +49,6 @@ import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_EXPOSE_
 import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
-import static io.netty.handler.codec.http.HttpResponseStatus.ACCEPTED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -256,7 +255,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     private Http2Headers acceptedHeaders() {
         return new DefaultHttp2Headers(false)
-                .status(ACCEPTED.codeAsText())
+                .status(OK.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().messageMaxAge()));
     }

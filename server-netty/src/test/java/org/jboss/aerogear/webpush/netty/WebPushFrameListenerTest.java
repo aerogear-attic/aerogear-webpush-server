@@ -398,7 +398,7 @@ public class WebPushFrameListenerTest {
             final Http2Headers subHeaders = subscribe(frameListener, ctx, regHeaders, encoder);
             assertThat(subHeaders.status(), equalTo(CREATED.codeAsText()));
             final Http2Headers notifyHeaders = notify(frameListener, ctx, encoder, subHeaders, data);
-            assertThat(notifyHeaders.status(), equalTo(HttpResponseStatus.ACCEPTED.codeAsText()));
+            assertThat(notifyHeaders.status(), equalTo(OK.codeAsText()));
             frameListener.shutdown();
         } finally {
             data.release();

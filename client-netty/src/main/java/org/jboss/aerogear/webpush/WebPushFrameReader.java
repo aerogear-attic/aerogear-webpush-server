@@ -11,17 +11,16 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.util.CharsetUtil;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
 import static io.netty.util.internal.ObjectUtil.checkNotNull;
 
 public class WebPushFrameReader implements Http2FrameReader {
 
     private final Http2FrameReader reader;
-    private final ResponseHandler callback;
+    private final EventHandler callback;
 
     private final static AsciiString LINK = new AsciiString("link");
 
-    public WebPushFrameReader(final ResponseHandler callback, final Http2FrameReader reader) {
+    public WebPushFrameReader(final EventHandler callback, final Http2FrameReader reader) {
         this.reader = checkNotNull(reader, "reader");
         this.callback = callback;
     }
@@ -48,13 +47,7 @@ public class WebPushFrameReader implements Http2FrameReader {
             }
 
             private void processHeaders(final Http2Headers headers, final int streamId) {
-                if (headers.contains(LINK) && headers.contains(LOCATION)) {
-                    callback.registerResponse(headers, streamId);
-                } else if (headers.contains(LOCATION)) {
-                    callback.subscribeResponse(headers, streamId);
-                } else {
-                    callback.status(headers, streamId);
-                }
+                callback.inbound(headers, streamId);
             }
 
             @Override
@@ -102,7 +95,7 @@ public class WebPushFrameReader implements Http2FrameReader {
             @Override
             public void onPushPromiseRead(ChannelHandlerContext ctx, int streamId,
                                           int promisedStreamId, Http2Headers headers, int padding) throws Http2Exception {
-                callback.status(headers, streamId);
+                callback.inbound(headers, streamId);
                 listener.onPushPromiseRead(ctx, streamId, promisedStreamId, headers, padding);
             }
 

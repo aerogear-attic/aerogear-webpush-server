@@ -47,13 +47,13 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
 
     private final SslContext sslCtx;
     private final int maxContentLength;
-    private final ResponseHandler callback;
+    private final EventHandler callback;
     private WebPushToHttp2ConnectionHandler connectionHandler;
     private HttpResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
 
-    public WebPushClientInitializer(SslContext sslCtx, int maxContentLength, final ResponseHandler callback) {
+    public WebPushClientInitializer(SslContext sslCtx, int maxContentLength, final EventHandler callback) {
         this.sslCtx = sslCtx;
         this.maxContentLength = maxContentLength;
         this.callback = callback;

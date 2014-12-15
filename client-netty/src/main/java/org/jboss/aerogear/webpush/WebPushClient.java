@@ -64,7 +64,7 @@ public class WebPushClient {
     private final List<String> protocols;
     private NioEventLoopGroup workerGroup;
     private Channel channel;
-    private final ResponseHandler handler;
+    private final EventHandler handler;
 
     private WebPushClient(final Builder builder) {
         host = builder.host;
@@ -145,12 +145,14 @@ public class WebPushClient {
     }
 
     private void writeRequest(final Http2Headers headers) throws Exception {
+        handler.outbound(headers);
         ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers)).sync();
         requestFuture.sync();
     }
 
     private void writeRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
         final Http2Headers headers = http2Headers(method, url);
+        handler.outbound(headers);
         ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, Optional.of(payload))).sync();
         requestFuture.sync();
     }
@@ -209,7 +211,7 @@ public class WebPushClient {
         private int port = 8080;
         private boolean ssl;
         private final List<String> protocols = new ArrayList<>();
-        private ResponseHandler handler;
+        private EventHandler handler;
 
         public Builder(final String host) {
             this.host = host;
@@ -230,7 +232,7 @@ public class WebPushClient {
             return this;
         }
 
-        public Builder notificationHandler(final ResponseHandler handler) {
+        public Builder notificationHandler(final EventHandler handler) {
             this.handler = handler;
             return this;
         }

@@ -168,37 +168,40 @@ public class WebPushConsole {
         console.start();
     }
 
-    private static class CallbackHandler implements ResponseHandler {
+    private static class CallbackHandler implements EventHandler {
 
         private final Console console;
         private final Prompt inbound = new Prompt("< ");
+        private final Prompt outbound = new Prompt(">");
 
         CallbackHandler(final Console console) {
             this.console = console;
         }
 
         @Override
-        public void registerResponse(final Http2Headers headers, final int streamId) {
-            print(headers.toString(), streamId);
+        public void outbound(final Http2Headers headers) {
+            printOutbound(headers);
         }
 
         @Override
-        public void subscribeResponse(final Http2Headers headers, final int streamId) {
-            print(headers.toString(), streamId);
+        public void inbound(Http2Headers headers, int streamId) {
+            printInbound(headers.toString(), streamId);
         }
 
         @Override
         public void notification(final String data, final int streamId) {
-            print(data, streamId);
+            printInbound(data, streamId);
         }
 
-        @Override
-        public void status(final Http2Headers headers, final int streamId) {
-            print(headers.toString(), streamId);
+        private void printOutbound(final Http2Headers headers) {
+            final Prompt current = console.getPrompt();
+            console.setPrompt(outbound);
+            console.getShell().out().println(" " + headers.toString());
+            console.setPrompt(current);
         }
 
-        private void print(final String message, final int streamId) {
-            final Prompt current =  console.getPrompt();
+        private void printInbound(final String message, final int streamId) {
+            final Prompt current = console.getPrompt();
             console.setPrompt(inbound);
             console.getShell().out().println("[streamid:" + streamId + "] " + message);
             console.setPrompt(current);

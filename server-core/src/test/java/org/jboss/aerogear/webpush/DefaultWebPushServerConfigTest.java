@@ -44,4 +44,17 @@ public class DefaultWebPushServerConfigTest {
         assertThat(config.endpointPort(), is(7777));
     }
 
+    @Test (expected = IllegalStateException.class)
+    public void shouldThrowIfMaxSizeLessThanMaxLowerBound() {
+        DefaultWebPushConfig.create().messageMaxSize(20L).password("dummy").build();
+    }
+
+    @Test
+    public void messageMaxSize() {
+        final WebPushServerConfig config = DefaultWebPushConfig.create()
+                .messageMaxSize(4097L)
+                .password("dummy").build();
+        assertThat(config.messageMaxSize(), is(4097L));
+    }
+
 }

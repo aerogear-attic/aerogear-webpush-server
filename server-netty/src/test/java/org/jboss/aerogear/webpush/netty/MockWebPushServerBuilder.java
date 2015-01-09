@@ -27,6 +27,7 @@ public class MockWebPushServerBuilder {
         this.registrationId = registrationId;
         when(registration.id()).thenReturn(registrationId);
         setRegistrationUrls(registrationId);
+        when(config.messageMaxSize()).thenReturn(4096L);
     }
 
     private void setRegistrationUrls(final String id) {
@@ -53,6 +54,11 @@ public class MockWebPushServerBuilder {
 
     public MockWebPushServerBuilder subscriptionOrder(final Consumer<OngoingStubbing<Optional<Subscription>>> consumer) {
         consumer.accept(when(webPushServer.newSubscription(registrationId)));
+        return this;
+    }
+
+    public MockWebPushServerBuilder messageMaxSize(final long maxSize) {
+        when(config.messageMaxSize()).thenReturn(maxSize);
         return this;
     }
 

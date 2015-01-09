@@ -21,6 +21,8 @@ package org.jboss.aerogear.webpush;
  */
 public interface WebPushServerConfig {
 
+    long MESSAGE_MAX_LOWER_BOUND = 4096;
+
     enum Protocol {
         ALPN, NPN
     }
@@ -88,5 +90,10 @@ public interface WebPushServerConfig {
      * Returns the maximum age that a message will be stored for.
      */
     long messageMaxAge();
+
+    /**
+     * Returns the maximum size of a message that this server can handle.
+     */
+    long messageMaxSize();
 
 }

@@ -163,7 +163,7 @@ public class WebPushFrameListenerTest {
     }
 
     @Test
-    public void statusMessage() throws Exception {
+    public void statusWithMessage() throws Exception {
         final String regId = "9999";
         final String endpoint = "endpoint1";
         final String subId = "sub1";
@@ -303,7 +303,7 @@ public class WebPushFrameListenerTest {
     }
 
     @Test
-    public void aggregateChannelCreation() throws Exception {
+    public void aggregateSubscription() throws Exception {
         final String regId = "9999";
         final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
         final Subscription subscription1 = mockSubscription(regId, "sub1", "endpoint1", "message1");
@@ -453,6 +453,38 @@ public class WebPushFrameListenerTest {
 
             notify(frameListener, ctx, encoder, aggregateChannelHeaders, data);
             verify(encoder, times(2)).writeData(eq(ctx), eq(pushStreamId), eq(data), eq(0), eq(false), any(ChannelPromise.class));
+            frameListener.shutdown();
+        } finally {
+            data.release();
+        }
+    }
+
+    @Test
+    public void notificationMessageTooBig() throws Exception {
+        final String regId = "9999";
+        final String endpoint = "endpoint1";
+        final String subId = "sub1";
+        final String message = "message1";
+        final ByteBuf data = copiedBuffer(new String(new byte[4099]), UTF_8);
+        try {
+            final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+            final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
+                    .withRegistrationid(regId)
+                    .registrationMaxAge(10000L)
+                    .subscriptionMaxAge(50000L)
+                    .messageMaxSize(4098)
+                    .addSubscription(mockSubscription(regId, subId, endpoint, message))
+                    .build());
+            final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(registerPath(regId))
+                    .thenReturn(subscribePath(regId))
+                    .thenReturn(endpointPath(endpoint)));
+            frameListener.encoder(encoder);
+
+            final Http2Headers regHeaders = register(frameListener, ctx, encoder);
+            final Http2Headers subHeaders = subscribe(frameListener, ctx, regHeaders, encoder);
+            assertThat(subHeaders.status(), equalTo(CREATED.codeAsText()));
+            final Http2Headers notifyHeaders = notify(frameListener, ctx, encoder, subHeaders, data);
+            assertThat(notifyHeaders.status(), equalTo(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.codeAsText()));
             frameListener.shutdown();
         } finally {
             data.release();

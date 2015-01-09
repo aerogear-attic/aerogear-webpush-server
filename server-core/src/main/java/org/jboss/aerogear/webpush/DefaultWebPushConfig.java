@@ -27,6 +27,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     private final long registrationMaxAge;
     private final long subscriptionMaxAge;
     private final long messageMaxAge;
+    private final long messageMaxSize;
     private final Protocol protocol;
 
     private DefaultWebPushConfig(final Builder builder) {
@@ -40,6 +41,10 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         subscriptionMaxAge = builder.subscriptionMaxAge;
         protocol = builder.protocol;
         messageMaxAge = builder.messageMaxAge;
+        if (builder.messageMaxSize < MESSAGE_MAX_LOWER_BOUND) {
+            throw new IllegalStateException("messageMaxSize cannot be set lower than " + MESSAGE_MAX_LOWER_BOUND);
+        }
+        messageMaxSize = builder.messageMaxSize;
     }
 
     @Override
@@ -92,6 +97,11 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         return messageMaxAge;
     }
 
+    @Override
+    public long messageMaxSize() {
+        return messageMaxSize;
+    }
+
     public String toString() {
         return new StringBuilder("WebPushConfig[host=").append(host)
                 .append(", port=").append(port)
@@ -102,6 +112,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
                 .append(", registrationMaxAge=").append(registrationMaxAge)
                 .append(", subscriptionMaxAge=").append(subscriptionMaxAge)
                 .append(", messageMaxAge=").append(messageMaxAge)
+                .append(", messageMaxSize=").append(messageMaxSize)
                 .append("]").toString();
     }
 
@@ -124,6 +135,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private long subscriptionMaxAge = 604800000L;
         private long messageMaxAge = 0L;
         private Protocol protocol = Protocol.ALPN;
+        private long messageMaxSize = Long.MAX_VALUE;
 
         public Builder host(final String host) {
             if (host != null) {
@@ -179,6 +191,13 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         public Builder messageMaxAge(final Long maxAge) {
             if (maxAge != null) {
                 this.messageMaxAge = maxAge;
+            }
+            return this;
+        }
+
+        public Builder messageMaxSize(final Long maxSize) {
+            if (maxSize != null) {
+                this.messageMaxSize = maxSize;
             }
             return this;
         }

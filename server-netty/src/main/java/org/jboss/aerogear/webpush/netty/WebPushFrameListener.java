@@ -53,10 +53,12 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
+import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.util.CharsetUtil.UTF_8;
 import static org.jboss.aerogear.webpush.JsonMapper.fromJson;
 import static org.jboss.aerogear.webpush.Registration.WebLink.AGGREGATE;
 import static org.jboss.aerogear.webpush.Registration.WebLink.REGISTRATION;
+import static org.jboss.aerogear.webpush.WebPushServerConfig.MESSAGE_MAX_LOWER_BOUND;
 
 public class WebPushFrameListener extends Http2FrameAdapter {
 
@@ -165,15 +167,21 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                                     final ByteBuf data,
                                     final int padding,
                                     final String path) {
-        final String endpoint = extractEndpointToken(path);
-        handleNotify(endpoint, data, padding, e ->
-                        encoder.writeHeaders(ctx, streamId, acceptedHeaders(), 0, true, ctx.newPromise())
-        );
-        Optional.ofNullable(aggregateChannels.get(endpoint)).ifPresent(agg ->
-                        agg.subscriptions().stream().forEach(entry -> handleNotify(entry.endpoint(), data, padding, e -> {
-                        }))
-        );
+        final int readableBytes = data.readableBytes();
+        if (readableBytes > webpushServer.config().messageMaxSize() && !(readableBytes < MESSAGE_MAX_LOWER_BOUND)) {
+            encoder.writeHeaders(ctx, streamId, messageToLarge(), 0, true, ctx.newPromise());
+        } else {
+            final String endpoint = extractEndpointToken(path);
+            handleNotify(endpoint, data, padding, e ->
+                            encoder.writeHeaders(ctx, streamId, acceptedHeaders(), 0, true, ctx.newPromise())
+            );
+            Optional.ofNullable(aggregateChannels.get(endpoint)).ifPresent(agg ->
+                            agg.subscriptions().stream().forEach(entry -> handleNotify(entry.endpoint(), data, padding, e -> {
+                            }))
+            );
+        }
     }
+
     private void handleNotify(final String endpoint,
                               final String data,
                               final int padding,
@@ -258,6 +266,12 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 .status(OK.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().messageMaxAge()));
+    }
+
+    private Http2Headers messageToLarge() {
+        return new DefaultHttp2Headers(false)
+                .status(REQUEST_ENTITY_TOO_LARGE.codeAsText())
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
     }
 
     private void handleAggregateSubscribe(final ChannelHandlerContext ctx,

@@ -77,7 +77,7 @@ public class WebPushFrameListenerTest {
         frameListener.encoder(encoder);
 
         final Http2Headers responseHeaders = register(frameListener, ctx, encoder);
-        assertThat(responseHeaders.status(), equalTo(OK.codeAsText()));
+        assertThat(responseHeaders.status(), equalTo(CREATED.codeAsText()));
         assertThat(responseHeaders.get(LOCATION), equalTo(asciiString(registrationPath(regId))));
         assertThat(responseHeaders.getAll(LINK), hasItems(
                 asciiString(REGISTRATION.weblink(registrationPath(regId))),

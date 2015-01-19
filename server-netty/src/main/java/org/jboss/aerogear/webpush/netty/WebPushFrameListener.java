@@ -251,7 +251,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     private Http2Headers registrationHeaders(final Registration registration) {
         return new DefaultHttp2Headers(false)
-                .status(OK.codeAsText())
+                .status(CREATED.codeAsText())
                 .set(LOCATION, new AsciiString(registration.uri().toString()))
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(ACCESS_CONTROL_EXPOSE_HEADERS, new AsciiString("Link, Cache-Control, Location"))

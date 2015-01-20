@@ -173,7 +173,12 @@ public class WebPushClient {
     public void disconnect() {
         if (channel != null) {
             channel.close();
+            shutdown();
         }
+    }
+
+    public boolean isConnected() {
+        return channel != null && channel.isOpen();
     }
 
     public void shutdown() {

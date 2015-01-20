@@ -1,180 +1,424 @@
 package org.jboss.aerogear.webpush;
 
 import io.netty.handler.codec.http2.Http2Headers;
-import org.jboss.aesh.complete.Completion;
-import org.jboss.aesh.console.AeshConsoleCallback;
-import org.jboss.aesh.console.Console;
-import org.jboss.aesh.console.ConsoleOperation;
+import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.cl.Option;
+import org.jboss.aesh.console.AeshConsole;
+import org.jboss.aesh.console.AeshConsoleBuilder;
 import org.jboss.aesh.console.Prompt;
+import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.aesh.console.command.invocation.CommandInvocation;
+import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
+import org.jboss.aesh.console.command.registry.CommandRegistry;
+import org.jboss.aesh.console.settings.Settings;
 import org.jboss.aesh.console.settings.SettingsBuilder;
+import org.jboss.aesh.terminal.Color;
+import org.jboss.aesh.terminal.Color.Intensity;
+import org.jboss.aesh.terminal.TerminalColor;
+import org.jboss.aesh.terminal.TerminalString;
 
 import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+
+import static org.jboss.aesh.terminal.Color.DEFAULT;
+import static org.jboss.aesh.terminal.Color.GREEN;
+import static org.jboss.aesh.terminal.Color.Intensity.NORMAL;
 
 public class WebPushConsole {
 
-    private enum Command {
-        CONNECT("connect",
-                Optional.of("localhost:8443"),
-                "Connects to specified WebPush server on the specificed host/port."),
-        REGISTER("register",
-                Optional.<String>empty(),
-                "Registers with the WebPush server and displays the subscribe-url and monitor-url."),
-        SUBSCRIBE("subscribe",
-                Optional.of("<subscribe-url>"),
-                "Creates a new subscription and displays the endpoint-url the subscription. This can be used with the notify command "),
-        STATUS("status",
-                Optional.of("<endpoint-url>"),
-                "Checks the status of the subscription and returns the latest message if the server has any undelivered messages for the subscription"),
-        DELETE("delete",
-                Optional.of("<endpoint-url>"),
-                "Deletes the specified subscription."),
-        AGGREGATE("aggregate-subscription",
-                Optional.of("<aggregate-url> <endpoint-url>[,<endpoint-url>]"),
-                "Creates a new aggregate subscription with the passed in endpoint-urls being part for the aggregate."),
-        MONITOR("monitor",
-                Optional.of("<reg-url> nowait"),
-                "Starts monitoring for notifications. Adding nowait will send a Prefer: wait=0 header."),
-        NOTIFY("notify",
-                Optional.of("<endpoint-url> <payload>"),
-                "Sends a notification to the specified endpoint-url."),
-        HELP("help",
-                Optional.<String>empty(),
-                "Displays the help for the WebPushConsole."),
-        QUIT("quit",
-                Optional.<String>empty(),
-                "Quits the WebPushConsole.");
+    public static void main(final String[] args) throws IOException {
+        final SettingsBuilder builder = new SettingsBuilder().logging(true);
+        builder.enableMan(true).readInputrc(false);
+        final ConnectCommand connectCommand = new ConnectCommand();
+        final DisconnectCommand disconnectCommand = new DisconnectCommand(connectCommand);
+        final RegisterCommand registerCommand = new RegisterCommand(connectCommand);
+        final SubscribeCommand subscribeCommand = new SubscribeCommand(connectCommand);
+        final MonitorCommand monitorCommand = new MonitorCommand(connectCommand);
+        final NotifyCommand notifyCommand = new NotifyCommand(connectCommand);
+        final StatusCommand statusCommand = new StatusCommand(connectCommand);
+        final AggregateCommand aggregateCommand = new AggregateCommand(connectCommand);
+        final DeleteSubCommand deleteSubCommand = new DeleteSubCommand(connectCommand);
 
-        private final String name;
-        private final Optional<String> parameters;
-        private final String description;
+        final Settings settings = builder.create();
+        final CommandRegistry registry = new AeshCommandRegistryBuilder()
+                .command(ExitCommand.class)
+                .command(connectCommand)
+                .command(disconnectCommand)
+                .command(registerCommand)
+                .command(subscribeCommand)
+                .command(monitorCommand)
+                .command(notifyCommand)
+                .command(statusCommand)
+                .command(aggregateCommand)
+                .command(deleteSubCommand)
+                .create();
 
-        private Command(String name, final Optional<String> parameters, String description) {
-            this.name = name;
-            this.parameters = parameters;
-            this.description = description;
+        final AeshConsole aeshConsole = new AeshConsoleBuilder()
+                .commandRegistry(registry)
+                .settings(settings)
+                .prompt(new Prompt(new TerminalString("[webpush]$ ", new TerminalColor(GREEN, DEFAULT, NORMAL))))
+                .create();
+        connectCommand.setConsole(aeshConsole);
+        aeshConsole.start();
+    }
+
+    @CommandDefinition(name="exit", description = "the program")
+    public static class ExitCommand implements org.jboss.aesh.console.command.Command {
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            commandInvocation.stop();
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "connect", description = "to a specific WebPush Server")
+    public static class ConnectCommand implements org.jboss.aesh.console.command.Command {
+        private WebPushClient webPushClient;
+        private AeshConsole console;
+
+        @Option(shortName = 'h', hasValue = true, description = "the host to connect to", defaultValue = "localhost")
+        private String host;
+
+        @Option(shortName = 'p', hasValue = true, description = "the port to connect to", defaultValue = "8443")
+        private int port;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        public void setConsole(final AeshConsole console) {
+            this.console = console;
         }
 
         @Override
-        public String toString() {
-            return name;
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("connect"));
+            } else {
+                if (webPushClient != null && webPushClient.isConnected()) {
+                    commandInvocation.getShell().out().println("Currently connected. Will disconnect");
+                    webPushClient.disconnect();
+                }
+                commandInvocation.putProcessInBackground();
+                webPushClient = WebPushClient.forHost(host)
+                        .port(port)
+                        .ssl(true)
+                        .notificationHandler(new CallbackHandler(console))
+                        .build();
+                try {
+                    webPushClient.connect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
         }
 
-        public Optional<String> parameters() {
-            return parameters;
+        public WebPushClient webPushClient() {
+            return webPushClient;
         }
-
-        public String example() {
-            return parameters.isPresent() ? name + " " +  parameters.get() : name;
-        }
-
-        public void printHelp(final PrintStream out) {
-            out.println(example());
-            out.println(description);
-            out.println();
-        }
-
     }
 
-    public static void main(String[] args) throws IOException {
+    @CommandDefinition(name = "disconnect", description = "from the connected WebPush Server")
+    public static class DisconnectCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
 
-        final Console console = new Console(new SettingsBuilder().create());
-        console.getShell().out().println("WebPush console");
-        final Prompt prompt = new Prompt("> ");
-        console.setPrompt(prompt);
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
 
-        final Completion completer = co -> {
-            final List<String> commands = new ArrayList<>();
-            if(co.getBuffer().startsWith("co")) {
-                commands.add(Command.CONNECT.example());
-            }
-            if(co.getBuffer().startsWith("re")) {
-                commands.add(Command.REGISTER.example());
-                co.setOffset(0);
-            }
-            if(co.getBuffer().startsWith("su")) {
-                commands.add(Command.SUBSCRIBE.example());
-            }
-            if(co.getBuffer().startsWith("st")) {
-                commands.add(Command.STATUS.example());
-            }
-            if(co.getBuffer().startsWith("de")) {
-                commands.add(Command.DELETE.example());
-            }
-            if(co.getBuffer().startsWith("ag")) {
-                commands.add(Command.AGGREGATE.example());
-            }
-            if(co.getBuffer().startsWith("m")) {
-                commands.add(Command.MONITOR.example());
-            }
-            if(co.getBuffer().startsWith("no")) {
-                commands.add(Command.NOTIFY.example());
-            }
-            if(co.getBuffer().startsWith("q")) {
-                commands.add(Command.QUIT.example());
-            }
-            if(co.getBuffer().equals("h") || co.getBuffer().startsWith("he")) {
-                commands.add(Command.HELP.example());
-            }
-            co.setCompletionCandidates(commands);
-        };
+        public DisconnectCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
 
-        console.addCompletion(completer);
-        AeshConsoleCallback consoleCallback = new AeshConsoleCallback() {
-            WebPushClient client = null;
-            @Override
-            public int execute(ConsoleOperation output) {
-                final String buffer = output.getBuffer();
-
-                if (buffer.startsWith("quit")) {
-                    try {
-                        if (client != null) {
-                            client.disconnect();
-                            client.shutdown();
-                        }
-                        console.stop();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                else if (buffer.startsWith(Command.CONNECT.toString())) {
-                    client = handleConnect(output, console);
-                } else if (buffer.startsWith(Command.REGISTER.toString())) {
-                    handleRegister(client);
-                } else if (buffer.startsWith(Command.MONITOR.toString())) {
-                    handleMonitor(client, buffer);
-                } else if (buffer.startsWith(Command.SUBSCRIBE.toString())) {
-                    handleSubscribe(client, getFirstArg(buffer));
-                } else if (buffer.startsWith(Command.STATUS.toString())) {
-                    handleStatus(client, getFirstArg(buffer));
-                } else if (buffer.startsWith(Command.DELETE.toString())) {
-                    handleSubscriptionDelete(client, getFirstArg(buffer));
-                } else if (buffer.startsWith(Command.AGGREGATE.toString())) {
-                    handleAggregateSubscription(client, buffer, console);
-                } else if (buffer.startsWith(Command.NOTIFY.toString())) {
-                    handleNotification(client, buffer);
-                } else if (buffer.startsWith(Command.HELP.toString())) {
-                    displayHelp(console);
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("disconnect"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (client != null && client.isConnected()) {
+                    client.disconnect();
+                    commandInvocation.getShell().out().println("Disconnected from ["
+                            + client.host() + ":" + client.port() + "]");
                 } else {
-                    console.getShell().out().println("Unknown command:" + buffer);
+                    commandInvocation.getShell().out().println("Not currently connected");
+                    return CommandResult.FAILURE;
                 }
-                return 0;
             }
-        };
-        console.setConsoleCallback(consoleCallback);
-        console.start();
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "register", description = "this device with the WebPush Server")
+    public static class RegisterCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        public RegisterCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("register"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    client.register();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "subscribe", description = "and displays the endpoint-url for the created subscription")
+    public static class SubscribeCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        @Option(hasValue = true, description = "the subscription WebLink URL, of rel type 'urn:ietf:params:push:sub', from the register command response", required = true)
+        private String url;
+
+        public SubscribeCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("subscribe"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    client.createSubscription(url);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "monitor", description = "for notifications")
+    public static class MonitorCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        @Option(hasValue = true, description = "the monitor WebLink URL, of rel type 'urn:ietf:params:push:reg',  from the register command response", required = true)
+        private String url;
+
+        @Option(hasValue = false, description = "returns any existing notifications that the server might have")
+        private boolean nowait;
+
+        public MonitorCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("monitor"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    client.monitor(url, nowait);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "notify", description = "a channel")
+    public static class NotifyCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        @Option(hasValue = true, description = "the endpoint url from an earlier 'subscribe' commands location response", required = true)
+        private String url;
+
+        @Option(hasValue = true, description = "the body/payload of the notification")
+        private String payload;
+
+        public NotifyCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("notify"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    client.notify(url, payload);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition( name = "status", description = "of the subscription and returns the latest message if the server has any undelivered messages for the subscription")
+    public static class StatusCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        @Option(hasValue = true, description = "the endpoint url from an earlier 'subscribe' commands location response", required = true)
+        private String url;
+
+        public StatusCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("status"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    client.status(url);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "aggregate", description = "multiple channels so they are handled as one")
+    public static class AggregateCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        @Option(hasValue = true, description = "the aggreagate url from an earlier 'subscribe' commands location response", required = true)
+        private String url;
+
+        @Option(hasValue = true, description = "comma separated list of channels that should be part of this aggreagate channel")
+        private String channels;
+
+        public AggregateCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("aggregate"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    final String json = JsonMapper.toJson(new DefaultAggregateSubscription(WebPushClient.asEntries(channels.split(","))));
+                    client.createAggregateSubscription(url, json);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    @CommandDefinition(name = "delete", description = "subscription")
+    public static class DeleteSubCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        @Option(hasValue = true, description = "the endpoint url for the subscription to be deleted", required = true)
+        private String url;
+
+        public DeleteSubCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("delete"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    client.deleteSubscription(url);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
+
+    private static boolean isConnected(final WebPushClient client, CommandInvocation inv) {
+        if (client == null || !client.isConnected()) {
+            inv.getShell().out().println("Please use the connect command to connect to the server");
+            return false;
+        }
+        return true;
     }
 
     private static class CallbackHandler implements EventHandler {
 
-        private final Console console;
-        private final Prompt inbound = new Prompt("< ");
-        private final Prompt outbound = new Prompt(">");
+        private final AeshConsole console;
+        private final Prompt inbound =  new Prompt(new TerminalString("< ",
+                new TerminalColor(Color.YELLOW, DEFAULT, Intensity.BRIGHT)));
+        private final Prompt outbound =  new Prompt(new TerminalString("> ",
+                new TerminalColor(GREEN, DEFAULT, Intensity.BRIGHT)));
 
-        CallbackHandler(final Console console) {
+        CallbackHandler(final AeshConsole console) {
             this.console = console;
         }
 
@@ -196,7 +440,7 @@ public class WebPushConsole {
         private void printOutbound(final Http2Headers headers) {
             final Prompt current = console.getPrompt();
             console.setPrompt(outbound);
-            console.getShell().out().println(" " + headers.toString());
+            console.getShell().out().println(headers.toString());
             console.setPrompt(current);
         }
 
@@ -207,107 +451,6 @@ public class WebPushConsole {
             console.setPrompt(current);
         }
 
-    }
-
-    private static WebPushClient handleConnect(final ConsoleOperation output, final Console console) {
-        final String cmd = output.getBuffer();
-        final String[] hostPort = cmd.substring(cmd.indexOf(" "), cmd.length()).trim().split(":");
-        final WebPushClient client = WebPushClient.forHost(hostPort[0])
-                .port(hostPort[1])
-                .ssl(true)
-                .notificationHandler(new CallbackHandler(console))
-                .build();
-        try {
-            client.connect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return client;
-    }
-
-    private static void handleRegister(final WebPushClient client) {
-        try {
-            client.register();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void handleMonitor(final WebPushClient client, final String buffer) {
-        final String[] args = getArgs(buffer);
-        final boolean nowait = args.length == 3 && args[2] != null;
-        try {
-            client.monitor(args[1], nowait);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void handleSubscribe(final WebPushClient client, final String url) {
-        try {
-            client.createSubscription(url);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void handleStatus(final WebPushClient client, final String url) {
-        try {
-            client.status(url);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void handleSubscriptionDelete(final WebPushClient client, final String url) {
-        try {
-            client.deleteSubscription(url);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void handleAggregateSubscription(final WebPushClient client,
-                                                   final String cmd,
-                                                   final Console console) {
-        final String[] args = getArgs(cmd);
-        try {
-            final String json = JsonMapper.toJson(new DefaultAggregateSubscription(WebPushClient.asEntries(args[2].split(","))));
-            console.getShell().out().println(JsonMapper.pretty(json));
-            client.createAggregateSubscription(args[1], json);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void handleNotification(final WebPushClient client, final String cmd) {
-        final String[] args = getArgs(cmd);
-        try {
-            client.notify(args[1], args[2]);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void displayHelp(final Console console) {
-        final PrintStream out = console.getShell().out();
-        out.println("WebPushConsole commands (tab completion available)");
-        out.println();
-        Command.CONNECT.printHelp(out);
-        Command.SUBSCRIBE.printHelp(out);
-        Command.HELP.printHelp(out);
-        Command.NOTIFY.printHelp(out);
-        Command.MONITOR.printHelp(out);
-        Command.REGISTER.printHelp(out);
-        Command.QUIT.printHelp(out);
-    }
-
-    private static String getFirstArg(final String cmd) {
-        return cmd.substring(cmd.indexOf(" ") + 1, cmd.length());
-    }
-
-    private static String[] getArgs(final String cmd) {
-        return cmd.split(" ");
     }
 
 }

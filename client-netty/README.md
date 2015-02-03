@@ -12,46 +12,50 @@ A very basic console/command line application is available to assist in developm
     [main] INFO org.jboss.aerogear.webpush.netty.WebPushNettyServer - WebPush server bound to localhost:8443
     
 ### Start the console
-The console support tab completion and you can type ```help``` to see the available commands.
+Press ```tab``` to see the available commands and also to display the available options for specific commands.   
+Most command also support a ```--help``` option to display information about options that the command accepts.
   
     cd client-netty
     mvn exec:exec
     
-    WebPush console
-    > 
+    [webpush]$
 
 #### Connect
-    WebPush console
-    > connect localhost:8443
+
+    [webpush]$ connect -h localhost -p 8443
     Connected to [localhost:8443]
-    >
     
 #### Register 
 
-    > register
-    < [streamid:3] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, Location, cache-control: private, max-age=604800000, link: <webpush/aggregate/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:aggregate", link: <webpush/reg/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:reg", link: <webpush/subscribe/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:sub", location: webpush/reg/97e360b2-383d-4de5-bf28-8956977599e9]
-    >
+    [webpush]$ register
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: /webpush/register, :scheme: https]
+    < [streamid:3] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, Location, cache-control: private, max-age=604800000, link: <webpush/aggregate/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:aggregate", link: <webpush/reg/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:reg", link: <webpush/subscribe/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:sub", location: webpush/reg/14752553-f74c-4031-9e0f-1dbc7a54cb45]
     
 #### Create a subscription
-    
-    > subscribe webpush/97e360b2-383d-4de5-bf28-8956977599e9/subscribe
-    < [streamid:5] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/Lc7OqncNa7b0v%2FRAoOp8sA0Z3t74IAN0RGHQ%2Bf%2BxLRWOTwnmDjOuzlWmSOvHqD93s%2B5Nm8lx7AeCheRKfxxqc%2BpSLfE79xymKiDwtTBgaIHRQNeD5e6WBSIvWJEzDndou3l7OLZ5lCkF]
-    >
+
+    [webpush]$ subscribe --url webpush/subscribe/14752553-f74c-4031-9e0f-1dbc7a54cb45
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: webpush/subscribe/14752553-f74c-4031-9e0f-1dbc7a54cb45, :scheme: https]
+    < [streamid:5] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/zZ9Y1tf1aSjKF135DlJve4TUcbp33tSfiHsalh8a0U%2FTFLd54bCSiVf0KX9YB2jw6W5lVNcBK3aO25C3ccknfpnMO77qJiUitrG4tvKSyhDmIFQFef8ZOCq9RwI1u8H7%2Bg70U0S79gXC]
     
 #### Monitor    
 
-    > monitor webpush/97e360b2-383d-4de5-bf28-8956977599e9/reg
-    < [streamid:7] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, cache-control: private, max-age=604800000, link: <webpush/aggregate/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:aggregate", link: <webpush/subscribe/97e360b2-383d-4de5-bf28-8956977599e9>;rel="urn:ietf:params:push:sub"]
+    [webpush]$ monitor --url webpush/reg/14752553-f74c-4031-9e0f-1dbc7a54cb45
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: webpush/reg/14752553-f74c-4031-9e0f-1dbc7a54cb45, :scheme: https]
+    < [streamid:7] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, cache-control: private, max-age=604800000, link: <webpush/aggregate/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:aggregate", link: <webpush/subscribe/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:sub"]
     
 #### Send notification
 
-    > notify /webpush/Lc7OqncNa7b0v%2FRAoOp8sA0Z3t74IAN0RGHQ%2Bf%2BxLRWOTwnmDjOuzlWmSOvHqD93s%2B5Nm8lx7AeCheRKfxxqc%2BpSLfE79xymKiDwtTBgaIHRQNeD5e6WBSIvWJEzDndou3l7OLZ5lCkF hello
+    [webpush]$ notify --url /webpush/zZ9Y1tf1aSjKF135DlJve4TUcbp33tSfiHsalh8a0U%2FTFLd54bCSiVf0KX9YB2jw6W5lVNcBK3aO25C3ccknfpnMO77qJiUitrG4tvKSyhDmIFQFef8ZOCq9RwI1u8H7%2Bg70U0S79gXC --payload hello
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: PUT, :path: /webpush/zZ9Y1tf1aSjKF135DlJve4TUcbp33tSfiHsalh8a0U%2FTFLd54bCSiVf0KX9YB2jw6W5lVNcBK3aO25C3ccknfpnMO77qJiUitrG4tvKSyhDmIFQFef8ZOCq9RwI1u8H7%2Bg70U0S79gXC, :scheme: https]
+    < [streamid:2] DefaultHttp2Header]
     < [streamid:2] hello
-    >
+    [webpush]$ notify --url /webpush/zZ9Y1tf1aSjKF135DlJve4TUcbp33tSfiHsalh8a0U%2FTFLd54bCSiVf0KX9YB2jw6W5lVNcBK3aO25C3ccknfpnMO77qJiUitrG4tvKSyhDmIFQFef8ZOCq9RwI1u8H7%2Bg70U0S79gXC --payload hello2
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: PUT, :path: /webpush/zZ9Y1tf1aSjKF135DlJve4TUcbp33tSfiHsalh8a0U%2FTFLd54bCSiVf0KX9YB2jw6W5lVNcBK3aO25C3ccknfpnMO77qJiUitrG4tvKSyhDmIFQFef8ZOCq9RwI1u8H7%2Bg70U0S79gXC, :scheme: https]
+    < [streamid:2] hello2
     
 #### Exit the console
     
-    > quit
+    > exit
     
 
 

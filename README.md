@@ -1,9 +1,16 @@
 # Aerogear WebPush Server [![Build Status](https://travis-ci.org/aerogear/aerogear-webpush-server.png)](https://travis-ci.org/aerogear/aerogear-webpush-server)
 This project is a proof of concept implementation of the 
 [WebPush Protocol](http://tools.ietf.org/html/draft-thomson-webpush-http2-02) specification with the purpose of gaining
-a better understanding of the specification.
+a better understanding of the specification. IETF [charter](https://datatracker.ietf.org/wg/webpush/charter)
 
-IETF [charter](https://datatracker.ietf.org/wg/webpush/charter)
+|                 | Project Info  |
+| --------------- | ------------- |
+| License:        | Apache License, Version 2.0  |
+| Build:          | Maven  |
+| Documentation:  | https://aerogear.org/push/  |
+| Issue tracker:  | https://issues.jboss.org/browse/AGPUSH  |
+| Mailing lists:  | [aerogear-users](http://aerogear-users.1116366.n5.nabble.com/) ([subscribe](https://lists.jboss.org/mailman/listinfo/aerogear-users))  |
+|                 | [aerogear-dev](http://aerogear-dev.1069024.n5.nabble.com/) ([subscribe](https://lists.jboss.org/mailman/listinfo/aerogear-dev))  |
 
 ## Message batching/aggregation
 Allows an application to request that a web push server deliver the same message to a potentially large set of devices,

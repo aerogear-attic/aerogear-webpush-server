@@ -85,7 +85,7 @@ public class WebPushClient {
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.remoteAddress(host, port);
-            b.handler(new WebPushClientInitializer(configureSsl(), handler));
+            b.handler(new WebPushClientInitializer(configureSsl(), host, port, handler));
             channel = b.connect().syncUninterruptibly().channel();
             System.out.println("Connected to [" + host + ':' + port + ']');
         } catch (final Exception e) {

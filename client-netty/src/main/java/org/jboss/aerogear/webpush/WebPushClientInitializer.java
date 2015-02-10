@@ -38,7 +38,7 @@ import io.netty.handler.codec.http2.Http2FrameListener;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
 import io.netty.handler.ssl.SslContext;
-
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -46,14 +46,21 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
 
     private final SslContext sslCtx;
     private final EventHandler callback;
+    private final String host;
+    private final int port;
     private WebPushToHttp2ConnectionHandler connectionHandler;
     private HttpResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
 
-    public WebPushClientInitializer(SslContext sslCtx, final EventHandler callback) {
+    public WebPushClientInitializer(SslContext sslCtx,
+                                    final String host,
+                                    final int port,
+                                    final EventHandler callback) {
         this.sslCtx = sslCtx;
         this.callback = callback;
+        this.host = host;
+        this.port = port;
     }
 
     @Override
@@ -91,13 +98,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
      */
     private void configureSsl(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
-        /*
-        DomainNameMapping<SslContext> mapping = new DomainNameMapping<SslContext>(sslCtx);
-        mapping.add("localhost", sslCtx);
-        final SniHandler sniHandler = new SniHandler(mapping);
-        pipeline.addLast("SslHandler", sniHandler);
-        */
-        pipeline.addLast("SslHandler", sslCtx.newHandler(ch.alloc()));
+        pipeline.addLast("SslHandler", sslCtx.newHandler(ch.alloc(), host, port));
         pipeline.addLast("Http2Handler", connectionHandler);
         ch.pipeline().addLast("Logger", new UserEventLogger());
         configureEndOfPipeline(pipeline);
@@ -136,6 +137,12 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     private static class UserEventLogger extends ChannelHandlerAdapter {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+            if (evt instanceof SslHandshakeCompletionEvent) {
+                SslHandshakeCompletionEvent sslEvent = (SslHandshakeCompletionEvent) evt;
+                if (!sslEvent.isSuccess()) {
+                    sslEvent.cause().printStackTrace();
+                }
+            }
             super.userEventTriggered(ctx, evt);
         }
     }

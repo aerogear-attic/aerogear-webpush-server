@@ -37,11 +37,7 @@ import io.netty.handler.codec.http2.Http2ConnectionHandler;
 import io.netty.handler.codec.http2.Http2FrameListener;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
-import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
-import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
-import io.netty.util.DomainNameMapping;
 
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -49,29 +45,24 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> {
 
     private final SslContext sslCtx;
-    private final int maxContentLength;
     private final EventHandler callback;
     private WebPushToHttp2ConnectionHandler connectionHandler;
     private HttpResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
 
-    public WebPushClientInitializer(SslContext sslCtx, int maxContentLength, final EventHandler callback) {
+    public WebPushClientInitializer(SslContext sslCtx, final EventHandler callback) {
         this.sslCtx = sslCtx;
-        this.maxContentLength = maxContentLength;
         this.callback = callback;
     }
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
         final Http2Connection connection = new DefaultHttp2Connection(false);
-        final Http2FrameWriter frameWriter = new DefaultHttp2FrameWriter();
-        final Http2FrameReader frameReader = new WebPushFrameReader(callback, new DefaultHttp2FrameReader());
         connectionHandler = new WebPushToHttp2ConnectionHandler(connection,
-                frameReader,
-                frameWriter,
-                new DelegatingDecompressorFrameListener(connection,
-                        new InboundHttp2ToHttpAdapter.Builder(connection).maxContentLength(maxContentLength).build()));
+                new DefaultHttp2FrameReader(),
+                new DefaultHttp2FrameWriter(),
+                new DelegatingDecompressorFrameListener(new DefaultHttp2Connection(false), new WebPushFrameListener(callback)));
         responseHandler = new HttpResponseHandler();
         settingsHandler = new Http2SettingsHandler(ch.newPromise());
 

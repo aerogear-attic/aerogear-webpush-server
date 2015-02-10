@@ -1,6 +1,8 @@
 {
     "host": "localhost",
     "port": 9999,
+    "cert": "/selfsigned.crt",
+    "privateKey": "/demo.key",
     "password" :"testing",
     "endpoint-host": "external",
     "endpoint-port": 8889,

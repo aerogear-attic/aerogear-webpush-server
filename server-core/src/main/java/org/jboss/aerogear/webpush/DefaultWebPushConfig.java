@@ -16,11 +16,18 @@
  */
 package org.jboss.aerogear.webpush;
 
+import org.jboss.aerogear.webpush.util.Arguments;
+
+import java.io.File;
+import java.net.URL;
+
 public final class DefaultWebPushConfig implements WebPushServerConfig {
 
     private final String host;
     private final int port;
     private final boolean endpointTls;
+    private final File cert;
+    private final File privateKey;
     private final String password;
     private final String endpointHost;
     private final int endpointPort;
@@ -35,6 +42,8 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         port = builder.port;
         endpointHost = builder.endpointHost == null ? host : builder.endpointHost;
         endpointPort = builder.endpointPort <= 0 ? port : builder.endpointPort;
+        cert = fileSystemOrClasspath(Arguments.checkNotNull(builder.cert, "cert must not be null"));
+        privateKey = fileSystemOrClasspath(Arguments.checkNotNull(builder.privateKey, "privateKey must not be null"));
         endpointTls = builder.endpointTls;
         password = builder.password;
         registrationMaxAge = builder.registrationMaxAge;
@@ -45,6 +54,14 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             throw new IllegalStateException("messageMaxSize cannot be set lower than " + MESSAGE_MAX_LOWER_BOUND);
         }
         messageMaxSize = builder.messageMaxSize;
+    }
+
+    private static File fileSystemOrClasspath(final File file) {
+        if (file.exists()) {
+            return file;
+        }
+        final URL resource = DefaultWebPushConfig.class.getResource(file.getPath());
+        return new File(resource.getFile());
     }
 
     @Override
@@ -60,6 +77,16 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     @Override
     public String password() {
         return password;
+    }
+
+    @Override
+    public File cert() {
+        return cert;
+    }
+
+    @Override
+    public File privateKey() {
+        return privateKey;
     }
 
     @Override
@@ -105,6 +132,8 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     public String toString() {
         return new StringBuilder("WebPushConfig[host=").append(host)
                 .append(", port=").append(port)
+                .append(", cert=").append(cert)
+                .append(", privateKey=").append(privateKey)
                 .append(", endpointHost=").append(endpointHost)
                 .append(", endpointPort=").append(endpointPort)
                 .append(", endpointTls=").append(endpointTls)
@@ -128,6 +157,8 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private String host;
         private int port;
         private String password;
+        private File cert;
+        private File privateKey;
         private boolean endpointTls;
         private String endpointHost;
         private int endpointPort;
@@ -151,6 +182,16 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
 
         public Builder password(final String password) {
             this.password = password;
+            return this;
+        }
+
+        public Builder cert(final String cert) {
+            this.cert = new File(cert);
+            return this;
+        }
+
+        public Builder privateKey(final String privateKey) {
+            this.privateKey = new File(privateKey);
             return this;
         }
 

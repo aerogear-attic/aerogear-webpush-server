@@ -83,6 +83,14 @@ public class ConfigReader {
         if (password != null) {
             builder.password(password.asText());
         }
+        final JsonNode cert = json.get("cert");
+        if (cert != null) {
+            builder.cert(cert.asText());
+        }
+        final JsonNode privateKey = json.get("privateKey");
+        if (privateKey != null) {
+            builder.privateKey(privateKey.asText());
+        }
         final JsonNode endpointHost = json.get("endpoint-host");
         if (endpointHost != null) {
             builder.endpointHost(endpointHost.asText());

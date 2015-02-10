@@ -18,8 +18,11 @@ import org.jboss.aerogear.webpush.WebPushServerConfig.Protocol;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ConfigReaderTest {
@@ -84,6 +87,16 @@ public class ConfigReaderTest {
     @Test
     public void protocol() {
         assertThat(webPushServerConfig.protocol(), is(Protocol.NPN));
+    }
+
+    @Test
+    public void cert() {
+        assertThat(webPushServerConfig.cert().getName(), equalTo("selfsigned.crt"));
+    }
+
+    @Test
+    public void privateKey() {
+        assertThat(webPushServerConfig.privateKey().getName(), equalTo("demo.key"));
     }
 
     @Test

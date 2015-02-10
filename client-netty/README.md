@@ -26,6 +26,11 @@ Java 1.8 is required for the AeroGear WebPush Server.
 Follow the [Getting started instructions](https://github.com/kitcambridge/node-webpush-server#getting-started) to start
 the Node.js WebPush Server.
 
+    $ webpush-server --port 8080 --key demo.key --cert selfsigned.crt
+    Listening on https://Daniels-MBP.lan:8080...
+
+The ```demo.key``` and ```selfsigned.crt``` can be found [server-netty/src/main/resources](../server-netty/src/main/resources)
+
 ### Start the console
 Java 1.8 is required for the WebPush Console when connecting to the AeroGear WebPush Server, and Java 1.7 for the Node.js
 WebPush Server.

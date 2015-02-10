@@ -1,6 +1,7 @@
 package org.jboss.aerogear.webpush;
 
 import io.netty.handler.codec.http2.Http2Headers;
+import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.AeshConsole;
@@ -35,7 +36,6 @@ public class WebPushConsole {
         final MonitorCommand monitorCommand = new MonitorCommand(connectCommand);
         final NotifyCommand notifyCommand = new NotifyCommand(connectCommand);
         final StatusCommand statusCommand = new StatusCommand(connectCommand);
-        final AggregateCommand aggregateCommand = new AggregateCommand(connectCommand);
         final DeleteSubCommand deleteSubCommand = new DeleteSubCommand(connectCommand);
 
         final Settings settings = builder.create();
@@ -48,7 +48,6 @@ public class WebPushConsole {
                 .command(monitorCommand)
                 .command(notifyCommand)
                 .command(statusCommand)
-                .command(aggregateCommand)
                 .command(deleteSubCommand)
                 .create();
 
@@ -71,7 +70,7 @@ public class WebPushConsole {
         }
     }
 
-    @CommandDefinition(name = "connect", description = "to a specific WebPush Server")
+    @CommandDefinition(name = "connect", description = "<url>")
     public static class ConnectCommand implements org.jboss.aesh.console.command.Command {
         private WebPushClient webPushClient;
         private AeshConsole console;
@@ -154,6 +153,12 @@ public class WebPushConsole {
     public static class RegisterCommand implements org.jboss.aesh.console.command.Command {
         private ConnectCommand connectCommand;
 
+        @Option(shortName = 'p',
+                hasValue = true,
+                description = "the path that that the WebPush server exposes for registrations",
+                defaultValue = "/webpush/register")
+        private String path;
+
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
 
@@ -172,7 +177,7 @@ public class WebPushConsole {
                     return CommandResult.FAILURE;
                 }
                 try {
-                    client.register();
+                    client.register(path);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return CommandResult.FAILURE;
@@ -319,45 +324,6 @@ public class WebPushConsole {
                 }
                 try {
                     client.status(url);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return CommandResult.FAILURE;
-                }
-            }
-            return CommandResult.SUCCESS;
-        }
-    }
-
-    @CommandDefinition(name = "aggregate", description = "multiple channels so they are handled as one")
-    public static class AggregateCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
-
-        @Option(hasValue = false, description = "display this help and exit")
-        private boolean help;
-
-        @Option(hasValue = true, description = "the aggreagate url from an earlier 'subscribe' commands location response", required = true)
-        private String url;
-
-        @Option(hasValue = true, description = "comma separated list of channels that should be part of this aggreagate channel")
-        private String channels;
-
-        public AggregateCommand(final ConnectCommand connectCommand) {
-            this.connectCommand = connectCommand;
-        }
-
-        @Override
-        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
-                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("aggregate"));
-            } else {
-                commandInvocation.putProcessInBackground();
-                final WebPushClient client = connectCommand.webPushClient();
-                if (!isConnected(client, commandInvocation)) {
-                    return CommandResult.FAILURE;
-                }
-                try {
-                    final String json = JsonMapper.toJson(new DefaultAggregateSubscription(WebPushClient.asEntries(channels.split(","))));
-                    client.createAggregateSubscription(url, json);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return CommandResult.FAILURE;

@@ -2,7 +2,6 @@ package org.jboss.aerogear.webpush;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Flags;
 import io.netty.handler.codec.http2.Http2FrameListener;
@@ -17,8 +16,6 @@ public class WebPushFrameReader implements Http2FrameReader {
 
     private final Http2FrameReader reader;
     private final EventHandler callback;
-
-    private final static AsciiString LINK = new AsciiString("link");
 
     public WebPushFrameReader(final EventHandler callback, final Http2FrameReader reader) {
         this.reader = checkNotNull(reader, "reader");
@@ -55,8 +52,7 @@ public class WebPushFrameReader implements Http2FrameReader {
                                       Http2Headers headers, int streamDependency, short weight, boolean exclusive,
                                       int padding, boolean endStream) throws Http2Exception {
                 processHeaders(headers, streamId);
-                listener.onHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive,
-                        padding, endStream);
+                listener.onHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endStream);
             }
 
             @Override
@@ -102,9 +98,6 @@ public class WebPushFrameReader implements Http2FrameReader {
             @Override
             public void onGoAwayRead(ChannelHandlerContext ctx, int lastStreamId, long errorCode,
                                      ByteBuf debugData) throws Http2Exception {
-                System.out.println("go away read: lastStreamId: " + lastStreamId
-                        + ", errorCode: " + errorCode
-                        + ", debugData: " + debugData.toString(CharsetUtil.UTF_8));
                 listener.onGoAwayRead(ctx, lastStreamId, errorCode, debugData);
             }
 

@@ -38,7 +38,10 @@ import io.netty.handler.codec.http2.Http2FrameListener;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
 import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
+import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
+import io.netty.util.DomainNameMapping;
 
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -97,8 +100,15 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
      */
     private void configureSsl(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
+        /*
+        DomainNameMapping<SslContext> mapping = new DomainNameMapping<SslContext>(sslCtx);
+        mapping.add("localhost", sslCtx);
+        final SniHandler sniHandler = new SniHandler(mapping);
+        pipeline.addLast("SslHandler", sniHandler);
+        */
         pipeline.addLast("SslHandler", sslCtx.newHandler(ch.alloc()));
         pipeline.addLast("Http2Handler", connectionHandler);
+        ch.pipeline().addLast("Logger", new UserEventLogger());
         configureEndOfPipeline(pipeline);
     }
 
@@ -135,7 +145,6 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     private static class UserEventLogger extends ChannelHandlerAdapter {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            System.out.println("User Event Triggered: " + evt);
             super.userEventTriggered(ctx, evt);
         }
     }
@@ -161,7 +170,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
                     final ChannelPromise dataPromise = ctx.newPromise();
                     promiseAggregator.add(headerPromise, dataPromise);
                     encoder.writeHeaders(ctx, streamId, message.headers(), 0, false, headerPromise);
-                    encoder.writeData(ctx, streamId, message.payload().get(), 0, true, dataPromise);
+                    encoder.writeData(ctx, streamId, message.payload(), 0, true, dataPromise);
                 } else {
                     encoder.writeHeaders(ctx, streamId, message.headers(), 0, true, promise);
                 }
@@ -172,7 +181,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
 
         @Override
         public void onException(ChannelHandlerContext ctx, Throwable cause) {
-            //cause.printStackTrace();
+            cause.printStackTrace();
             super.onException(ctx, cause);
         }
     }

@@ -1,9 +1,12 @@
 package org.jboss.aerogear.webpush;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http2.HttpUtil;
+import io.netty.util.CharsetUtil;
 
 import java.util.Iterator;
 import java.util.Map.Entry;

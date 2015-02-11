@@ -119,7 +119,7 @@ public class WebPushClient {
     }
 
     public void createAggregateSubscription(final String aggregateUrl, final String json) throws Exception {
-        writeRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
+        writeJsonRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
     }
 
     public void notify(final String endpointUrl, final String payload) throws Exception {
@@ -140,6 +140,13 @@ public class WebPushClient {
     private void writeRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
         final Http2Headers headers = http2Headers(method, url);
         handler.outbound(headers);
+        ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
+        requestFuture.sync();
+    }
+
+    private void writeJsonRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
+        final Http2Headers headers = http2Headers(method, url);
+        handler.outbound(headers, payload);
         ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
         requestFuture.sync();
     }

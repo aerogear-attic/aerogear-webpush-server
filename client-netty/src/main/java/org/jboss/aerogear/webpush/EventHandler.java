@@ -1,5 +1,6 @@
 package org.jboss.aerogear.webpush;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http2.Http2Headers;
 
 /**
@@ -13,6 +14,14 @@ public interface EventHandler {
      * @param headers the headers of the outbound request
      */
     void outbound(Http2Headers headers);
+
+    /**
+     * Fired before an outbound event occurs.
+     *
+     * @param headers the headers of the outbound request
+     * @param payload the headers of the outbound request
+     */
+    void outbound(Http2Headers headers, ByteBuf payload);
 
     /**
      * Fired after an inbound event occurs.

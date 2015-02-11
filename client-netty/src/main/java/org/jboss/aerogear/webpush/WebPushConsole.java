@@ -1,7 +1,8 @@
 package org.jboss.aerogear.webpush;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http2.Http2Headers;
-import org.jboss.aesh.cl.Arguments;
+import io.netty.util.CharsetUtil;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.AeshConsole;
@@ -37,6 +38,7 @@ public class WebPushConsole {
         final NotifyCommand notifyCommand = new NotifyCommand(connectCommand);
         final StatusCommand statusCommand = new StatusCommand(connectCommand);
         final DeleteSubCommand deleteSubCommand = new DeleteSubCommand(connectCommand);
+        final AggregateCommand aggregateCommand = new AggregateCommand(connectCommand);
 
         final Settings settings = builder.create();
         final CommandRegistry registry = new AeshCommandRegistryBuilder()
@@ -49,6 +51,7 @@ public class WebPushConsole {
                 .command(notifyCommand)
                 .command(statusCommand)
                 .command(deleteSubCommand)
+                .command(aggregateCommand)
                 .create();
 
         final AeshConsole aeshConsole = new AeshConsoleBuilder()
@@ -368,6 +371,46 @@ public class WebPushConsole {
         }
     }
 
+    @CommandDefinition(name = "aggregate", description = "multiple channels so they are handled as one")
+    public static class AggregateCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        @Option(hasValue = true, description = "the aggreagate url from an earlier 'subscribe' commands location response", required = true)
+        private String url;
+
+        @Option(hasValue = true, description = "comma separated list of channels that should be part of this aggreagate channel")
+        private String channels;
+
+        public AggregateCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if(help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("aggregate"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    final String json = JsonMapper.toJson(AggregateSubscription.from(channels));
+                    client.createAggregateSubscription(url, json);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
+
+
     private static boolean isConnected(final WebPushClient client, CommandInvocation inv) {
         if (client == null || !client.isConnected()) {
             inv.getShell().out().println("Please use the connect command to connect to the server");
@@ -394,6 +437,11 @@ public class WebPushConsole {
         }
 
         @Override
+        public void outbound(final Http2Headers headers, final ByteBuf byteBuf) {
+            printOutbound(headers, byteBuf);
+        }
+
+        @Override
         public void inbound(Http2Headers headers, int streamId) {
             printInbound(headers.toString(), streamId);
         }
@@ -407,6 +455,14 @@ public class WebPushConsole {
             final Prompt current = console.getPrompt();
             console.setPrompt(outbound);
             console.getShell().out().println(headers.toString());
+            console.setPrompt(current);
+        }
+
+        private void printOutbound(final Http2Headers headers, final ByteBuf byteBuf) {
+            final Prompt current = console.getPrompt();
+            console.setPrompt(outbound);
+            console.getShell().out().println(headers.toString());
+            console.getShell().out().println(JsonMapper.pretty(byteBuf.toString(CharsetUtil.UTF_8)));
             console.setPrompt(current);
         }
 

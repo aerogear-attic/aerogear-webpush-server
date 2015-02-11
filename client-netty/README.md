@@ -95,7 +95,63 @@ Use the ```location``` header value from the subscription response above as the 
 #### Exit the console
     
     > exit
-    
+
+
+### WebPush Aggregate Extension
+Allows an application to request that a web push server deliver the same message to a potentially large set of devices,
+and is a separate specification called [webpush-aggregate](http://tools.ietf.org/html/draft-thomson-webpush-aggregate-00)
+
+This may not be supported by all WebPush server implementation but is supported by the WebPush Console. The following
+example is using AeroGear WebPush Server.
+
+    [webpush]$ connect
+    Connected to [localhost:8443]
+
+    [webpush]$ register
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: /webpush/register, :scheme: https]
+    < [streamid:3] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, Location, cache-control: private, max-age=604800000, link: <webpush/aggregate/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:aggregate", link: <webpush/reg/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:reg", link: <webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:sub", location: webpush/reg/66a0f93c-1857-4507-a5da-0bb04e26f6b3]
+
+Notice the web link of rel type ```urn:ietf:params:push:aggregate``` which is the url that will be used when creating an
+aggregate channel.
+
+    [webpush]$ monitor --url webpush/reg/66a0f93c-1857-4507-a5da-0bb04e26f6b3
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: webpush/reg/66a0f93c-1857-4507-a5da-0bb04e26f6b3, :scheme: https]
+    < [streamid:5] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, cache-control: private, max-age=604800000, link: <webpush/aggregate/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:aggregate", link: <webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:sub"]
+
+Create two subscriptions:
+
+    [webpush]$ subscribe --url webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3, :scheme: https]
+    < [streamid:7] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/vlual30OKuEN4OPoXtj73Dsys%2FG05GJXe%2BK1%2FQDFJhcMfbCr8XZF5W5axRu5whKr%2BktqaUGIoMqMRfQPlSr%2Bq0wO2APBtvvdX4%2FDFJbT3wiLC5ug16BzP2%2B1zyyluv2ujVzXinrLeCkt]
+
+    [webpush]$ subscribe --url webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3, :scheme: https]
+    < [streamid:9] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/m2avCgWq14%2FeuuAQiGxZr%2BmmMZJp88FBQ%2BV42irZTm62ORyhg85IWuffZOdoEnkZx3wTs2St4IIaJxy%2FrJfq5eZkAsj355hDdARXrncTbiutv5rgcGGzG2GzDCeZaeHS6KgS9WAAvf5q]
+
+Next, create the aggregate channel using the web link of type ```urn:ietf:params:push:aggregate``` from the above ```register``` command.
+This command will also print the JSON format of the request body.
+
+    [webpush]$ aggregate --url webpush/aggregate/66a0f93c-1857-4507-a5da-0bb04e26f6b3 --channels /webpush/vlual30OKuEN4OPoXtj73Dsys%2FG05GJXe%2BK1%2FQDFJhcMfbCr8XZF5W5axRu5whKr%2BktqaUGIoMqMRfQPlSr%2Bq0wO2APBtvvdX4%2FDFJbT3wiLC5ug16BzP2%2B1zyyluv2ujVzXinrLeCkt,/webpush/m2avCgWq14%2FeuuAQiGxZr%2BmmMZJp88FBQ%2BV42irZTm62ORyhg85IWuffZOdoEnkZx3wTs2St4IIaJxy%2FrJfq5eZkAsj355hDdARXrncTbiutv5rgcGGzG2GzDCeZaeHS6KgS9WAAvf5q
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: webpush/aggregate/66a0f93c-1857-4507-a5da-0bb04e26f6b3, :scheme: https]
+    [ {
+      "/webpush/m2avCgWq14%2FeuuAQiGxZr%2BmmMZJp88FBQ%2BV42irZTm62ORyhg85IWuffZOdoEnkZx3wTs2St4IIaJxy%2FrJfq5eZkAsj355hDdARXrncTbiutv5rgcGGzG2GzDCeZaeHS6KgS9WAAvf5q" : {
+        "expires" : 0
+      }
+    }, {
+      "/webpush/vlual30OKuEN4OPoXtj73Dsys%2FG05GJXe%2BK1%2FQDFJhcMfbCr8XZF5W5axRu5whKr%2BktqaUGIoMqMRfQPlSr%2Bq0wO2APBtvvdX4%2FDFJbT3wiLC5ug16BzP2%2B1zyyluv2ujVzXinrLeCkt" : {
+        "expires" : 0
+      }
+    } ]
+    < [streamid:11] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/%2FgVm34r0gfnFphFCxxRPSodg94d4zH7CWWd76t0%2BVsMiNIZ%2F1Or%2B52w9X6k913dgHIK0XJnLg7bOsAzLPdvR7RWBzx4mqTTFTWzyymw26J7RCMR76CdNvdfqY%2FnG2s7KtBVVtzijw54p]
+
+Finally, we can use the ```notify``` command which is the same as before only the url for the aggreate channel, which is
+the value of the ```location``` response header from the ```aggregate``` command above:
+
+    [webpush]$ notify --url /webpush/%2FgVm34r0gfnFphFCxxRPSodg94d4zH7CWWd76t0%2BVsMiNIZ%2F1Or%2B52w9X6k913dgHIK0XJnLg7bOsAzLPdvR7RWBzx4mqTTFTWzyymw26J7RCMR76CdNvdfqY%2FnG2s7KtBVVtzijw54p --payload agg2
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: PUT, :path: /webpush/%2FgVm34r0gfnFphFCxxRPSodg94d4zH7CWWd76t0%2BVsMiNIZ%2F1Or%2B52w9X6k913dgHIK0XJnLg7bOsAzLPdvR7RWBzx4mqTTFTWzyymw26J7RCMR76CdNvdfqY%2FnG2s7KtBVVtzijw54p, :scheme: https]
+    < [streamid:2] agg2
+    < [streamid:2] agg2
+
 
 
 

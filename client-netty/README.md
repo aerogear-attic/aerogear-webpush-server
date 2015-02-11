@@ -29,11 +29,11 @@ the Node.js WebPush Server.
     $ webpush-server --port 8080 --key demo.key --cert selfsigned.crt
     Listening on https://Daniels-MBP.lan:8080...
 
-The _demo.key_ and _selfsigned.crt_ can be found in [server-netty/src/main/resources](../server-netty/src/main/resources).
+The ```demo.key``` and ```selfsigned.crt``` can be found in [server-netty/src/main/resources](../server-netty/src/main/resources).
 
 ### Start the console
 __Java 1.8__ is required for the WebPush Console when connecting to the AeroGear WebPush Server, and __Java 1.7__ for
-the node-webpush-server.
+the WebPush Console running against the node-webpush-server.
 
 Press ```tab``` to see the available commands and also to display the available options for specific commands.
 Most command also support a ```--help``` option to display information about options that the command accepts.

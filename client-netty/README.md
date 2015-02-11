@@ -45,8 +45,8 @@ Most command also support a ```--help``` option to display information about opt
 
 #### Connect
 
-    [webpush]$ connect -h hostname -p 8443
-    Connected to [hostname:8443]
+    [webpush]$ connect -h hostname -p port
+    Connected to [hostname:port]
 
 __Note__ that when connecting to the ```node-webpush-server``` the host name should be the host printed when upon server
 startup. This is because the _node-webpush-server_ supports [Server Name Indication](http://en.wikipedia.org/wiki/Server_Name_Indication).

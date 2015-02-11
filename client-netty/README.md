@@ -18,7 +18,7 @@ be done as a choice at runtime as the jar files for either NPN or ALPN must be a
 __Java 1.8__ is required for the AeroGear WebPush Server.
 
     cd server-netty
-    mvn exec:exec
+    mvn compile exec:exec
     (maven output not displayed)
     [main] INFO org.jboss.aerogear.webpush.netty.WebPushNettyServer - WebPush server bound to localhost:8443
 
@@ -39,7 +39,7 @@ Press ```tab``` to see the available commands and also to display the available 
 Most command also support a ```--help``` option to display information about options that the command accepts.
   
     cd client-netty
-    mvn exec:exec
+    mvn compile exec:exec
     
     [webpush]$
 

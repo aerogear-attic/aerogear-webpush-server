@@ -15,6 +15,8 @@ import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import org.jboss.aerogear.webpush.AggregateSubscription;
 import org.jboss.aerogear.webpush.AggregateSubscription.Entry;
 import org.jboss.aerogear.webpush.DefaultAggregateSubscription;
@@ -52,6 +54,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -68,7 +71,7 @@ public class WebPushFrameListenerTest {
     @Test
     public void register() throws Exception {
         final String regId = "9999";
-        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                 .withRegistrationid(regId)
                 .registrationMaxAge(10000L)
@@ -92,7 +95,7 @@ public class WebPushFrameListenerTest {
         final String regId = "9999";
         final String endpoint = "endpoint1";
         final String subscriptionId = "sub1";
-        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                 .withRegistrationid(regId)
                 .registrationMaxAge(10000L)
@@ -135,7 +138,7 @@ public class WebPushFrameListenerTest {
         final String endpoint = "endpoint1";
         final String subId = "sub1";
         final String message = "message1";
-        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
         final Subscription subscription = mockSubscription(regId, subId, endpoint, message);
         when(subscription.message()).thenReturn(Optional.of(message)).thenReturn(Optional.<String>empty());
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
@@ -169,7 +172,7 @@ public class WebPushFrameListenerTest {
         final String subId = "sub1";
         final String message = "message1";
         final ByteBuf data = copiedBuffer("message1", UTF_8);
-        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
         final Subscription subscription = mockSubscription(regId, subId, endpoint, message);
         when(subscription.message()).thenReturn(Optional.of(message)).thenReturn(Optional.<String>empty());
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
@@ -203,7 +206,7 @@ public class WebPushFrameListenerTest {
         final String regId = "9999";
         final String endpoint = "endpoint1";
         final String subId = "sub1";
-        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
         final WebPushServer webPushServer = MockWebPushServerBuilder
                 .withRegistrationid(regId)
                 .registrationMaxAge(10000L)
@@ -235,7 +238,7 @@ public class WebPushFrameListenerTest {
         final String regId = "9999";
         final String subId = "sub1";
         final String endpoint = "endpoint1";
-        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                 .withRegistrationid(regId)
                 .registrationMaxAge(10000L)
@@ -272,7 +275,7 @@ public class WebPushFrameListenerTest {
             final Subscription subscription = mockSubscription(regId, subId, endpoint);
             when(subscription.message()).thenReturn(Optional.of(message)).thenReturn(Optional.of(message));
 
-            final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+            final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
             final WebPushServer webPushServer = MockWebPushServerBuilder.withRegistrationid(regId)
                     .registrationMaxAge(10000L)
                     .subscriptionMaxAge(50000L)
@@ -305,7 +308,7 @@ public class WebPushFrameListenerTest {
     @Test
     public void aggregateSubscription() throws Exception {
         final String regId = "9999";
-        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
         final Subscription subscription1 = mockSubscription(regId, "sub1", "endpoint1", "message1");
         final Subscription subscription2 = mockSubscription(regId, "sub3", "endpoint2", "message2");
         final Subscription subscription3 = mockSubscription(regId, "sub3", "aggSub");
@@ -348,7 +351,7 @@ public class WebPushFrameListenerTest {
         final ByteBuf data = copiedBuffer("some payload", UTF_8);
         final int pushStreamId = 4;
         try {
-            final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+            final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
             final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                     .withRegistrationid(regId)
                     .registrationMaxAge(10000L)
@@ -382,7 +385,7 @@ public class WebPushFrameListenerTest {
         final String message = "message1";
         final ByteBuf data = copiedBuffer("some payload", UTF_8);
         try {
-            final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+            final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
             final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                     .withRegistrationid(regId)
                     .registrationMaxAge(10000L)
@@ -415,7 +418,7 @@ public class WebPushFrameListenerTest {
         final Subscription subscription3 = mockSubscription(regId, "sub3", "aggSub");
         try {
             final int pushStreamId = 4;
-            final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+            final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
             final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                     .withRegistrationid(regId)
                     .registrationMaxAge(10000L)
@@ -467,7 +470,7 @@ public class WebPushFrameListenerTest {
         final String message = "message1";
         final ByteBuf data = copiedBuffer(new String(new byte[4099]), UTF_8);
         try {
-            final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+            final ChannelHandlerContext ctx = mockChannelHandlerContext(regId);
             final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                     .withRegistrationid(regId)
                     .registrationMaxAge(10000L)
@@ -693,6 +696,14 @@ public class WebPushFrameListenerTest {
 
     private static String webpushPath(final String path) {
         return "/webpush/" + path;
+    }
+
+    private static ChannelHandlerContext mockChannelHandlerContext(final String regId) {
+        final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+        final Attribute<Object> attribute = mock(Attribute.class);
+        when(attribute.get()).thenReturn(regId);
+        when(ctx.attr(any(AttributeKey.class))).thenReturn(attribute);
+        return ctx;
     }
 
 }

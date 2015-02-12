@@ -87,7 +87,7 @@ public class WebPushClient {
             b.remoteAddress(host, port);
             b.handler(new WebPushClientInitializer(configureSsl(), host, port, handler));
             channel = b.connect().syncUninterruptibly().channel();
-            System.out.println("Connected to [" + host + ':' + port + ']');
+            System.out.println("Connected to [" + host + ':' + port + "][channelId=" + channel.id() + ']');
         } catch (final Exception e) {
             e.printStackTrace();
             workerGroup.shutdownGracefully();

@@ -1,12 +1,9 @@
 package org.jboss.aerogear.webpush;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http2.HttpUtil;
-import io.netty.util.CharsetUtil;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -17,9 +14,11 @@ import java.util.concurrent.TimeUnit;
 public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpResponse> {
 
     private final SortedMap<Integer, ChannelPromise> streamidPromiseMap;
+    private final EventHandler handler;
 
-    public HttpResponseHandler() {
+    public HttpResponseHandler(final EventHandler handler) {
         streamidPromiseMap = new TreeMap<>();
+        this.handler = handler;
     }
 
     /**
@@ -83,6 +82,12 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpRes
             promise.setSuccess();
         }
         */
+    }
+
+    @Override
+    public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
+        handler.message("Channel with id " + ctx.channel().id() + ", became inactive/disonnected.");
+        super.channelInactive(ctx);
     }
 
     @Override

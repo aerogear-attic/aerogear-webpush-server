@@ -39,4 +39,11 @@ public interface EventHandler {
      */
     void notification(String data, int streamId);
 
+    /**
+     * Invoked when a general message should be displayed.
+     *
+     * @param message the message to be displayed
+     */
+    void message(String message);
+
 }

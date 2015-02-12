@@ -451,10 +451,19 @@ public class WebPushConsole {
             printInbound(data, streamId);
         }
 
+        @Override
+        public void message(final String message) {
+            printOutbound(message);
+        }
+
         private void printOutbound(final Http2Headers headers) {
+            printOutbound(headers.toString());
+        }
+
+        private void printOutbound(final String msg) {
             final Prompt current = console.getPrompt();
             console.setPrompt(outbound);
-            console.getShell().out().println(headers.toString());
+            console.getShell().out().println(msg);
             console.setPrompt(current);
         }
 

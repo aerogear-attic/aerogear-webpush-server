@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.jboss.aerogear</groupId>
     <artifactId>aerogear-parent</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.12</version>
   </parent>
   <artifactId>webpush-parent</artifactId>
   <packaging>pom</packaging>
@@ -32,22 +32,6 @@
   <description>
     A WebPush Server Implementation.
   </description>
-
-  <licenses>
-    <license>
-      <name>Apache License, Version 2.0</name>
-      <distribution>repo</distribution>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
-    </license>
-  </licenses>
-
-  <developers>
-    <developer>
-      <id>aerogear</id>
-      <name>AeroGear Team</name>
-      <email>aerogear-dev@lists.jboss.org</email>
-    </developer>
-  </developers>
 
   <scm>
     <connection>scm:git:git://github.com/aerogear/aerogear-webpush-server.git</connection>
@@ -71,6 +55,7 @@
     <mockito.version>1.9.0</mockito.version>
     <slf4j.version>1.7.5</slf4j.version>
     <jetty.npn.version>7.6.2.v20120308</jetty.npn.version>
+    <additionalparam>-Xdoclint:none</additionalparam>
   </properties>
 
   <modules>
@@ -287,40 +272,22 @@
             </lifecycleMappingMetadata>
           </configuration>
         </plugin>
+        <!-- Override the actual checkstyle version to support Java 1.8 -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${version.checkstyle.plugin}</version>
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>5.9</version>
+            </dependency>
+          </dependencies>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
-
-  <profiles>
-    <profile>
-      <id>release-sign-artifacts</id>
-      <activation>
-        <property>
-          <name>performRelease</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <!-- Inherits version 1.4 from org.jboss:jboss-parent:10 pom.xml -->
-            <!-- <version>1.4</version> -->
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
   <repositories>
     <repository>
       <id>clinker-netty-snapshots-repo</id>

@@ -1,7 +1,6 @@
 package org.jboss.aerogear.webpush;
 
 import java.net.URI;
-import java.util.UUID;
 
 /**
  * Represents a client registration in the WebPush protocol.
@@ -11,7 +10,7 @@ public interface Registration {
     /**
      * A globally unique identifier for this registration.
      *
-     * @return {@link UUID} the identifier for this registration.
+     * @return {@code String} the identifier for this registration.
      */
     String id();
 

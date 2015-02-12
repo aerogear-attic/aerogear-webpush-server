@@ -48,8 +48,16 @@ Most command also support a ```--help``` option to display information about opt
     [webpush]$ connect -h hostname -p port
     Connected to [hostname:port]
 
-__Note__ that when connecting to the ```node-webpush-server``` the host name should be the host printed when upon server
-startup. This is because the _node-webpush-server_ supports [Server Name Indication](http://en.wikipedia.org/wiki/Server_Name_Indication).
+__Note__
+When connecting to the ```node-webpush-server``` the hostname specified must be a fully qualified domain name
+[FQDN](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)
+since this hostname is used for [Server Name Indication](http://tools.ietf.org/html/rfc6066#section-3).  
+The hostname must have a hostname part, and a domain part, separated by a comma. If the address that the
+_node-webpush-server_ is listening to is not a FQDN you can add such a name to hosts file.  
+For example, add a FQDN to /etc/hosts:
+
+    127.0.0.1	localhost localhost.com
+
 
 #### Register 
 

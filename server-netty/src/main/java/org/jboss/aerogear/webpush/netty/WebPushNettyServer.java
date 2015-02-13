@@ -40,8 +40,6 @@ import org.jboss.aerogear.webpush.standalone.ConfigReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-
 /**
  * A HTTP/2 based WebPush Server.
  */

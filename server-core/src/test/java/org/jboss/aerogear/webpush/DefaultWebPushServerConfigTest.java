@@ -24,7 +24,10 @@ public class DefaultWebPushServerConfigTest {
     public void endpointHost() {
         final WebPushServerConfig config = DefaultWebPushConfig.create()
                 .endpointHost("localhost")
-                .password("dummy").build();
+                .password("dummy")
+                .cert("/selfsigned.crt")
+                .privateKey("/demo.key")
+                .build();
         assertThat(config.endpointHost(), equalTo("localhost"));
     }
 
@@ -32,7 +35,10 @@ public class DefaultWebPushServerConfigTest {
     public void endpointPort() {
         final WebPushServerConfig config = DefaultWebPushConfig.create()
                 .endpointPort(8888)
-                .password("dummy").build();
+                .password("dummy")
+                .cert("/selfsigned.crt")
+                .privateKey("/demo.key")
+                .build();
         assertThat(config.endpointPort(), is(8888));
     }
 
@@ -40,20 +46,31 @@ public class DefaultWebPushServerConfigTest {
     public void endpointPortNegative() {
         final WebPushServerConfig config = DefaultWebPushConfig.create()
                 .endpointPort(-8888)
-                .password("dummy").build();
+                .password("dummy")
+                .cert("/selfsigned.crt")
+                .privateKey("/demo.key")
+                .build();
         assertThat(config.endpointPort(), is(7777));
     }
 
     @Test (expected = IllegalStateException.class)
     public void shouldThrowIfMaxSizeLessThanMaxLowerBound() {
-        DefaultWebPushConfig.create().messageMaxSize(20L).password("dummy").build();
+        DefaultWebPushConfig.create()
+                .messageMaxSize(20L)
+                .password("dummy")
+                .cert("/selfsigned.crt")
+                .privateKey("/demo.key")
+                .build();
     }
 
     @Test
     public void messageMaxSize() {
         final WebPushServerConfig config = DefaultWebPushConfig.create()
                 .messageMaxSize(4097L)
-                .password("dummy").build();
+                .password("dummy")
+                .cert("/selfsigned.crt")
+                .privateKey("/demo.key")
+                .build();
         assertThat(config.messageMaxSize(), is(4097L));
     }
 

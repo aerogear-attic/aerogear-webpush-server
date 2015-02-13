@@ -87,6 +87,16 @@ public class ConfigReaderTest {
     }
 
     @Test
+    public void cert() {
+        assertThat(webPushServerConfig.cert().getName(), equalTo("selfsigned.crt"));
+    }
+
+    @Test
+    public void privateKey() {
+        assertThat(webPushServerConfig.privateKey().getName(), equalTo("demo.key"));
+    }
+
+    @Test
     public void sampleConfig() {
         final WebPushServerConfig config = ConfigReader.parse(ConfigReaderTest.class.getResourceAsStream("/webpush-config.json"));
         assertThat(config.host(), equalTo("0.0.0.0"));

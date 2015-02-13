@@ -34,7 +34,10 @@ public class DefaultWebPushServerTest {
     @Before
     public void setup() {
         final DataStore dataStore = new InMemoryDataStore();
-        final WebPushServerConfig config = DefaultWebPushConfig.create().password("test").build();
+        final WebPushServerConfig config = DefaultWebPushConfig.create().password("test")
+                .cert("/selfsigned.crt")
+                .privateKey("/demo.key")
+                .build();
         final byte[] privateKey = DefaultWebPushServer.generateAndStorePrivateKey(dataStore, config);
         server = new DefaultWebPushServer(dataStore, config, privateKey);
     }

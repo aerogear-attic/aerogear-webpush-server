@@ -38,16 +38,11 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import org.jboss.aerogear.webpush.AggregateSubscription.Entry;
-import org.jboss.aerogear.webpush.DefaultAggregateSubscription.DefaultEntry;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 import static io.netty.buffer.Unpooled.copiedBuffer;
 import static io.netty.handler.codec.http.HttpMethod.POST;
@@ -90,17 +85,17 @@ public class WebPushClient {
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.remoteAddress(host, port);
-            b.handler(new WebPushClientInitializer(configureSsl(), Integer.MAX_VALUE, handler));
+            b.handler(new WebPushClientInitializer(configureSsl(), host, port, handler));
             channel = b.connect().syncUninterruptibly().channel();
-            System.out.println("Connected to [" + host + ':' + port + ']');
+            System.out.println("Connected to [" + host + ':' + port + "][channelId=" + channel.id() + ']');
         } catch (final Exception e) {
             e.printStackTrace();
             workerGroup.shutdownGracefully();
         }
     }
 
-    public void register() throws Exception {
-        writeRequest(POST, "/webpush/register", Unpooled.buffer());
+    public void register(final String path) throws Exception {
+        writeRequest(POST, path, Unpooled.buffer());
     }
 
     public void monitor(final String monitorUrl, final boolean now) throws Exception {
@@ -124,15 +119,7 @@ public class WebPushClient {
     }
 
     public void createAggregateSubscription(final String aggregateUrl, final String json) throws Exception {
-        writeRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
-    }
-
-    public static Set<Entry> asEntries(final String[] endpointUrls) {
-        final Set<Entry> entries = new HashSet<>(endpointUrls.length);
-        for (String url: endpointUrls) {
-            entries.add(new DefaultEntry(url, Optional.of(0L)));
-        }
-        return entries;
+        writeJsonRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
     }
 
     public void notify(final String endpointUrl, final String payload) throws Exception {
@@ -153,7 +140,14 @@ public class WebPushClient {
     private void writeRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
         final Http2Headers headers = http2Headers(method, url);
         handler.outbound(headers);
-        ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, Optional.of(payload))).sync();
+        ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
+        requestFuture.sync();
+    }
+
+    private void writeJsonRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
+        final Http2Headers headers = http2Headers(method, url);
+        handler.outbound(headers, payload);
+        ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
         requestFuture.sync();
     }
 
@@ -187,12 +181,28 @@ public class WebPushClient {
 
     private SslContext configureSsl() throws SSLException {
         if (ssl) {
+            // The jar for the TLS protocol extension must be on the bootclasspath
+            // and will be set up prior to program execution. We need to configure
+            // the SslContext to suite both NPN and ALPN.
+            final String protocol = System.getProperty("webpush.tls.protocol");
+            if (protocol.equals("NPN")) {
+                return SslContext.newClientContext(SslProvider.JDK,
+                        null,
+                        InsecureTrustManagerFactory.INSTANCE,
+                        null,
+                        SupportedCipherSuiteFilter.INSTANCE,
+                        new ApplicationProtocolConfig(
+                                Protocol.NPN,
+                                SelectorFailureBehavior.FATAL_ALERT,
+                                SelectedListenerFailureBehavior.FATAL_ALERT,
+                                SelectedProtocol.HTTP_2.protocolName(),
+                                SelectedProtocol.HTTP_1_1.protocolName()),
+                        0, 0);
+            }
             return SslContext.newClientContext(SslProvider.JDK,
                     null,
                     InsecureTrustManagerFactory.INSTANCE,
                     Http2SecurityUtil.CIPHERS,
-                    /* NOTE: the following filter may not include all ciphers required by the HTTP/2 specification
-                     * Please refer to the HTTP/2 specification for cipher requirements. */
                     SupportedCipherSuiteFilter.INSTANCE,
                     new ApplicationProtocolConfig(
                             Protocol.ALPN,
@@ -201,7 +211,6 @@ public class WebPushClient {
                             SelectedProtocol.HTTP_2.protocolName(),
                             SelectedProtocol.HTTP_1_1.protocolName()),
                     0, 0);
-
         }
         return null;
     }
@@ -213,8 +222,8 @@ public class WebPushClient {
     public static class Builder {
 
         private final String host;
-        private int port = 8080;
-        private boolean ssl;
+        private int port = 8443;
+        private boolean ssl = true;
         private final List<String> protocols = new ArrayList<>();
         private EventHandler handler;
 

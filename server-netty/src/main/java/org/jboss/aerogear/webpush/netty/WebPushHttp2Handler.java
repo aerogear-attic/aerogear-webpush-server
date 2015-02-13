@@ -22,6 +22,8 @@ import org.jboss.aerogear.webpush.WebPushServer;
 
 public class WebPushHttp2Handler extends Http2ConnectionHandler {
 
+    private final WebPushFrameListener listener;
+
     public WebPushHttp2Handler(final WebPushServer webpushServer) {
         this(new DefaultHttp2Connection(true),
                 new DefaultHttp2FrameReader(),
@@ -34,6 +36,7 @@ public class WebPushHttp2Handler extends Http2ConnectionHandler {
                                 final Http2FrameWriter frameWriter,
                                 final WebPushFrameListener listener) {
         super(connection, frameReader, frameWriter, listener);
+        this.listener = listener;
         listener.encoder(encoder());
     }
 
@@ -43,4 +46,9 @@ public class WebPushHttp2Handler extends Http2ConnectionHandler {
         ctx.close();
     }
 
+    @Override
+    public void channelUnregistered(final ChannelHandlerContext ctx) throws Exception {
+        listener.disconnect(ctx);
+        super.channelUnregistered(ctx);
+    }
 }

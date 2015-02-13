@@ -33,7 +33,6 @@ import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
 import org.jboss.aerogear.webpush.datastore.DataStore;
 import org.jboss.aerogear.webpush.datastore.InMemoryDataStore;
@@ -77,12 +76,10 @@ public final class WebPushNettyServer {
     }
 
     private static SslContext createSslContext(final WebPushServerConfig config) throws Exception {
-
         if (config.useEndpointTls()) {
-            SelfSignedCertificate ssc = new SelfSignedCertificate();
             return SslContext.newServerContext(SslProvider.JDK,
-                    ssc.certificate(),
-                    ssc.privateKey(),
+                    config.cert(),
+                    config.privateKey(),
                     null,
                     Http2SecurityUtil.CIPHERS,
                     SupportedCipherSuiteFilter.INSTANCE,

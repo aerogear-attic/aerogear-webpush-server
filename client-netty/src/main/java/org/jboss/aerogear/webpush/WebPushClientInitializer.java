@@ -16,6 +16,7 @@
  */
 package org.jboss.aerogear.webpush;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
@@ -37,8 +38,11 @@ import io.netty.handler.codec.http2.Http2ConnectionHandler;
 import io.netty.handler.codec.http2.Http2FrameListener;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
-import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -46,30 +50,32 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> {
 
     private final SslContext sslCtx;
-    private final int maxContentLength;
     private final EventHandler callback;
+    private final String host;
+    private final int port;
     private WebPushToHttp2ConnectionHandler connectionHandler;
     private HttpResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
 
-    public WebPushClientInitializer(SslContext sslCtx, int maxContentLength, final EventHandler callback) {
+    public WebPushClientInitializer(SslContext sslCtx,
+                                    final String host,
+                                    final int port,
+                                    final EventHandler callback) {
         this.sslCtx = sslCtx;
-        this.maxContentLength = maxContentLength;
         this.callback = callback;
+        this.host = host;
+        this.port = port;
     }
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
         final Http2Connection connection = new DefaultHttp2Connection(false);
-        final Http2FrameWriter frameWriter = new DefaultHttp2FrameWriter();
-        final Http2FrameReader frameReader = new WebPushFrameReader(callback, new DefaultHttp2FrameReader());
         connectionHandler = new WebPushToHttp2ConnectionHandler(connection,
-                frameReader,
-                frameWriter,
-                new DelegatingDecompressorFrameListener(connection,
-                        new InboundHttp2ToHttpAdapter.Builder(connection).maxContentLength(maxContentLength).build()));
-        responseHandler = new HttpResponseHandler();
+                new DefaultHttp2FrameReader(),
+                new DefaultHttp2FrameWriter(),
+                new DelegatingDecompressorFrameListener(new DefaultHttp2Connection(false), new WebPushFrameListener(callback)));
+        responseHandler = new HttpResponseHandler(callback);
         settingsHandler = new Http2SettingsHandler(ch.newPromise());
 
         if (sslCtx != null) {
@@ -97,8 +103,11 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
      */
     private void configureSsl(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
-        pipeline.addLast("SslHandler", sslCtx.newHandler(ch.alloc()));
+        final SslHandler sslHandler = sslCtx.newHandler(ch.alloc(), host, port);
+        sslHandler.handshakeFuture().addListener(new SslHandshakeListener(callback));
+        pipeline.addLast("SslHandler", sslHandler);
         pipeline.addLast("Http2Handler", connectionHandler);
+        ch.pipeline().addLast("Logger", new UserEventLogger(callback));
         configureEndOfPipeline(pipeline);
     }
 
@@ -112,7 +121,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
         ch.pipeline().addLast("Http2SourceCodec", sourceCodec);
         ch.pipeline().addLast("Http2UpgradeHandler", upgradeHandler);
         ch.pipeline().addLast("Http2UpgradeRequestHandler", new UpgradeRequestHandler());
-        ch.pipeline().addLast("Logger", new UserEventLogger());
+        ch.pipeline().addLast("Logger", new UserEventLogger(callback));
     }
 
     /**
@@ -133,9 +142,21 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
      * Class that logs any User Events triggered on this channel.
      */
     private static class UserEventLogger extends ChannelHandlerAdapter {
+
+        private final EventHandler handler;
+
+        UserEventLogger(final EventHandler handler) {
+           this.handler = handler;
+        }
+
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            System.out.println("User Event Triggered: " + evt);
+            if (evt instanceof SslHandshakeCompletionEvent) {
+                SslHandshakeCompletionEvent sslEvent = (SslHandshakeCompletionEvent) evt;
+                if (!sslEvent.isSuccess()) {
+                    handler.message(sslEvent.cause().getMessage());
+                }
+            }
             super.userEventTriggered(ctx, evt);
         }
     }
@@ -161,7 +182,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
                     final ChannelPromise dataPromise = ctx.newPromise();
                     promiseAggregator.add(headerPromise, dataPromise);
                     encoder.writeHeaders(ctx, streamId, message.headers(), 0, false, headerPromise);
-                    encoder.writeData(ctx, streamId, message.payload().get(), 0, true, dataPromise);
+                    encoder.writeData(ctx, streamId, message.payload(), 0, true, dataPromise);
                 } else {
                     encoder.writeHeaders(ctx, streamId, message.headers(), 0, true, promise);
                 }
@@ -172,8 +193,24 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
 
         @Override
         public void onException(ChannelHandlerContext ctx, Throwable cause) {
-            //cause.printStackTrace();
+            cause.printStackTrace();
             super.onException(ctx, cause);
+        }
+    }
+
+    private static class SslHandshakeListener implements GenericFutureListener<Future<Channel>> {
+
+        private EventHandler handler;
+
+        private SslHandshakeListener(final EventHandler handler) {
+            this.handler = handler;
+        }
+
+        @Override
+        public void operationComplete(final Future<Channel> future) throws Exception {
+            if (!future.isSuccess()) {
+                handler.message(future.cause().getMessage());
+            }
         }
     }
 

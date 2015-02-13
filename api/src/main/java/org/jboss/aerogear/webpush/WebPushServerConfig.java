@@ -16,6 +16,8 @@
  */
 package org.jboss.aerogear.webpush;
 
+import java.io.File;
+
 /**
  * Configuration settings for WebPush server
  */
@@ -47,6 +49,20 @@ public interface WebPushServerConfig {
      * @return {@link Protocol} the protocol used for TLS application protocol negotiation.
      */
     Protocol protocol();
+
+    /**
+     * Returns the server certificate file.
+     *
+     * @return {@link File} the servers certificate file.
+     */
+    File cert();
+
+    /**
+     * Returns the server private key file.
+     *
+     * @return {@link File} the servers private key file.
+     */
+    File privateKey();
 
     /**
      * Determins whether transport layer security is in use.

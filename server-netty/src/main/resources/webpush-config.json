@@ -1,6 +1,8 @@
 {
     "host": "localhost",
     "port": 8443,
+    "cert": "/selfsigned.crt",
+    "privateKey": "/demo.key",
     "endpoint-tls": true,
     "endpoint-host": "localhost",
     "password": "ChangeMe!!!!",

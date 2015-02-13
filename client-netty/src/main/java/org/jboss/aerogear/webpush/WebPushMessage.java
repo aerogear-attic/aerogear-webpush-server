@@ -3,18 +3,16 @@ package org.jboss.aerogear.webpush;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http2.Http2Headers;
 
-import java.util.Optional;
-
 public class WebPushMessage {
 
     private final Http2Headers headers;
-    private final Optional<ByteBuf> payload;
+    private final ByteBuf payload;
 
     public WebPushMessage(final Http2Headers headers) {
-        this(headers, Optional.empty());
+        this(headers, null);
     }
 
-    public WebPushMessage(final Http2Headers headers, final Optional<ByteBuf> payload) {
+    public WebPushMessage(final Http2Headers headers, final ByteBuf payload) {
         this.headers = headers;
         this.payload = payload;
     }
@@ -24,10 +22,10 @@ public class WebPushMessage {
     }
 
     public boolean hasData() {
-        return payload.isPresent();
+        return payload != null;
     }
 
-    public Optional<ByteBuf> payload() {
+    public ByteBuf payload() {
         return payload;
     }
 

@@ -26,6 +26,7 @@ import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2FrameAdapter;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.Future;
 import org.jboss.aerogear.webpush.AggregateSubscription;
@@ -64,16 +65,16 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     public static final AsciiString LINK = new AsciiString("link");
     public static final AsciiString ANY_ORIGIN = new AsciiString("*");
-    public static final AsciiString AGGREGATION_JSON = new AsciiString("application/push-aggregation+json");
+    private static final AsciiString AGGREGATION_JSON = new AsciiString("application/push-aggregation+json");
     private static final Logger LOGGER = LoggerFactory.getLogger(WebPushNettyServer.class);
     private static final ConcurrentHashMap<String, Optional<Client>> monitoredStreams = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> notificationStreams = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, AggregateSubscription> aggregateChannels = new ConcurrentHashMap<>();
+    private static final AttributeKey<String> REG_ID = AttributeKey.valueOf("regId");
     private static final String GET = "GET";
     private static final String POST = "POST";
     private static final String PUT = "PUT";
     private static final String DELETE = "DELETE";
-
     private static final String PATH_KEY = "webpush.path";
     private static final String METHOD_KEY = "webpush.method";
     private final WebPushServer webpushServer;
@@ -87,7 +88,6 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     public void encoder(Http2ConnectionEncoder encoder) {
         this.encoder = encoder;
     }
-
 
     @Override
     public void onHeadersRead(final ChannelHandlerContext ctx,
@@ -123,17 +123,6 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         }
     }
 
-    private static void setPathAndMethod(final Http2Stream stream, final String path, final AsciiString method) {
-        stream.setProperty(PATH_KEY, path);
-        stream.setProperty(METHOD_KEY, method);
-    }
-
-    private void verifyAggregateMimeType(final Http2Headers headers) {
-        if (!AGGREGATION_JSON.equals(headers.get(CONTENT_TYPE))) {
-            // TODO: handle a stream error. Needs to be investigate what the proper handling is.
-        }
-    }
-
     @Override
     public int onDataRead(final ChannelHandlerContext ctx,
                           final int streamId,
@@ -162,6 +151,18 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         notificationStreams.clear();
     }
 
+    public void disconnect(final ChannelHandlerContext ctx) {
+        final Optional<String> regId = Optional.ofNullable(ctx.attr(REG_ID).get());
+        if (regId.isPresent()) {
+            final Optional<Client> removed = monitoredStreams.remove(regId.get());
+            if (removed != null && removed.isPresent()) {
+                final Client client = removed.get();
+                LOGGER.info("Removed client regId{}", client);
+            }
+        }
+        LOGGER.info("Disconnected channel {}", ctx.channel().id());
+    }
+
     private void handleNotification(final ChannelHandlerContext ctx,
                                     final int streamId,
                                     final ByteBuf data,
@@ -176,7 +177,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                             encoder.writeHeaders(ctx, streamId, acceptedHeaders(), 0, true, ctx.newPromise())
             );
             Optional.ofNullable(aggregateChannels.get(endpoint)).ifPresent(agg ->
-                            agg.subscriptions().stream().forEach(entry -> handleNotify(entry.endpoint(), data, padding, e -> {
+                            agg.subscriptions().stream().forEach(entry -> handleNotify(entry.endpoint(), data.copy(), padding, e -> {
                             }))
             );
         }
@@ -231,6 +232,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     private void handleDeviceRegister(final ChannelHandlerContext ctx, final int streamId) {
         final Registration registration = webpushServer.register();
+        ctx.attr(REG_ID).set(registration.id());
         encoder.writeHeaders(ctx, streamId, registrationHeaders(registration), 0, true, ctx.newPromise());
         LOGGER.info("Registered {} " + registration);
     }
@@ -295,6 +297,17 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(ACCESS_CONTROL_EXPOSE_HEADERS, new AsciiString("Location"))
                 .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().subscriptionMaxAge()));
+    }
+
+    private static void setPathAndMethod(final Http2Stream stream, final String path, final AsciiString method) {
+        stream.setProperty(PATH_KEY, path);
+        stream.setProperty(METHOD_KEY, method);
+    }
+
+    private void verifyAggregateMimeType(final Http2Headers headers) {
+        if (!AGGREGATION_JSON.equals(headers.get(CONTENT_TYPE))) {
+            // TODO: handle a stream error. Needs to be investigate what the proper handling is.
+        }
     }
 
     /**
@@ -398,7 +411,6 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(ACCESS_CONTROL_EXPOSE_HEADERS, CONTENT_TYPE);
     }
-
 
     private static Optional<String> extractRegistrationId(final String path, final String segment) {
         try {

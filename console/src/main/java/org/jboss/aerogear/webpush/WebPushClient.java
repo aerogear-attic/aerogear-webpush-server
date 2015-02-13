@@ -184,8 +184,8 @@ public class WebPushClient {
             // The jar for the TLS protocol extension must be on the bootclasspath
             // and will be set up prior to program execution. We need to configure
             // the SslContext to suite both NPN and ALPN.
-            final String protocol = System.getProperty("webpush.tls.protocol");
-            if (protocol.equals("NPN")) {
+            final String version = System.getProperty("java.version");
+            if (version.startsWith("1.7")) {
                 return SslContext.newClientContext(SslProvider.JDK,
                         null,
                         InsecureTrustManagerFactory.INSTANCE,

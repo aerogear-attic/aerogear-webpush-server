@@ -1,5 +1,5 @@
-## WebPush Client based on Netty
-This module contains both a WebPush client and a command line applications called the WebPush Console.
+## WebPush Console
+This module contains WebPush client command line applications called the WebPush Console.
 
 The WebPush Console is intended to be used during development and manual testing of a WebPush server. Currently, it works
 with the [node-webpush-server](https://github.com/kitcambridge/node-webpush-server) and the AeroGear
@@ -38,7 +38,7 @@ the WebPush Console running against the node-webpush-server.
 Press ```tab``` to see the available commands and also to display the available options for specific commands.
 Most command also support a ```--help``` option to display information about options that the command accepts.
   
-    cd client-netty
+    cd console
     mvn compile exec:exec
     
     [webpush]$

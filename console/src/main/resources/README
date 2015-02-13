@@ -1,0 +1,11 @@
+## AeroGear WebPush Console
+This distribution of the WebPush Console is targeted at a specific version of Java. The Transport Layer Security
+ (TLS) extension in the lib directory matches the Java version that this distribution is for.
+
+For more information about the WebPush Console please refer to:
+https://github.com/aerogear/aerogear-webpush-server/tree/master/console
+
+### Usage
+java -Xbootclasspath/p:./lib/<jar-file-name>.jar -jar webpush-console-dist.jar
+
+

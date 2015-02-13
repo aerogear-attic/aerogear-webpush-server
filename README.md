@@ -39,8 +39,8 @@ An implementation of AeroGear WebPush Server API.
 * [server-netty](./server-netty)  
 The WebPush Server implementation that uses Netty 5.x.
 
-* [client-netty](./client-netty)  
-The WebPush Client implementation that uses Netty 5.x.
+* [console](./console)
+The WebPush Client command line application.
 
 Please refer to the above modules documentation for more information.
 

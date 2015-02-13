@@ -23,9 +23,9 @@
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>client-netty</artifactId>
+    <artifactId>webpush-console</artifactId>
     <packaging>jar</packaging>
-    <name>AeroGear WebPush Netty Client</name>
+    <name>AeroGear WebPush Console</name>
 
     <url>http://aerogear.org</url>
     <licenses>
@@ -44,7 +44,6 @@
         <jetty.alpn.version>8.1.0.v20141016</jetty.alpn.version>
         <jetty.alpn.path>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${jetty.alpn.version}/alpn-boot-${jetty.alpn.version}.jar</jetty.alpn.path>
         <bootcp>${jetty.alpn.path}</bootcp>
-        <webpush.tls.protocol>ALPN</webpush.tls.protocol>
     </properties>
 
     <build>
@@ -70,26 +69,59 @@
                 <executions>
                     <execution>
                         <id>get-npn-boot</id>
-                        <phase>validate</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>get</goal>
+                            <goal>copy</goal>
                         </goals>
                         <configuration>
                             <groupId>org.mortbay.jetty.npn</groupId>
                             <artifactId>npn-boot</artifactId>
                             <version>${jetty.npn.version}</version>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                            <artifactItems>
+                              <artifactItem>
+                                <groupId>org.mortbay.jetty.npn</groupId>
+                                <artifactId>npn-boot</artifactId>
+                                <version>1.1.9.v20141016</version>
+                              </artifactItem>
+                              <artifactItem>
+                                <groupId>org.mortbay.jetty.npn</groupId>
+                                <artifactId>npn-boot</artifactId>
+                                <version>1.1.5.v20130313</version>
+                              </artifactItem>
+                              <artifactItem>
+                                <groupId>org.mortbay.jetty.npn</groupId>
+                                <artifactId>npn-boot</artifactId>
+                                <version>1.1.8.v20141013</version>
+                              </artifactItem>
+                              <artifactItem>
+                                <groupId>org.mortbay.jetty.npn</groupId>
+                                <artifactId>npn-boot</artifactId>
+                                <version>1.1.9.v20141016</version>
+                              </artifactItem>
+                            </artifactItems>
                         </configuration>
                     </execution>
                     <execution>
                         <id>get-alpn-boot</id>
-                        <phase>validate</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>get</goal>
+                            <goal>copy</goal>
                         </goals>
                         <configuration>
                             <groupId>org.mortbay.jetty.alpn</groupId>
                             <artifactId>alpn-boot</artifactId>
                             <version>${jetty.alpn.version}</version>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                            <artifactItems>
+                              <artifactItem>
+                                <groupId>org.mortbay.jetty.alpn</groupId>
+                                <artifactId>alpn-boot</artifactId>
+                                <version>8.1.0.v20141016</version>
+                              </artifactItem>
+                            </artifactItems>
                         </configuration>
                     </execution>
                 </executions>
@@ -103,7 +135,6 @@
                     <arguments>
                         <!--argument>-Djavax.net.debug=all</argument-->
                         <argument>-Xbootclasspath/p:${bootcp}</argument>
-                        <argument>-Dwebpush.tls.protocol=${webpush.tls.protocol}</argument>
                         <argument>-classpath</argument>
                         <classpath/>
                         <argument>org.jboss.aerogear.webpush.WebPushConsole</argument>
@@ -121,10 +152,14 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4.1</version>
                 <configuration>
-                    <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <appendAssemblyId>false</appendAssemblyId>
+                    <descriptors>
+                      <descriptor>src/assembly/jar.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-8.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-7_0_25.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-7_0_67.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-7_0_72.xml</descriptor>
+                    </descriptors>
+                    <appendAssemblyId>true</appendAssemblyId>
                     <archive>
                         <manifest>
                             <mainClass>org.jboss.aerogear.webpush.WebPushConsole</mainClass>
@@ -214,7 +249,6 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.3.v20130313</jetty.npn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -228,7 +262,6 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.3.v20130313</jetty.npn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -242,7 +275,6 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.3.v20130313</jetty.npn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -256,7 +288,6 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.4.v20130313</jetty.npn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -270,7 +301,6 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.5.v20130313</jetty.npn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -284,7 +314,6 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.5.v20130313</jetty.npn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -298,7 +327,6 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.5.v20130313</jetty.npn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -312,7 +340,6 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.5.v20130313</jetty.npn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -327,7 +354,6 @@
       <properties>
         <jetty.npn.version>1.1.6.v20130911</jetty.npn.version>
         <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -342,7 +368,6 @@
       <properties>
         <jetty.npn.version>1.1.6.v20130911</jetty.npn.version>
         <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -357,7 +382,6 @@
       <properties>
         <jetty.npn.version>1.1.6.v20130911</jetty.npn.version>
         <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -372,7 +396,6 @@
       <properties>
         <jetty.npn.version>1.1.8.v20141013</jetty.npn.version>
         <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -387,7 +410,6 @@
       <properties>
         <jetty.npn.version>1.1.8.v20141013</jetty.npn.version>
         <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -402,7 +424,6 @@
       <properties>
         <jetty.npn.version>1.1.8.v20141013</jetty.npn.version>
         <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -417,7 +438,6 @@
       <properties>
         <jetty.npn.version>1.1.8.v20141013</jetty.npn.version>
         <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -432,7 +452,6 @@
       <properties>
         <jetty.npn.version>1.1.9.v20141016</jetty.npn.version>
         <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -447,7 +466,6 @@
       <properties>
         <jetty.npn.version>1.1.9.v20141016</jetty.npn.version>
         <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
-        <webpush.tls.protocol>NPN</webpush.tls.protocol>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>

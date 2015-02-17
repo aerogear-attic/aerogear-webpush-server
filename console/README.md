@@ -14,6 +14,21 @@ extension Next Protocol Negotiation (NPN) and does currently not support Applica
 There is no NPN support for Java 1.8 so it is required that Java 1.7 be used to start the WebPush Console. This cannot
 be done as a choice at runtime as the jar files for either NPN or ALPN must be added to the Java boot classpath.
 
+For __Java 1.7__ the minor version is also important as different minor version of Java 1.7 require different
+[versions](http://www.eclipse.org/jetty/documentation/current/npn-chapter.html#npn-versions) of NPN.
+
+We provide different zip distributions for the various Java 1.7 and NPN version combinations:
+
+* 1.7.0_9 - 1.7.0_11      webpush-console-7_0_11.zip
+* 1.7.0_13                webpush-console-7_0_13.zip
+* 1.7.0_15 - 1.7.0_25     webpush-console-7_0_25.zip
+* 1.7.0_40 - 1.7.0_51     webpush-console-7_0_51.zip
+* 1.7.0_55 - 1.7.0_67     webpush-console-7_0_67.zip
+* 1.7.0_71 - 1.7.0_72     webpush-console-7_0_72.zip
+* 1.7.0_75 - 1.7.0_76     webpush-console-7_0_76.zip
+
+The above zip files can be found in the ```target``` directory after building.
+
 ### Start the AerogGear server
 __Java 1.8__ is required for the AeroGear WebPush Server.
 
@@ -34,6 +49,7 @@ The ```demo.key``` and ```selfsigned.crt``` can be found in [server-netty/src/ma
 ### Start the console
 __Java 1.8__ is required for the WebPush Console when connecting to the AeroGear WebPush Server, and __Java 1.7__ for
 the WebPush Console running against the node-webpush-server.
+
 
 Press ```tab``` to see the available commands and also to display the available options for specific commands.
 Most command also support a ```--help``` option to display information about options that the command accepts.

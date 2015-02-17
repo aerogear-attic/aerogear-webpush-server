@@ -100,6 +100,21 @@
                                 <artifactId>npn-boot</artifactId>
                                 <version>1.1.9.v20141016</version>
                               </artifactItem>
+                              <artifactItem>
+                                <groupId>org.mortbay.jetty.npn</groupId>
+                                <artifactId>npn-boot</artifactId>
+                                <version>1.1.4.v20130313</version>
+                              </artifactItem>
+                              <artifactItem>
+                                <groupId>org.mortbay.jetty.npn</groupId>
+                                <artifactId>npn-boot</artifactId>
+                                <version>1.1.6.v20130911</version>
+                              </artifactItem>
+                              <artifactItem>
+                                <groupId>org.mortbay.jetty.npn</groupId>
+                                <artifactId>npn-boot</artifactId>
+                                <version>1.1.10.v20150130</version>
+                              </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -155,9 +170,12 @@
                     <descriptors>
                       <descriptor>src/assembly/jar.xml</descriptor>
                       <descriptor>src/assembly/zip-java-8.xml</descriptor>
-                      <descriptor>src/assembly/zip-java-7_0_25.xml</descriptor>
-                      <descriptor>src/assembly/zip-java-7_0_67.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-7_0_76.xml</descriptor>
                       <descriptor>src/assembly/zip-java-7_0_72.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-7_0_67.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-7_0_51.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-7_0_25.xml</descriptor>
+                      <descriptor>src/assembly/zip-java-7_0_13.xml</descriptor>
                     </descriptors>
                     <appendAssemblyId>true</appendAssemblyId>
                     <archive>
@@ -465,6 +483,34 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.9.v20141016</jetty.npn.version>
+        <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
+        <bootcp>${jetty.npn.path}</bootcp>
+      </properties>
+    </profile>
+    <profile>
+      <id>npn-alpn-7u75</id>
+      <activation>
+        <property>
+          <name>java.version</name>
+          <value>1.7.0_75</value>
+        </property>
+      </activation>
+      <properties>
+        <jetty.npn.version>1.1.10.v20150130</jetty.npn.version>
+        <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
+        <bootcp>${jetty.npn.path}</bootcp>
+      </properties>
+    </profile>
+    <profile>
+      <id>npn-alpn-7u76</id>
+      <activation>
+        <property>
+          <name>java.version</name>
+          <value>1.7.0_76</value>
+        </property>
+      </activation>
+      <properties>
+        <jetty.npn.version>1.1.10.v20150130</jetty.npn.version>
         <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>

@@ -17,8 +17,8 @@
 package org.jboss.aerogear.webpush;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
@@ -127,12 +127,12 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     /**
      * A handler that triggers the cleartext upgrade to HTTP/2 by sending an initial HTTP request.
      */
-    private final class UpgradeRequestHandler extends ChannelHandlerAdapter {
+    private final class UpgradeRequestHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             DefaultFullHttpRequest upgradeRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "/");
             ctx.writeAndFlush(upgradeRequest);
-            super.channelActive(ctx);
+            ctx.fireChannelActive();
             ctx.pipeline().remove(this);
             WebPushClientInitializer.this.configureEndOfPipeline(ctx.pipeline());
         }
@@ -141,7 +141,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     /**
      * Class that logs any User Events triggered on this channel.
      */
-    private static class UserEventLogger extends ChannelHandlerAdapter {
+    private static class UserEventLogger extends ChannelInboundHandlerAdapter {
 
         private final EventHandler handler;
 
@@ -157,7 +157,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
                     handler.message(sslEvent.cause().getMessage());
                 }
             }
-            super.userEventTriggered(ctx, evt);
+            ctx.fireUserEventTriggered(evt);
         }
     }
 

@@ -46,7 +46,7 @@ public class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpReques
     }
 
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
+    public void channelRead0(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
         if (HttpHeaderUtil.is100ContinueExpected(req)) {
             ctx.write(new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.CONTINUE));
         }

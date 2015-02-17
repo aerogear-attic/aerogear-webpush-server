@@ -57,31 +57,7 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<FullHttpRes
     }
 
     @Override
-    protected void messageReceived(ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
-        /*
-        System.out.println("message received: " + msg);
-        Integer streamId = msg.headers().getInt(HttpUtil.ExtensionHeaderNames.STREAM_ID.text());
-        if (streamId == null) {
-            System.err.println("HttpResponseHandler unexpected message received: " + msg);
-            return;
-        }
-
-        ChannelPromise promise = streamidPromiseMap.get(streamId);
-        if (promise == null) {
-            System.err.println("Message received for unknown stream id " + streamId);
-        } else {
-            // Do stuff with the message (for now just print it)
-            ByteBuf content = msg.content();
-            if (content.isReadable()) {
-                int contentLength = content.readableBytes();
-                byte[] arr = new byte[contentLength];
-                content.readBytes(arr);
-                System.out.println(new String(arr, 0, contentLength, CharsetUtil.UTF_8));
-            }
-
-            promise.setSuccess();
-        }
-        */
+    protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
     }
 
     @Override

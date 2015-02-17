@@ -606,42 +606,42 @@ public class WebPushFrameListenerTest {
 
     private static Http2Headers registerHeaders() {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(HttpMethod.POST.name());
+        requestHeaders.method(AsciiString.of(HttpMethod.POST.name()));
         requestHeaders.path(asciiString("/webpush/" + Resource.REGISTER.resourceName()));
         return requestHeaders;
     }
 
     private static Http2Headers subHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(HttpMethod.POST.name());
+        requestHeaders.method(AsciiString.of(HttpMethod.POST.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
     private static Http2Headers monitorHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(HttpMethod.GET.name());
+        requestHeaders.method(AsciiString.of(HttpMethod.GET.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
     private static Http2Headers notifyHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(HttpMethod.PUT.name());
+        requestHeaders.method(AsciiString.of(HttpMethod.PUT.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
     private static Http2Headers statusHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(HttpMethod.GET.name());
+        requestHeaders.method(AsciiString.of(HttpMethod.GET.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
     private static Http2Headers subDeleteHeaders(final AsciiString resourceUrl) {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
-        requestHeaders.method(HttpMethod.DELETE.name());
+        requestHeaders.method(AsciiString.of(HttpMethod.DELETE.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }

@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.jboss.aerogear</groupId>
         <artifactId>webpush-parent</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0.0-alpha.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>aerogear-webpush-server-netty</artifactId>
@@ -159,7 +159,7 @@
                         <argument>-Xbootclasspath/p:${bootcp}</argument>
                         <argument>-Djavax.net.debug=none</argument>
                         <argument>-classpath</argument>
-                        <classpath/>
+                        <classpath />
                         <argument>org.jboss.aerogear.webpush.netty.WebPushNettyServer</argument>
                         <argument>${webpush.config}</argument>
                     </arguments>

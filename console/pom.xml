@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.jboss.aerogear</groupId>
         <artifactId>webpush-parent</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0.0-alpha.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>webpush-console</artifactId>
@@ -151,7 +151,7 @@
                         <!--argument>-Djavax.net.debug=all</argument-->
                         <argument>-Xbootclasspath/p:${bootcp}</argument>
                         <argument>-classpath</argument>
-                        <classpath/>
+                        <classpath />
                         <argument>org.jboss.aerogear.webpush.WebPushConsole</argument>
                     </arguments>
                     <classpathScope>compile</classpathScope>

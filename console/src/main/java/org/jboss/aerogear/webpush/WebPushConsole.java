@@ -1,6 +1,7 @@
 package org.jboss.aerogear.webpush;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.util.CharsetUtil;
 import org.jboss.aesh.cl.CommandDefinition;
@@ -444,6 +445,16 @@ public class WebPushConsole {
 
         @Override
         public void inbound(Http2Headers headers, int streamId) {
+            AsciiString link = headers.getAndRemove(AsciiString.of("link"));
+            LinkHeaderDecoder decoder = new LinkHeaderDecoder(link);
+            String pushURL = decoder.getURLByRel("urn:ietf:params:push:message");
+            if (pushURL != null) {
+                printInbound("Push: " + pushURL, streamId);
+            }
+            String receiptSubURL = decoder.getURLByRel("urn:ietf:params:push:receipt:subscribe");
+            if (receiptSubURL != null) {
+                printInbound("Receipt Subscribe: " + receiptSubURL, streamId);
+            }
             printInbound(headers.toString(), streamId);
         }
 

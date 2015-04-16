@@ -94,10 +94,6 @@ public class WebPushClient {
         }
     }
 
-    public void register(final String path) throws Exception {
-        writeRequest(POST, path, Unpooled.buffer());
-    }
-
     public void monitor(final String monitorUrl, final boolean now) throws Exception {
         final Http2Headers headers = http2Headers(GET, monitorUrl);
         if (now) {
@@ -110,10 +106,6 @@ public class WebPushClient {
         writeRequest(POST, subscribeUrl, Unpooled.buffer());
     }
 
-    public void status(final String endpointUrl) throws Exception {
-        writeRequest(GET, endpointUrl);
-    }
-
     public void deleteSubscription(final String endpointUrl) throws Exception {
         writeRequest(DELETE, endpointUrl);
     }
@@ -122,8 +114,28 @@ public class WebPushClient {
         writeJsonRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
     }
 
-    public void notify(final String endpointUrl, final String payload) throws Exception {
-        writeRequest(PUT, endpointUrl, copiedBuffer(payload, UTF_8));
+    public void notify(final String endpointUrl, final String payload, final String receiptUrl) throws Exception {
+        final Http2Headers headers = http2Headers(POST, endpointUrl);
+        if (receiptUrl != null) {
+            headers.add(new AsciiString("push-receipt"), AsciiString.of(receiptUrl));
+        }
+        writeRequest(headers, copiedBuffer(payload, UTF_8));
+    }
+
+    public void updateNotification(final String messageUrl, final String payload) throws Exception {
+        writeRequest(PUT, messageUrl, copiedBuffer(payload, UTF_8));
+    }
+
+    public void ackNotification(final String messageUrl) throws Exception {
+        writeRequest(DELETE, messageUrl);
+    }
+
+    public void requestReceipts(final String receiptSubscribeUrl) throws Exception {
+        writeRequest(POST, receiptSubscribeUrl);
+    }
+
+    public void acks(final String receiptSubUrl) throws Exception {
+        writeRequest(GET, receiptSubUrl);
     }
 
     private void writeRequest(final HttpMethod method, final String url) throws Exception {
@@ -146,6 +158,10 @@ public class WebPushClient {
 
     private void writeJsonRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
         final Http2Headers headers = http2Headers(method, url);
+        writeRequest(headers, payload);
+    }
+
+    private void writeRequest(final Http2Headers headers, final ByteBuf payload) throws Exception {
         handler.outbound(headers, payload);
         ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
         requestFuture.sync();

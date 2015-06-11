@@ -45,14 +45,9 @@ public class ConfigReader {
      */
     public static WebPushServerConfig parse(final String fileName) throws Exception {
         final File configFile = new File(fileName);
-        InputStream in = null;
-        try {
-            in = configFile.exists() ? new FileInputStream(configFile) : ConfigReader.class.getResourceAsStream(fileName);
+        try (InputStream in = configFile.exists()
+                              ? new FileInputStream(configFile) : ConfigReader.class.getResourceAsStream(fileName)) {
             return parse(in);
-        } finally {
-            if (in != null) {
-                in.close();
-            }
         }
     }
 

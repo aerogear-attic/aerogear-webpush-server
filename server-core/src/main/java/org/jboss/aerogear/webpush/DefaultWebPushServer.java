@@ -122,6 +122,7 @@ public class DefaultWebPushServer implements WebPushServer {
         );
     }
 
+    @Override
     public Optional<Subscription> subscription(final String endpointToken) {
         try {
             final String decrypt = CryptoUtil.decrypt(privateKey, endpointToken);

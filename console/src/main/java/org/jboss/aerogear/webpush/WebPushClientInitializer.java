@@ -134,7 +134,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
             ctx.writeAndFlush(upgradeRequest);
             ctx.fireChannelActive();
             ctx.pipeline().remove(this);
-            WebPushClientInitializer.this.configureEndOfPipeline(ctx.pipeline());
+            configureEndOfPipeline(ctx.pipeline());
         }
     }
 
@@ -200,7 +200,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
 
     private static class SslHandshakeListener implements GenericFutureListener<Future<Channel>> {
 
-        private EventHandler handler;
+        private final EventHandler handler;
 
         private SslHandshakeListener(final EventHandler handler) {
             this.handler = handler;

@@ -31,6 +31,7 @@ import org.jboss.aerogear.webpush.Registration;
  */
 public class InMemoryDataStore implements DataStore {
 
+    public static final byte[] EMPTY_BYTES = {};
     private final ConcurrentMap<String, Registration> registrations = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Set<Subscription>> subscriptions = new ConcurrentHashMap<>();
 
@@ -46,7 +47,7 @@ public class InMemoryDataStore implements DataStore {
     @Override
     public byte[] getPrivateKeySalt() {
         if (salt == null) {
-            return new byte[]{};
+            return EMPTY_BYTES;
         }
         return salt;
     }

@@ -129,6 +129,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         return messageMaxSize;
     }
 
+    @Override
     public String toString() {
         return new StringBuilder("WebPushConfig[host=").append(host)
                 .append(", port=").append(port)
@@ -146,11 +147,11 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     }
 
     public static Builder create() {
-        return new DefaultWebPushConfig.Builder().host("127.0.0.1").port(7777);
+        return new Builder().host("127.0.0.1").port(7777);
     }
 
     public static Builder create(final String host, final int port) {
-        return new DefaultWebPushConfig.Builder().host(host).port(port);
+        return new Builder().host(host).port(port);
     }
 
     public static class Builder {

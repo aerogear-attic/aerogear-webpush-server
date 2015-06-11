@@ -33,7 +33,7 @@ public class CryptoUtilTest {
     public void decrypt() throws Exception {
         final byte[] salt = "some salt for the server private".getBytes();
         final byte[] encryptKey = CryptoUtil.secretKey("key", salt);
-        final String expected = UUID.randomUUID().toString() + "." + UUID.randomUUID().toString();
+        final String expected = UUID.randomUUID() + "." + UUID.randomUUID();
         final String encrypted = CryptoUtil.encrypt(encryptKey, expected);
         final byte[] decryptKey = CryptoUtil.secretKey("key", salt);
         assertThat(CryptoUtil.decrypt(decryptKey, encrypted), is(equalTo(expected)));

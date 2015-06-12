@@ -65,7 +65,7 @@ public class Http2OrHttpHandler extends Http2OrHttpChooser {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        if (!cause.getMessage().equals("javax.net.ssl.SSLException: Received fatal alert: unknown_ca")) {
+        if (!"javax.net.ssl.SSLException: Received fatal alert: unknown_ca".equals(cause.getMessage())) {
             ctx.fireExceptionCaught(cause);
         }
     }

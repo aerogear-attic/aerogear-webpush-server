@@ -8,6 +8,7 @@ import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.AeshConsole;
 import org.jboss.aesh.console.AeshConsoleBuilder;
 import org.jboss.aesh.console.Prompt;
+import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
@@ -27,7 +28,7 @@ import static org.jboss.aesh.terminal.Color.Intensity.NORMAL;
 
 public class WebPushConsole {
 
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String[] args) {
         final SettingsBuilder builder = new SettingsBuilder().logging(true);
         builder.enableMan(true).readInputrc(false);
         final ConnectCommand connectCommand = new ConnectCommand();
@@ -64,7 +65,7 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name="exit", description = "the program")
-    public static class ExitCommand implements org.jboss.aesh.console.command.Command {
+    public static class ExitCommand implements Command {
 
         @Override
         public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
@@ -74,7 +75,7 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name = "connect", description = "<url>")
-    public static class ConnectCommand implements org.jboss.aesh.console.command.Command {
+    public static class ConnectCommand implements Command {
         private WebPushClient webPushClient;
         private AeshConsole console;
 
@@ -122,8 +123,8 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name = "disconnect", description = "from the connected WebPush Server")
-    public static class DisconnectCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
+    public static class DisconnectCommand implements Command {
+        private final ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
@@ -153,8 +154,8 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name = "register", description = "this device with the WebPush Server")
-    public static class RegisterCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
+    public static class RegisterCommand implements Command {
+        private final ConnectCommand connectCommand;
 
         @Option(shortName = 'p',
                 hasValue = true,
@@ -191,8 +192,8 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name = "subscribe", description = "and displays the endpoint-url for the created subscription")
-    public static class SubscribeCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
+    public static class SubscribeCommand implements Command {
+        private final ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
@@ -226,8 +227,8 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name = "monitor", description = "for notifications")
-    public static class MonitorCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
+    public static class MonitorCommand implements Command {
+        private final ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
@@ -264,8 +265,8 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name = "notify", description = "a channel")
-    public static class NotifyCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
+    public static class NotifyCommand implements Command {
+        private final ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
@@ -302,8 +303,8 @@ public class WebPushConsole {
     }
 
     @CommandDefinition( name = "status", description = "of the subscription and returns the latest message if the server has any undelivered messages for the subscription")
-    public static class StatusCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
+    public static class StatusCommand implements Command {
+        private final ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
@@ -337,8 +338,8 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name = "delete", description = "subscription")
-    public static class DeleteSubCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
+    public static class DeleteSubCommand implements Command {
+        private final ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
@@ -372,8 +373,8 @@ public class WebPushConsole {
     }
 
     @CommandDefinition(name = "aggregate", description = "multiple channels so they are handled as one")
-    public static class AggregateCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
+    public static class AggregateCommand implements Command {
+        private final ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
@@ -470,7 +471,7 @@ public class WebPushConsole {
         private void printOutbound(final Http2Headers headers, final ByteBuf byteBuf) {
             final Prompt current = console.getPrompt();
             console.setPrompt(outbound);
-            console.getShell().out().println(headers.toString());
+            console.getShell().out().println(headers);
             console.getShell().out().println(JsonMapper.pretty(byteBuf.toString(CharsetUtil.UTF_8)));
             console.setPrompt(current);
         }

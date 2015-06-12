@@ -25,7 +25,6 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderUtil;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.CharsetUtil;
 import org.jboss.aerogear.webpush.WebPushServer;
 
@@ -48,7 +47,7 @@ public class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpReques
     @Override
     public void channelRead0(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
         if (HttpHeaderUtil.is100ContinueExpected(req)) {
-            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.CONTINUE));
+            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
         }
         final ByteBuf content = ctx.alloc().buffer();
         content.writeBytes(RESPONSE_BYTES);

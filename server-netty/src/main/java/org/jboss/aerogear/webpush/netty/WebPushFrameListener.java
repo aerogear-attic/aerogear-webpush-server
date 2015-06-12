@@ -27,7 +27,6 @@ import io.netty.handler.codec.http2.Http2FrameAdapter;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.AttributeKey;
-import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.Future;
 import org.jboss.aerogear.webpush.AggregateSubscription;
 import org.jboss.aerogear.webpush.Subscription;
@@ -66,7 +65,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     public static final AsciiString LINK = new AsciiString("link");
     public static final AsciiString ANY_ORIGIN = new AsciiString("*");
     private static final AsciiString AGGREGATION_JSON = new AsciiString("application/push-aggregation+json");
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebPushNettyServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebPushFrameListener.class);
     private static final ConcurrentHashMap<String, Optional<Client>> monitoredStreams = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> notificationStreams = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, AggregateSubscription> aggregateChannels = new ConcurrentHashMap<>();
@@ -101,7 +100,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final String path = headers.path().toString();
         LOGGER.info("onHeadersRead. streamId={}, method={}, path={}, endstream={}", streamId, headers.method(), path, endStream);
 
-        setPathAndMethod(encoder.connection().stream((streamId)), path, headers.method());
+        setPathAndMethod(encoder.connection().stream(streamId), path, headers.method());
         switch (headers.method().toString()) {
             case GET:
                 if (path.contains(Resource.REGISTRATION.resourceName())) {
@@ -209,24 +208,24 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                         .addListener(WebPushFrameListener::logFutureError);
                 webpushServer.setMessage(endpoint, Optional.empty());
             } else {
-                webpushServer.setMessage(endpoint, Optional.of(data.toString(CharsetUtil.UTF_8)));
+                webpushServer.setMessage(endpoint, Optional.of(data.toString(UTF_8)));
                 consumer.accept(encoder);
             }
         }
     }
 
-    private Optional<String> subscriptionRegIdForEndpoint(final String endpointToken) {
+    private static Optional<String> subscriptionRegIdForEndpoint(final String endpointToken) {
         return Optional.ofNullable(notificationStreams.get(endpointToken));
     }
 
-    private Optional<Client> clientForRegId(final String regId) {
+    private static Optional<Client> clientForRegId(final String regId) {
         return Optional.ofNullable(monitoredStreams.get(regId)).orElse(Optional.empty());
 
     }
 
     private static void logFutureError(final Future future) {
         if (!future.isSuccess()) {
-            LOGGER.error("ChannelFuture failed. Cause: {}", future.cause());
+            LOGGER.error("ChannelFuture failed. Cause:", future.cause());
         }
     }
 
@@ -234,7 +233,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final Registration registration = webpushServer.register();
         ctx.attr(REG_ID).set(registration.id());
         encoder.writeHeaders(ctx, streamId, registrationHeaders(registration), 0, true, ctx.newPromise());
-        LOGGER.info("Registered {} " + registration);
+        LOGGER.info("Registered {}", registration);
     }
 
     private static AsciiString asLink(final URI contextUri, final String relationType) {
@@ -245,7 +244,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final Optional<Subscription> subscription = extractRegistrationId(path, Resource.SUBSCRIBE.resourceName())
                 .flatMap(webpushServer::newSubscription);
         subscription.ifPresent(ch -> {
-            LOGGER.info("Subscription {} " + ch);
+            LOGGER.info("Subscription {}", ch);
             notificationStreams.put(ch.endpoint(), ch.registrationId());
             encoder.writeHeaders(ctx, streamId, createdHeaders(ch), 0, true, ctx.newPromise());
         });
@@ -270,7 +269,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().messageMaxAge()));
     }
 
-    private Http2Headers messageToLarge() {
+    private static Http2Headers messageToLarge() {
         return new DefaultHttp2Headers(false)
                 .status(REQUEST_ENTITY_TOO_LARGE.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
@@ -284,7 +283,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final Optional<Subscription> subscription = extractRegistrationId(path, "aggregate").flatMap(webpushServer::newSubscription);
         final AggregateSubscription aggregateSubscription = fromJson(data.toString(UTF_8), AggregateSubscription.class);
         subscription.ifPresent(ch -> {
-            LOGGER.info("Created aggregate subscription {} " + ch);
+            LOGGER.info("Created aggregate subscription {}", ch);
             aggregateChannels.put(ch.endpoint(), aggregateSubscription);
             encoder.writeHeaders(ctx, streamId, createdHeaders(ch), 0, true, ctx.newPromise());
         });
@@ -304,7 +303,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         stream.setProperty(METHOD_KEY, method);
     }
 
-    private void verifyAggregateMimeType(final Http2Headers headers) {
+    private static void verifyAggregateMimeType(final Http2Headers headers) {
         if (!AGGREGATION_JSON.equals(headers.get(CONTENT_TYPE))) {
             // TODO: handle a stream error. Needs to be investigate what the proper handling is.
         }
@@ -349,7 +348,8 @@ public class WebPushFrameListener extends Http2FrameAdapter {
             monitoredStreams.put(reg.id(), Optional.of(client));
             encoder.writePushPromise(ctx, streamId, pushStreamId, monitorHeaders(reg), 0, ctx.newPromise());
             LOGGER.info("Monitor ctx={}, registrationId={}, pushPromiseStreamId={}, headers={}", ctx, reg.id(), pushStreamId, monitorHeaders(reg));
-            final Optional<AsciiString> wait = Optional.ofNullable(headers.get(new AsciiString("prefer"))).filter(val -> val.toString().equals("wait=0"));
+            final Optional<AsciiString> wait = Optional.ofNullable(headers.get(new AsciiString("prefer"))).filter(val -> "wait=0"
+                    .equals(val.toString()));
             wait.ifPresent(s ->
                             notificationStreams.entrySet().stream().filter(kv -> kv.getValue().equals(reg.id())).forEach(e -> {
                                 final String endpoint = e.getKey();
@@ -422,7 +422,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private static String extractEndpointToken(final String path) {
-        return path.substring(path.lastIndexOf("/") + 1);
+        return path.substring(path.lastIndexOf('/') + 1);
     }
 
     private static class Client {

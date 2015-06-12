@@ -41,7 +41,7 @@ public class InMemoryDataStoreTest {
         return URI.create(uri);
     }
 
-    private Registration mockRegistration(final String id, final URI monitorURI, final URI subscribeUri) {
+    private static Registration mockRegistration(final String id, final URI monitorURI, final URI subscribeUri) {
         final Registration r = mock(Registration.class);
         when(r.id()).thenReturn(id);
         when(r.uri()).thenReturn(monitorURI);

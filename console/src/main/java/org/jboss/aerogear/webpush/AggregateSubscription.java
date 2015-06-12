@@ -2,7 +2,9 @@ package org.jboss.aerogear.webpush;
 
 import org.jboss.aerogear.webpush.util.Arguments;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class AggregateSubscription {
@@ -83,7 +85,8 @@ public class AggregateSubscription {
 
         @Override
         public String toString() {
-            return "DefaulEntry[endpoint=" + endpoint + ", expires=" + expires + ", pubkey=" + pubkey + "]";
+            return "DefaulEntry[endpoint=" + endpoint + ", expires=" + expires
+                    + ", pubkey=" + Arrays.toString(pubkey) + "]";
         }
 
         @Override
@@ -93,13 +96,13 @@ public class AggregateSubscription {
 
             final DefaultEntry that = (DefaultEntry) o;
 
-            if (!endpoint.equals(that.endpoint)) {
+            if (!Objects.equals(endpoint, that.endpoint)) {
                 return false;
             }
-            if (expires != that.expires) {
+            if (!Objects.equals(expires, that.expires)) {
                 return false;
             }
-            if (pubkey != that.pubkey) {
+            if (!Arrays.equals(pubkey, that.pubkey)) {
                  return false;
             }
             return true;
@@ -110,7 +113,7 @@ public class AggregateSubscription {
             int result = endpoint.hashCode();
             result = 31 * result + expires.hashCode();
             if (pubkey != null) {
-                result = 31 * result + pubkey.hashCode();
+                result = 31 * result + Arrays.hashCode(pubkey);
             }
             return result;
         }

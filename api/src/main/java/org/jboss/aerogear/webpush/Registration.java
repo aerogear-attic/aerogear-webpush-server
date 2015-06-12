@@ -47,7 +47,7 @@ public interface Registration {
 
         private final String type;
 
-        private WebLink(final String type) {
+        WebLink(final String type) {
             this.type = type;
         }
 
@@ -70,7 +70,7 @@ public interface Registration {
 
         private final String resourceName;
 
-        private Resource(final String resourceName) {
+        Resource(final String resourceName) {
             this.resourceName = resourceName;
         }
 

@@ -17,7 +17,13 @@
 package org.jboss.aerogear.webpush.netty;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http2.*;
+import io.netty.handler.codec.http2.DefaultHttp2Connection;
+import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
+import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
+import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.codec.http2.Http2ConnectionHandler;
+import io.netty.handler.codec.http2.Http2FrameReader;
+import io.netty.handler.codec.http2.Http2FrameWriter;
 import org.jboss.aerogear.webpush.WebPushServer;
 
 public class WebPushHttp2Handler extends Http2ConnectionHandler {

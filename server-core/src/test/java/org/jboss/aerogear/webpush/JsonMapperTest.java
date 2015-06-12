@@ -30,7 +30,7 @@ public class JsonMapperTest {
         assertAggregateChannel(JsonMapper.fromJson(json, AggregateSubscription.class));
     }
 
-    private void assertAggregateChannel(final AggregateSubscription aggregate) {
+    private static void assertAggregateChannel(final AggregateSubscription aggregate) {
         assertThat(aggregate.subscriptions().size(), is(3));
         assertThat(aggregate.subscriptions(), hasItems(
                 new DefaultEntry("http://host/webpush/entry1", Optional.of(10L), Optional.of(new byte[1])),
@@ -38,7 +38,7 @@ public class JsonMapperTest {
                 new DefaultEntry("http://host/webpush/entry3")));
     }
 
-    private Set<Entry> asSet(final AggregateSubscription.Entry... entries) {
+    private static Set<Entry> asSet(final AggregateSubscription.Entry... entries) {
         return new LinkedHashSet<>(Arrays.asList(entries));
     }
 }

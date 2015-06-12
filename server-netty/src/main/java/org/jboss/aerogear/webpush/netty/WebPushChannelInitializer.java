@@ -60,7 +60,7 @@ public class WebPushChannelInitializer extends ChannelInitializer<SocketChannel>
         ch.pipeline().addLast(sslCtx.newHandler(ch.alloc()), new Http2OrHttpHandler(webPushServer));
     }
 
-    private void configureClearText(final SocketChannel ch, final WebPushServer webPushServer) {
+    private static void configureClearText(final SocketChannel ch, final WebPushServer webPushServer) {
         final UpgradeCodec upgradeCodec = new Http2ServerUpgradeCodec(new WebPushHttp2Handler(webPushServer));
         final HttpServerCodec sourceCodec = new HttpServerCodec();
         final HttpServerUpgradeHandler upgradeHandler =

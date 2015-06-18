@@ -16,7 +16,8 @@
  */
 package org.jboss.aerogear.webpush;
 
-import io.netty.handler.codec.AsciiString;
+import io.netty.util.AsciiString;
+import io.netty.util.ByteString;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,38 +33,38 @@ public class LinkHeaderDecoder {
     private final AsciiString header;
     private List<Map<String, String>> links;
 
-    public LinkHeaderDecoder(final AsciiString header) {
-        this.header = header;
+    public LinkHeaderDecoder(final ByteString header) {
+        this.header = new AsciiString(header, false);
     }
 
-    private static String cleanURL(final AsciiString url) {
+    private static String cleanURL(CharSequence url) {
         return CLEAN_HREF.matcher(url).replaceAll("");
     }
 
-    private static String cleanParam(final AsciiString param) {
+    private static String cleanParam(CharSequence param) {
         return CLEAN_PARAM.matcher(param).replaceAll("");
     }
 
     public List<Map<String, String>> getLinks() {
-        if (this.links != null) {
-            return this.links;
+        if (links != null) {
+            return links;
         }
-        if (this.header == null || this.header.length() == 0) {
-            this.links = Collections.emptyList();
-            return this.links;
+        if (header == null || header.isEmpty()) {
+            links = Collections.emptyList();
+            return links;
         }
-        this.links = new ArrayList<Map<String, String>>();
-        final AsciiString[] headers = this.header.split(',');
+        links = new ArrayList<>();
+        final AsciiString[] headers = header.split(',');
         for (AsciiString header : headers) {
             final AsciiString[] params = header.split(';');
             if (params.length < 1) {
                 continue;
             }
-            final Map<String, String> link = new LinkedHashMap<String, String>();
+            final Map<String, String> link = new LinkedHashMap<>();
             link.put("href", cleanURL(params[0]));
             for (int i = 1; i < params.length; i++) {
                 final AsciiString param = params[i];
-                final int valueIndex = param.indexOf(0x3d); // '='
+                final int valueIndex = param.indexOf("=");
                 String key, value;
                 if (valueIndex < 0 || valueIndex == param.length()) {
                     key = value = cleanParam(param);
@@ -73,13 +74,13 @@ public class LinkHeaderDecoder {
                 }
                 link.put(key, value);
             }
-            this.links.add(link);
+            links.add(link);
         }
-        return this.links;
+        return links;
     }
 
     public Map<String, String> getParamsByField(final String name, final String value) {
-        final List<Map<String, String>> links = this.getLinks();
+        final List<Map<String, String>> links = getLinks();
         for (Map<String, String> link : links) {
             String param = link.get(name);
             if (param != null && param.equals(value)) {
@@ -90,15 +91,16 @@ public class LinkHeaderDecoder {
     }
 
     public String getURLByRel(final String rel) {
-        Map<String, String> params = this.getParamsByField("rel", rel);
+        Map<String, String> params = getParamsByField("rel", rel);
         if (params == null) {
             return null;
         }
         return params.get("href");
     }
 
+    @Override
     public String toString() {
-      final List<Map<String, String>> links = this.getLinks();
+      final List<Map<String, String>> links = getLinks();
       return links.toString();
     }
 }

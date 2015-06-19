@@ -1,8 +1,9 @@
 package org.jboss.aerogear.webpush;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http2.Http2Headers;
+import io.netty.util.AsciiString;
+import io.netty.util.ByteString;
 import io.netty.util.CharsetUtil;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
@@ -28,6 +29,8 @@ import static org.jboss.aesh.terminal.Color.GREEN;
 import static org.jboss.aesh.terminal.Color.Intensity.NORMAL;
 
 public class WebPushConsole {
+
+    private static final AsciiString LINK = new AsciiString("link");
 
     public static void main(final String[] args) {
         final SettingsBuilder builder = new SettingsBuilder().logging(true);
@@ -526,7 +529,7 @@ public class WebPushConsole {
 
         @Override
         public void inbound(Http2Headers headers, int streamId) {
-            AsciiString link = headers.getAndRemove(AsciiString.of("link"));
+            ByteString link = headers.getAndRemove(LINK);
             LinkHeaderDecoder decoder = new LinkHeaderDecoder(link);
             String pushURL = decoder.getURLByRel("urn:ietf:params:push:message");
             if (pushURL != null) {

@@ -34,6 +34,7 @@ import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
@@ -202,31 +203,29 @@ public class WebPushClient {
             // the SslContext to suite both NPN and ALPN.
             final String version = System.getProperty("java.version");
             if (version.startsWith("1.7")) {
-                return SslContext.newClientContext(SslProvider.JDK,
-                        null,
-                        InsecureTrustManagerFactory.INSTANCE,
-                        null,
-                        SupportedCipherSuiteFilter.INSTANCE,
-                        new ApplicationProtocolConfig(
+                return SslContextBuilder.forClient()
+                        .sslProvider(SslProvider.JDK)
+                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .ciphers(null, SupportedCipherSuiteFilter.INSTANCE)
+                        .applicationProtocolConfig(new ApplicationProtocolConfig(
                                 Protocol.NPN,
                                 SelectorFailureBehavior.FATAL_ALERT,
                                 SelectedListenerFailureBehavior.FATAL_ALERT,
                                 SelectedProtocol.HTTP_2.protocolName(),
-                                SelectedProtocol.HTTP_1_1.protocolName()),
-                        0, 0);
+                                SelectedProtocol.HTTP_1_1.protocolName()))
+                        .build();
             }
-            return SslContext.newClientContext(SslProvider.JDK,
-                    null,
-                    InsecureTrustManagerFactory.INSTANCE,
-                    Http2SecurityUtil.CIPHERS,
-                    SupportedCipherSuiteFilter.INSTANCE,
-                    new ApplicationProtocolConfig(
+            return SslContextBuilder.forClient()
+                    .sslProvider(SslProvider.JDK)
+                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                    .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
+                    .applicationProtocolConfig(new ApplicationProtocolConfig(
                             Protocol.ALPN,
                             SelectorFailureBehavior.FATAL_ALERT,
                             SelectedListenerFailureBehavior.FATAL_ALERT,
                             SelectedProtocol.HTTP_2.protocolName(),
-                            SelectedProtocol.HTTP_1_1.protocolName()),
-                    0, 0);
+                            SelectedProtocol.HTTP_1_1.protocolName()))
+                    .build();
         }
         return null;
     }

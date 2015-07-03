@@ -23,8 +23,8 @@ import org.jboss.aerogear.webpush.AggregateSubscription.Entry;
 import org.jboss.aerogear.webpush.DefaultAggregateSubscription;
 import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.DefaultAggregateSubscription.DefaultEntry;
-import org.jboss.aerogear.webpush.Registration.Resource;
-import org.jboss.aerogear.webpush.Registration.WebLink;
+import org.jboss.aerogear.webpush.Resource;
+import org.jboss.aerogear.webpush.WebLink;
 import org.jboss.aerogear.webpush.WebPushServer;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -47,10 +47,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.*;
 import static org.jboss.aerogear.webpush.JsonMapper.toJson;
-import static org.jboss.aerogear.webpush.Registration.WebLink.AGGREGATE;
-import static org.jboss.aerogear.webpush.Registration.WebLink.SUBSCRIBE;
-import static org.jboss.aerogear.webpush.Registration.WebLink.REGISTRATION;
-import static org.jboss.aerogear.webpush.netty.WebPushFrameListener.LINK;
+import static org.jboss.aerogear.webpush.WebLink.AGGREGATE;
+import static org.jboss.aerogear.webpush.WebLink.SUBSCRIBE;
+import static org.jboss.aerogear.webpush.WebLink.REGISTRATION;
+import static org.jboss.aerogear.webpush.netty.WebPushFrameListener.LINK_HEADER;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -82,10 +82,9 @@ public class WebPushFrameListenerTest {
         final Http2Headers responseHeaders = register(frameListener, ctx, encoder);
         assertThat(responseHeaders.status(), equalTo(CREATED.codeAsText()));
         assertThat(responseHeaders.get(LOCATION), equalTo(asciiString(registrationPath(regId))));
-        assertThat(responseHeaders.getAll(LINK), hasItems(
+        assertThat(responseHeaders.getAll(LINK_HEADER), hasItems(
                 asciiString(REGISTRATION.weblink(registrationPath(regId))),
-                asciiString(SUBSCRIBE.weblink(subscribePath(regId))),
-                asciiString(AGGREGATE.weblink(aggregatePath(regId)))));
+                asciiString(SUBSCRIBE.weblink(subscribePath(regId)))));
         assertThat(responseHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=10000")));
         frameListener.shutdown();
     }
@@ -256,9 +255,8 @@ public class WebPushFrameListenerTest {
                 any(ChannelPromise.class));
         final Http2Headers monitorHeaders = captor.getValue();
         assertThat(monitorHeaders.status(), equalTo(OK.codeAsText()));
-        assertThat(monitorHeaders.getAll(LINK), hasItems(
-                asciiString(SUBSCRIBE.weblink(subscribePath(regId))),
-                asciiString(AGGREGATE.weblink(aggregatePath(regId)))));
+        assertThat(monitorHeaders.getAll(LINK_HEADER), hasItems(
+                asciiString(SUBSCRIBE.weblink(subscribePath(regId)))));
         assertThat(monitorHeaders.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=10000")));
         frameListener.shutdown();
     }
@@ -325,8 +323,7 @@ public class WebPushFrameListenerTest {
                 .build());
         final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(registerPath(regId))
                 .thenReturn(subscribePath(regId))
-                .thenReturn(subscribePath(regId))
-                .thenReturn(aggregatePath(regId)));
+                .thenReturn(subscribePath(regId)));
         frameListener.encoder(encoder);
         final Http2Headers regHeaders = register(frameListener, ctx, encoder);
         final String endpoint1 = subscribe(frameListener, ctx, regHeaders, encoder).get(LOCATION).toString();
@@ -433,7 +430,6 @@ public class WebPushFrameListenerTest {
             final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(registerPath(regId))
                     .thenReturn(subscribePath(regId))
                     .thenReturn(subscribePath(regId))
-                    .thenReturn(aggregatePath(regId))
                     .thenReturn(webpushPath(subId)));
             frameListener.encoder(encoder);
 
@@ -507,7 +503,7 @@ public class WebPushFrameListenerTest {
                                           final ChannelHandlerContext ctx,
                                           final Http2Headers registrationHeaders,
                                           final Http2ConnectionEncoder encoder) throws Http2Exception {
-        final ByteString subUri = getLinkUri(asciiString(SUBSCRIBE), registrationHeaders.getAll(LINK));
+        final ByteString subUri = getLinkUri(asciiString(SUBSCRIBE), registrationHeaders.getAll(LINK_HEADER));
         frameListener.onHeadersRead(ctx, 3, subHeaders(subUri), 0, (short) 22, false, 0, false);
         frameListener.onDataRead(ctx, 3, Unpooled.buffer(), 0, true);
         return verifyAndCapture(ctx, encoder, true);
@@ -518,7 +514,7 @@ public class WebPushFrameListenerTest {
                                                    final Http2Headers registrationHeaders,
                                                    final String json,
                                                    final Http2ConnectionEncoder encoder) throws Http2Exception {
-        final ByteString aggregateUri = getLinkUri(asciiString(AGGREGATE), registrationHeaders.getAll(LINK));
+        final ByteString aggregateUri = getLinkUri(asciiString(AGGREGATE), registrationHeaders.getAll(LINK_HEADER));
         frameListener.onHeadersRead(ctx, 3, subHeaders(aggregateUri), 0, (short) 22, false, 0, false);
         frameListener.onDataRead(ctx, 3, copiedBuffer(json, UTF_8), 0, true);
         return verifyAndCapture(ctx, encoder, true);
@@ -609,7 +605,7 @@ public class WebPushFrameListenerTest {
     private static Http2Headers registerHeaders() {
         final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
         requestHeaders.method(AsciiString.of(HttpMethod.POST.name()));
-        requestHeaders.path(asciiString("/webpush/" + Resource.REGISTER.resourceName()));
+        requestHeaders.path(asciiString("/webpush/" + Resource.SUBSCRIBE.resourceName()));
         return requestHeaders;
     }
 
@@ -679,12 +675,8 @@ public class WebPushFrameListenerTest {
         return webpushPath(Resource.SUBSCRIBE.resourceName(), registrationId);
     }
 
-    private static String aggregatePath(final String registrationId) {
-        return webpushPath(Resource.AGGREGATE.resourceName(), registrationId);
-    }
-
     private static String registerPath(final String registrationId) {
-        return webpushPath(Resource.REGISTER.resourceName(), registrationId);
+        return webpushPath(Resource.SUBSCRIBE.resourceName(), registrationId);
     }
 
     private static String webpushPath(final String path, final String registrationId) {

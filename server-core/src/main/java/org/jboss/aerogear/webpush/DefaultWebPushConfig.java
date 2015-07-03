@@ -16,10 +16,9 @@
  */
 package org.jboss.aerogear.webpush;
 
-import org.jboss.aerogear.webpush.util.Arguments;
-
 import java.io.File;
 import java.net.URL;
+import java.util.Objects;
 
 public final class DefaultWebPushConfig implements WebPushServerConfig {
 
@@ -42,16 +41,16 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         port = builder.port;
         endpointHost = builder.endpointHost == null ? host : builder.endpointHost;
         endpointPort = builder.endpointPort <= 0 ? port : builder.endpointPort;
-        cert = fileSystemOrClasspath(Arguments.checkNotNull(builder.cert, "cert must not be null"));
-        privateKey = fileSystemOrClasspath(Arguments.checkNotNull(builder.privateKey, "privateKey must not be null"));
+        cert = fileSystemOrClasspath(Objects.requireNonNull(builder.cert, "cert must not be null"));
+        privateKey = fileSystemOrClasspath(Objects.requireNonNull(builder.privateKey, "privateKey must not be null"));
         endpointTls = builder.endpointTls;
         password = builder.password;
         registrationMaxAge = builder.registrationMaxAge;
         subscriptionMaxAge = builder.subscriptionMaxAge;
         protocol = builder.protocol;
         messageMaxAge = builder.messageMaxAge;
-        if (builder.messageMaxSize < MESSAGE_MAX_LOWER_BOUND) {
-            throw new IllegalStateException("messageMaxSize cannot be set lower than " + MESSAGE_MAX_LOWER_BOUND);
+        if (builder.messageMaxSize < MESSAGE_MAX_SIZE_LOWER_BOUND) {
+            throw new IllegalStateException("messageMaxSize cannot be set lower than " + MESSAGE_MAX_SIZE_LOWER_BOUND);
         }
         messageMaxSize = builder.messageMaxSize;
     }
@@ -167,7 +166,7 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private long subscriptionMaxAge = 604800000L;
         private long messageMaxAge = 0L;
         private Protocol protocol = Protocol.ALPN;
-        private long messageMaxSize = Long.MAX_VALUE;
+        private long messageMaxSize = MESSAGE_MAX_SIZE_LOWER_BOUND;
 
         public Builder host(final String host) {
             if (host != null) {

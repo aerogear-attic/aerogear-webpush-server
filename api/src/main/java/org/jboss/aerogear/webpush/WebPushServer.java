@@ -16,6 +16,7 @@
  */
 package org.jboss.aerogear.webpush;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -24,72 +25,27 @@ import java.util.Optional;
 public interface WebPushServer {
 
     /**
-     * Registers a device with this server as per
-     * <a href="https://tools.ietf.org/html/draft-thomson-webpush-http2-01#section-4.">Section 4</a> of
-     * the specification.
-     * <p>
-     * This establishes a shared session between the device and the server.
-     * A new registration does not have any subscriptions associated with it.
-     *
-     * @return {@link Registration} the response for this registration
+     * TODO add comments
      */
-    Registration register();
+    Subscription subscription();
 
-    /**
-     * Returns the {@link Registration} for the specified id.
-     *
-     * @param id the registration identifier.
-     * @return {@code Optional} {@link Registration} with the registration or {@code Optional.empty}
-     */
-    Optional<Registration> registration(final String id);
+    Optional<Subscription> subscriptionById(String id);
 
-    /**
-     * Handles the creation of new subscriptions for a registration.
-     *
-     * @param registrationId the registration id that this new subscription belongs to
-     */
-    Optional<Subscription> newSubscription(String registrationId);
+    Optional<Subscription> subscriptionByToken(String token);
 
-    /**
-     * Retrieves a subscriptions.
-     *
-     * @param endpoint the endpoint to retrieve
-     * @return {@code Optional} an {@link Optional} {@link Subscription}
-     */
-    Optional<Subscription> subscription(String endpoint);
+    Optional<Subscription> subscriptionByPushToken(String pushToken);
 
-    /**
-     * Removes the specified subscription.
-     *
-     * @param subscription the subscription to be removed
-     */
-    void removeSubscription(Subscription subscription);
+    Optional<Subscription> subscriptionByReceiptToken(String receiptToken);
 
-    /**
-     * Handles the retrieval of a subscriptions's message.
-     * This enables clients to query the server for the latest notification/message.
-     *
-     * @param endpoint the endpoint for the subscriptoin
-     * @return {code String} the latest notification/message for the specified subscription
-     */
-    Optional<String> getMessage(String endpoint);
+    List<PushMessage> removeSubscription(String id);
 
-    /**
-     * Set the notifcation/message for a subscription.
-     *
-     * @param endpoint that identifies the subscription.
-     * @param content the new content.
-     */
-    void setMessage(String endpoint, Optional<String> content);
+    void saveMessage(PushMessage msg);
 
-    /**
-     * Handles device monitorURI requests which are a signal to the server to begin delivering
-     * push notification/messages to the client.
-     *
-     * @param registrationId the id of the registration.
-     * @param endpoint the endpoint
-     */
-    void monitor(String registrationId, String endpoint);
+    List<PushMessage> waitingDeliveryMessages(String subId);
+
+    void saveSentMessage(PushMessage msg);
+
+    Optional<PushMessage> sentMessage(String pushMsgResource);
 
     /**
      * Returns the configuration for this WebPush server.
@@ -98,4 +54,7 @@ public interface WebPushServer {
      */
     WebPushServerConfig config();
 
+    String generateEndpointToken(String value);
+
+    String generateEndpointToken(String firstId, String secondId);
 }

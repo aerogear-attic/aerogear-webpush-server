@@ -16,18 +16,19 @@
  */
 package org.jboss.aerogear.webpush;
 
-/**
- * Represents a client subscription in the WebPush protocol.
- */
-public interface Subscription {
+public enum WebLink {
 
-    /**
-     * A globally unique identifier for this subscription.
-     *
-     * @return {@code String} the identifier for this subscription.
-     */
-    String id();
+    PUSH("urn:ietf:params:push"),
+    RECEIPTS("urn:ietf:params:push:receipt");
 
-    String pushResourceId();
+    private final String type;
 
+    WebLink(final String type) {
+        this.type = type;
+    }
+
+    @Override
+    public String toString() {
+        return type;
+    }
 }

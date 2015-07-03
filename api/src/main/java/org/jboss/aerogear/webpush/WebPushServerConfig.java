@@ -23,7 +23,7 @@ import java.io.File;
  */
 public interface WebPushServerConfig {
 
-    long MESSAGE_MAX_LOWER_BOUND = 4096;
+    long MESSAGE_MAX_SIZE_LOWER_BOUND = 4096;
 
     enum Protocol {
         ALPN, NPN

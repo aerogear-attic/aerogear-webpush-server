@@ -1,10 +1,6 @@
 package org.jboss.aerogear.webpush;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http2.Http2Headers;
-import io.netty.util.AsciiString;
-import io.netty.util.ByteString;
-import io.netty.util.CharsetUtil;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.AeshConsole;
@@ -30,43 +26,44 @@ import static org.jboss.aesh.terminal.Color.Intensity.NORMAL;
 
 public class WebPushConsole {
 
-    private static final AsciiString LINK = new AsciiString("link");
-
     public static void main(final String[] args) {
-        final SettingsBuilder builder = new SettingsBuilder().logging(true);
-        builder.enableMan(true).readInputrc(false);
         final ConnectCommand connectCommand = new ConnectCommand();
         final DisconnectCommand disconnectCommand = new DisconnectCommand(connectCommand);
         final SubscribeCommand subscribeCommand = new SubscribeCommand(connectCommand);
-        final MonitorCommand monitorCommand = new MonitorCommand(connectCommand);
-        final NotifyCommand notifyCommand = new NotifyCommand(connectCommand);
-        final DeleteSubCommand deleteSubCommand = new DeleteSubCommand(connectCommand);
-        final AggregateCommand aggregateCommand = new AggregateCommand(connectCommand);
-        final UpdateCommand updateCommand = new UpdateCommand(connectCommand);
-        final AckCommand ackCommand = new AckCommand(connectCommand);
         final ReceiptCommand receiptCommand = new ReceiptCommand(connectCommand);
+        final NotifyCommand notifyCommand = new NotifyCommand(connectCommand);
+        final MonitorCommand monitorCommand = new MonitorCommand(connectCommand);
+        final AckCommand ackCommand = new AckCommand(connectCommand);
         final AcksCommand acksCommand = new AcksCommand(connectCommand);
+        final DeleteSubCommand deleteSubCommand = new DeleteSubCommand(connectCommand);
 
-        final Settings settings = builder.create();
         final CommandRegistry registry = new AeshCommandRegistryBuilder()
                 .command(ExitCommand.class)
                 .command(connectCommand)
                 .command(disconnectCommand)
                 .command(subscribeCommand)
-                .command(monitorCommand)
+                .command(receiptCommand)
                 .command(notifyCommand)
-                .command(deleteSubCommand)
-                .command(aggregateCommand)
-                .command(updateCommand)
+                .command(monitorCommand)
                 .command(ackCommand)
                 .command(acksCommand)
+                .command(deleteSubCommand)
                 .create();
+
+        final Settings settings = new SettingsBuilder()
+                .logging(true)
+                .enableMan(true)
+                .readInputrc(false)
+                .create();
+
+        final Prompt prompt = new Prompt(new TerminalString("[webpush]$ ", new TerminalColor(GREEN, DEFAULT, NORMAL)));
 
         final AeshConsole aeshConsole = new AeshConsoleBuilder()
                 .commandRegistry(registry)
                 .settings(settings)
-                .prompt(new Prompt(new TerminalString("[webpush]$ ", new TerminalColor(GREEN, DEFAULT, NORMAL))))
+                .prompt(prompt)
                 .create();
+
         connectCommand.setConsole(aeshConsole);
         aeshConsole.start();
     }
@@ -86,22 +83,18 @@ public class WebPushConsole {
         private WebPushClient webPushClient;
         private AeshConsole console;
 
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
         @Option(shortName = 'h', hasValue = true, description = "the host to connect to", defaultValue = "localhost")
         private String host;
 
         @Option(shortName = 'p', hasValue = true, description = "the port to connect to", defaultValue = "8443")
         private int port;
 
-        @Option(hasValue = false, description = "display this help and exit")
-        private boolean help;
-
-        public void setConsole(final AeshConsole console) {
-            this.console = console;
-        }
-
         @Override
         public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
+            if (help) {
                 commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("connect"));
             } else {
                 if (webPushClient != null && webPushClient.isConnected()) {
@@ -127,6 +120,10 @@ public class WebPushConsole {
         public WebPushClient webPushClient() {
             return webPushClient;
         }
+
+        public void setConsole(final AeshConsole console) {
+            this.console = console;
+        }
     }
 
     @CommandDefinition(name = "disconnect", description = "from the connected WebPush Server")
@@ -142,7 +139,7 @@ public class WebPushConsole {
 
         @Override
         public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
+            if (help) {
                 commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("disconnect"));
             } else {
                 commandInvocation.putProcessInBackground();
@@ -167,11 +164,10 @@ public class WebPushConsole {
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
 
-        @Option(shortName = 'p',
-                hasValue = true,
-                description = "the path that that the WebPush server exposes for subscriptions",
-                defaultValue = "/webpush/register")
-        private String path;
+        @Option(hasValue = true,
+                description = "the url that the WebPush server exposes for subscriptions",
+                defaultValue = "/webpush/subscribe")
+        private String url;
 
         public SubscribeCommand(final ConnectCommand connectCommand) {
             this.connectCommand = connectCommand;
@@ -179,7 +175,7 @@ public class WebPushConsole {
 
         @Override
         public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
+            if (help) {
                 commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("subscribe"));
             } else {
                 commandInvocation.putProcessInBackground();
@@ -188,7 +184,7 @@ public class WebPushConsole {
                     return CommandResult.FAILURE;
                 }
                 try {
-                    client.createSubscription(path);
+                    client.createSubscription(url);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return CommandResult.FAILURE;
@@ -198,27 +194,26 @@ public class WebPushConsole {
         }
     }
 
-    @CommandDefinition(name = "monitor", description = "for notifications")
-    public static class MonitorCommand implements org.jboss.aesh.console.command.Command {
+    @CommandDefinition(name = "receipt", description = "subscription for delivered notifications")
+    public static class ReceiptCommand implements org.jboss.aesh.console.command.Command {
         private ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
 
-        @Option(hasValue = true, description = "the message subscription URL from the subscribe command's location response", required = true)
+        @Option(hasValue = true,
+                description = "the receipt subscribe URL, of rel type 'urn:ietf:params:push:receipt', from the subscribe command response",
+                required = true)
         private String url;
 
-        @Option(hasValue = false, description = "returns any existing notifications that the server might have")
-        private boolean nowait;
-
-        public MonitorCommand(final ConnectCommand connectCommand) {
+        public ReceiptCommand(final ConnectCommand connectCommand) {
             this.connectCommand = connectCommand;
         }
 
         @Override
         public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
-                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("monitor"));
+            if (help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("receipt"));
             } else {
                 commandInvocation.putProcessInBackground();
                 final WebPushClient client = connectCommand.webPushClient();
@@ -226,7 +221,7 @@ public class WebPushConsole {
                     return CommandResult.FAILURE;
                 }
                 try {
-                    client.monitor(url, nowait);
+                    client.requestReceipts(url);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return CommandResult.FAILURE;
@@ -243,14 +238,19 @@ public class WebPushConsole {
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
 
-        @Option(hasValue = true, description = "the push WebLink URL, of rel type 'urn:ietf:params:push:message', from the subscribe command response", required = true)
+        @Option(hasValue = true,
+                description = "the push WebLink URL, of rel type 'urn:ietf:params:push', from the subscribe command response",
+                required = true)
         private String url;
 
-        @Option(hasValue = true, description = "the body/payload of the notification")
+        @Option(hasValue = true, description = "the body/payload of the notification", required = true)
         private String payload;
 
         @Option(hasValue = true, description = "the notification receipt URL")
         private String receiptUrl;
+
+        @Option(hasValue = true, description = "the Time-To-Live (TTL) period in seconds for the notification")
+        private int ttl;
 
         public NotifyCommand(final ConnectCommand connectCommand) {
             this.connectCommand = connectCommand;
@@ -258,7 +258,7 @@ public class WebPushConsole {
 
         @Override
         public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
+            if (help) {
                 commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("notify"));
             } else {
                 commandInvocation.putProcessInBackground();
@@ -267,7 +267,7 @@ public class WebPushConsole {
                     return CommandResult.FAILURE;
                 }
                 try {
-                    client.notify(url, payload, receiptUrl);
+                    client.notify(url, payload, receiptUrl, ttl);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return CommandResult.FAILURE;
@@ -277,24 +277,29 @@ public class WebPushConsole {
         }
     }
 
-    @CommandDefinition(name = "delete", description = "subscription")
-    public static class DeleteSubCommand implements Command {
-        private final ConnectCommand connectCommand;
+    @CommandDefinition(name = "monitor", description = "for notifications")
+    public static class MonitorCommand implements org.jboss.aesh.console.command.Command {
+        private ConnectCommand connectCommand;
 
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
 
-        @Option(hasValue = true, description = "the endpoint url for the subscription to be deleted", required = true)
+        @Option(hasValue = true,
+                description = "the message subscription URL from the subscribe command's location response",
+                required = true)
         private String url;
 
-        public DeleteSubCommand(final ConnectCommand connectCommand) {
+        @Option(hasValue = false, description = "returns any existing notifications that the server might have")
+        private boolean nowait;
+
+        public MonitorCommand(final ConnectCommand connectCommand) {
             this.connectCommand = connectCommand;
         }
 
         @Override
         public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
-                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("delete"));
+            if (help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("monitor"));
             } else {
                 commandInvocation.putProcessInBackground();
                 final WebPushClient client = connectCommand.webPushClient();
@@ -302,84 +307,7 @@ public class WebPushConsole {
                     return CommandResult.FAILURE;
                 }
                 try {
-                    client.deleteSubscription(url);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return CommandResult.FAILURE;
-                }
-            }
-            return CommandResult.SUCCESS;
-        }
-    }
-
-    @CommandDefinition(name = "aggregate", description = "multiple channels so they are handled as one")
-    public static class AggregateCommand implements Command {
-        private final ConnectCommand connectCommand;
-
-        @Option(hasValue = false, description = "display this help and exit")
-        private boolean help;
-
-        @Option(hasValue = true, description = "the aggreagate url from an earlier 'subscribe' commands location response", required = true)
-        private String url;
-
-        @Option(hasValue = true, description = "comma separated list of channels that should be part of this aggreagate channel")
-        private String channels;
-
-        public AggregateCommand(final ConnectCommand connectCommand) {
-            this.connectCommand = connectCommand;
-        }
-
-        @Override
-        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
-                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("aggregate"));
-            } else {
-                commandInvocation.putProcessInBackground();
-                final WebPushClient client = connectCommand.webPushClient();
-                if (!isConnected(client, commandInvocation)) {
-                    return CommandResult.FAILURE;
-                }
-                try {
-                    final String json = JsonMapper.toJson(AggregateSubscription.from(channels));
-                    client.createAggregateSubscription(url, json);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return CommandResult.FAILURE;
-                }
-            }
-            return CommandResult.SUCCESS;
-        }
-    }
-
-    @CommandDefinition(name = "update", description = "an existing notification")
-    public static class UpdateCommand implements Command {
-        private final ConnectCommand connectCommand;
-
-        @Option(hasValue = false, description = "display this help and exit")
-        private boolean help;
-
-        @Option(hasValue = true, description = "the push message URL, from the notify command location response", required = true)
-        private String url;
-
-        @Option(hasValue = true, description = "the new notification payload")
-        private String payload;
-
-        public UpdateCommand(final ConnectCommand connectCommand) {
-            this.connectCommand = connectCommand;
-        }
-
-        @Override
-        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
-                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("update"));
-            } else {
-                commandInvocation.putProcessInBackground();
-                final WebPushClient client = connectCommand.webPushClient();
-                if (!isConnected(client, commandInvocation)) {
-                    return CommandResult.FAILURE;
-                }
-                try {
-                    client.updateNotification(url, payload);
+                    client.monitor(url, nowait);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return CommandResult.FAILURE;
@@ -424,41 +352,6 @@ public class WebPushConsole {
       }
     }
 
-    @CommandDefinition(name = "receipt", description = "subscription for delivered notifications")
-    public static class ReceiptCommand implements org.jboss.aesh.console.command.Command {
-        private ConnectCommand connectCommand;
-
-        @Option(hasValue = false, description = "display this help and exit")
-        private boolean help;
-
-        @Option(hasValue = true, description = "the receipt subscribe WebLink URL, of rel type 'urn:ietf:params:push:receipt:subscribe', from the subscribe command response", required = true)
-        private String url;
-
-        public ReceiptCommand(final ConnectCommand connectCommand) {
-            this.connectCommand = connectCommand;
-        }
-
-        @Override
-        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
-                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("monitor"));
-            } else {
-                commandInvocation.putProcessInBackground();
-                final WebPushClient client = connectCommand.webPushClient();
-                if (!isConnected(client, commandInvocation)) {
-                    return CommandResult.FAILURE;
-                }
-                try {
-                    client.requestReceipts(url);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return CommandResult.FAILURE;
-                }
-            }
-            return CommandResult.SUCCESS;
-        }
-    }
-
     @CommandDefinition(name = "acks", description = "for delivered notifications")
     public static class AcksCommand implements Command {
         private final ConnectCommand connectCommand;
@@ -466,9 +359,7 @@ public class WebPushConsole {
         @Option(hasValue = false, description = "display this help and exit")
         private boolean help;
 
-        @Option(hasValue = true, description =
-
-        "the receipt subscription URL, from the receipt command response", required = true)
+        @Option(hasValue = true, description = "the receipt subscription URL, from the receipt command response", required = true)
         private String url;
 
         public AcksCommand(final ConnectCommand connectCommand) {
@@ -477,7 +368,7 @@ public class WebPushConsole {
 
         @Override
         public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
-            if(help) {
+            if (help) {
                 commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("monitor"));
             } else {
                 commandInvocation.putProcessInBackground();
@@ -496,6 +387,42 @@ public class WebPushConsole {
         }
     }
 
+    @CommandDefinition(name = "delete", description = "push message or receipt subscription")
+    public static class DeleteSubCommand implements Command {
+        private final ConnectCommand connectCommand;
+
+        @Option(hasValue = false, description = "display this help and exit")
+        private boolean help;
+
+        @Option(hasValue = true,
+                description = "a push message (/s) or receipt (/r) subscription URI for the subscription to be deleted",
+                required = true)
+        private String url;
+
+        public DeleteSubCommand(final ConnectCommand connectCommand) {
+            this.connectCommand = connectCommand;
+        }
+
+        @Override
+        public CommandResult execute(final CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            if (help) {
+                commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("delete"));
+            } else {
+                commandInvocation.putProcessInBackground();
+                final WebPushClient client = connectCommand.webPushClient();
+                if (!isConnected(client, commandInvocation)) {
+                    return CommandResult.FAILURE;
+                }
+                try {
+                    client.deleteSubscription(url);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return CommandResult.FAILURE;
+                }
+            }
+            return CommandResult.SUCCESS;
+        }
+    }
 
     private static boolean isConnected(final WebPushClient client, CommandInvocation inv) {
         if (client == null || !client.isConnected()) {
@@ -523,28 +450,18 @@ public class WebPushConsole {
         }
 
         @Override
-        public void outbound(final Http2Headers headers, final ByteBuf byteBuf) {
-            printOutbound(headers, byteBuf);
+        public void inbound(Http2Headers headers, int streamId) {
+            printInbound(headers.toString(), streamId, null);
         }
 
         @Override
-        public void inbound(Http2Headers headers, int streamId) {
-            ByteString link = headers.getAndRemove(LINK);
-            LinkHeaderDecoder decoder = new LinkHeaderDecoder(link);
-            String pushURL = decoder.getURLByRel("urn:ietf:params:push:message");
-            if (pushURL != null) {
-                printInbound("Push: " + pushURL, streamId);
-            }
-            String receiptSubURL = decoder.getURLByRel("urn:ietf:params:push:receipt:subscribe");
-            if (receiptSubURL != null) {
-                printInbound("Receipt Subscribe: " + receiptSubURL, streamId);
-            }
-            printInbound(headers.toString(), streamId);
+        public void pushPromise(Http2Headers headers, int streamId, int promisedStreamId) {
+            printInbound(headers.toString(), streamId, promisedStreamId);
         }
 
         @Override
         public void notification(final String data, final int streamId) {
-            printInbound(data, streamId);
+            printInbound(data, streamId, null);
         }
 
         @Override
@@ -563,21 +480,13 @@ public class WebPushConsole {
             console.setPrompt(current);
         }
 
-        private void printOutbound(final Http2Headers headers, final ByteBuf byteBuf) {
-            final Prompt current = console.getPrompt();
-            console.setPrompt(outbound);
-            console.getShell().out().println(headers);
-            console.getShell().out().println(JsonMapper.pretty(byteBuf.toString(CharsetUtil.UTF_8)));
-            console.setPrompt(current);
-        }
-
-        private void printInbound(final String message, final int streamId) {
+        private void printInbound(final String message, final int streamId, final Integer promisedStreamId) {
             final Prompt current = console.getPrompt();
             console.setPrompt(inbound);
-            console.getShell().out().println("[streamid:" + streamId + "] " + message);
+            console.getShell().out().println("[streamId:" + streamId
+                    + (promisedStreamId != null ? ", promisedStreamId:" + String.valueOf(promisedStreamId) : "")
+                    + "] " + message);
             console.setPrompt(current);
         }
-
     }
-
 }

@@ -16,18 +16,20 @@
  */
 package org.jboss.aerogear.webpush;
 
-/**
- * Represents a client subscription in the WebPush protocol.
- */
-public interface Subscription {
+import java.time.LocalDateTime;
+import java.util.Optional;
 
-    /**
-     * A globally unique identifier for this subscription.
-     *
-     * @return {@code String} the identifier for this subscription.
-     */
+public interface PushMessage {
+
     String id();
 
-    String pushResourceId();
+    String subscription();
 
+    Optional<String> receiptSubscription();
+
+    String payload();
+
+    int ttl();
+
+    LocalDateTime createdDateTime();
 }

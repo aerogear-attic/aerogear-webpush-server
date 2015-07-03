@@ -1,80 +1,71 @@
+/**
+ * JBoss, Home of Professional Open Source
+ * Copyright Red Hat, Inc., and individual contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jboss.aerogear.webpush;
-
-import java.util.Objects;
-import java.util.Optional;
 
 public class DefaultSubscription implements Subscription {
 
-    private final String regstrationId;
-    private final Optional<String> message;
-    private final String subscriptionId;
-    private final String endpoint;
+    private final String id;
+    private final String pushResourceId;
 
-    public DefaultSubscription(final String regstrationId, final String subscriptionId, final String endpoint) {
-        this(regstrationId, subscriptionId, endpoint, Optional.empty());
-    }
-
-    public DefaultSubscription(final String regstrationId,
-                               final String subscriptionId,
-                               String endpoint,
-                               final Optional<String> message) {
-        Objects.requireNonNull(regstrationId, "registrationId must not be null");
-        Objects.requireNonNull(subscriptionId, "subscriptionId must not be null");
-        Objects.requireNonNull(endpoint, "endpoint must not be null");
-        Objects.requireNonNull(message, "message must not be null");
-        this.subscriptionId = subscriptionId;
-        this.endpoint = endpoint;
-        this.regstrationId = regstrationId;
-        this.message = message;
-    }
-
-    @Override
-    public String registrationId() {
-        return regstrationId;
+    public DefaultSubscription(String id, String pushResourceId) {
+        this.id = id;
+        this.pushResourceId = pushResourceId;
     }
 
     @Override
     public String id() {
-        return subscriptionId;
+        return id;
     }
 
     @Override
-    public String endpoint() {
-        return endpoint;
-    }
-
-    @Override
-    public Optional<String> message() {
-        return message;
-    }
-
-    @Override
-    public String toString() {
-        return "DefaultChannel[registrationId=" + regstrationId +
-                ", id=" + subscriptionId +
-                ", endpoint=" + endpoint +
-                ", message=" + message + "]";
+    public String pushResourceId() {
+        return pushResourceId;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         DefaultSubscription that = (DefaultSubscription) o;
 
-        if (!subscriptionId.equals(that.subscriptionId)) return false;
-        if (!endpoint.equals(that.endpoint)) return false;
-        if (!regstrationId.equals(that.regstrationId)) return false;
+        if (!id.equals(that.id)) {
+            return false;
+        }
+        return pushResourceId.equals(that.pushResourceId);
 
-        return true;
     }
 
     @Override
     public int hashCode() {
-        int result = regstrationId.hashCode();
-        result = 31 * result + subscriptionId.hashCode();
-        result = 31 * result + endpoint.hashCode();
+        int result = id.hashCode();
+        result = 31 * result + pushResourceId.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultSubscription{" +
+                "id='" + id + '\'' +
+                ", pushResourceId='" + pushResourceId + '\'' +
+                '}';
     }
 }

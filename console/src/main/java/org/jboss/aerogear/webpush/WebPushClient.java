@@ -18,7 +18,6 @@ package org.jboss.aerogear.webpush;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -46,13 +45,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.netty.buffer.Unpooled.copiedBuffer;
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpMethod.PUT;
 import static io.netty.handler.codec.http.HttpMethod.DELETE;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.util.CharsetUtil.UTF_8;
 
-public class WebPushClient {
+public final class WebPushClient {
+
+    private static final AsciiString PUSH_RECEIPT_HEADER = new AsciiString("push-receipt");
+    private static final AsciiString TTL_HEADER = new AsciiString("ttl");
+    private static final AsciiString PREFER_HEADER = new AsciiString("prefer");
+    private static final AsciiString PREFER_HEADER_VALUE = new AsciiString("wait=0");
 
     private final String host;
     private final int port;
@@ -98,33 +101,28 @@ public class WebPushClient {
     public void monitor(final String monitorUrl, final boolean now) throws Exception {
         final Http2Headers headers = http2Headers(GET, monitorUrl);
         if (now) {
-            headers.add(new AsciiString("prefer"), new AsciiString("wait=0"));
+            headers.add(PREFER_HEADER, PREFER_HEADER_VALUE);
         }
         writeRequest(headers);
     }
 
     public void createSubscription(final String subscribeUrl) throws Exception {
-        writeRequest(POST, subscribeUrl, Unpooled.buffer());
+        writeRequest(POST, subscribeUrl);
     }
 
     public void deleteSubscription(final String endpointUrl) throws Exception {
         writeRequest(DELETE, endpointUrl);
     }
 
-    public void createAggregateSubscription(final String aggregateUrl, final String json) throws Exception {
-        writeJsonRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
-    }
-
-    public void notify(final String endpointUrl, final String payload, final String receiptUrl) throws Exception {
+    public void notify(final String endpointUrl, final String payload, final String receiptUrl, int ttl) throws Exception {
         final Http2Headers headers = http2Headers(POST, endpointUrl);
-        if (receiptUrl != null) {
-            headers.add(new AsciiString("push-receipt"), AsciiString.of(receiptUrl));
+        if (receiptUrl != null && !receiptUrl.isEmpty()) {
+            headers.add(PUSH_RECEIPT_HEADER, AsciiString.of(receiptUrl));
+        }
+        if (ttl > 0) {
+            headers.addInt(TTL_HEADER, ttl);
         }
         writeRequest(headers, copiedBuffer(payload, UTF_8));
-    }
-
-    public void updateNotification(final String messageUrl, final String payload) throws Exception {
-        writeRequest(PUT, messageUrl, copiedBuffer(payload, UTF_8));
     }
 
     public void ackNotification(final String messageUrl) throws Exception {
@@ -150,20 +148,8 @@ public class WebPushClient {
         requestFuture.sync();
     }
 
-    private void writeRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
-        final Http2Headers headers = http2Headers(method, url);
-        handler.outbound(headers);
-        ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
-        requestFuture.sync();
-    }
-
-    private void writeJsonRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
-        final Http2Headers headers = http2Headers(method, url);
-        writeRequest(headers, payload);
-    }
-
     private void writeRequest(final Http2Headers headers, final ByteBuf payload) throws Exception {
-        handler.outbound(headers, payload);
+        handler.outbound(headers);
         ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
         requestFuture.sync();
     }

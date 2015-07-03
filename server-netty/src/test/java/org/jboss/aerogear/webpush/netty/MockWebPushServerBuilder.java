@@ -2,7 +2,7 @@ package org.jboss.aerogear.webpush.netty;
 
 import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.Registration;
-import org.jboss.aerogear.webpush.Registration.Resource;
+import org.jboss.aerogear.webpush.Resource;
 import org.jboss.aerogear.webpush.WebPushServer;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
 import org.mockito.stubbing.OngoingStubbing;
@@ -33,7 +33,6 @@ public class MockWebPushServerBuilder {
     private void setRegistrationUrls(final String id) {
         when(registration.uri()).thenReturn(asURI(context, Resource.REGISTRATION.resourceName(), id));
         when(registration.subscribeUri()).thenReturn(asURI(context, Resource.SUBSCRIBE.resourceName(), id));
-        when(registration.aggregateUri()).thenReturn(asURI(context, Resource.AGGREGATE.resourceName(), id));
     }
 
     public MockWebPushServerBuilder registrationMaxAge(final long maxAge) {
@@ -48,12 +47,12 @@ public class MockWebPushServerBuilder {
 
     public MockWebPushServerBuilder addSubscription(final Subscription subscription) {
         when(webPushServer.subscription(subscription.endpoint())).thenReturn(Optional.of(subscription));
-        when(webPushServer.newSubscription(registrationId)).thenReturn(Optional.of(subscription));
+        when(webPushServer.subscription(registrationId)).thenReturn(Optional.of(subscription));
         return this;
     }
 
     public MockWebPushServerBuilder subscriptionOrder(final Consumer<OngoingStubbing<Optional<Subscription>>> consumer) {
-        consumer.accept(when(webPushServer.newSubscription(registrationId)));
+        consumer.accept(when(webPushServer.subscription(registrationId)));
         return this;
     }
 

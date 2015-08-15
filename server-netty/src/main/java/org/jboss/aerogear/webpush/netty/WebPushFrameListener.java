@@ -253,6 +253,9 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 }
             }
         });
+        if (!subscription.isPresent()) {
+            encoder.writeHeaders(ctx, streamId, notFoundHeaders(), 0, true, ctx.newPromise());
+        }
     }
 
     private PushMessage buildPushMessage(String subId, ByteBuf data, Http2Stream stream) {

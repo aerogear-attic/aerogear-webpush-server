@@ -201,7 +201,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         return resourceHeaders(Resource.SUBSCRIPTION, subscription.id(), EXPOSE_HEADERS)
                 .set(LINK_HEADER, asLink(webpushUri(Resource.PUSH, pushToken), WebLink.PUSH),
                         asLink(webpushUri(Resource.RECEIPTS, receiptsToken), WebLink.RECEIPTS))
-                .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().registrationMaxAge()));
+                .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().subscriptionMaxAge()));
     }
 
     private static AsciiString asLink(AsciiString uri, WebLink rel) {
@@ -344,7 +344,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 .status(OK.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(ACCESS_CONTROL_EXPOSE_HEADERS, EXPOSE_HEADERS_SHORT)   //FIXME incorrect EXPOSE_HEADERS
-                .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().registrationMaxAge()))
+                .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().subscriptionMaxAge()))
                 .set(CONTENT_TYPE, CONTENT_TYPE_VALUE)
                 .setInt(CONTENT_LENGTH, pushMessage.payload().length());
         //TODO add "last-modified" headers

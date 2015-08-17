@@ -93,11 +93,6 @@ public interface WebPushServerConfig {
     int endpointPort();
 
     /**
-     * Returns the maximum age for a registration
-     */
-    long registrationMaxAge();
-
-    /**
      * Returns the maximum age for a subscription.
      */
     long subscriptionMaxAge();

@@ -21,7 +21,9 @@ import org.jboss.aerogear.webpush.datastore.InMemoryDataStore;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -42,43 +44,33 @@ public class DefaultWebPushServerTest {
     }
 
     @Test
-    public void register() {
-        final Registration reg = server.register();
+    public void subscribe() {
+        final Subscription reg = server.subscription();
         assertThat(reg.id(), is(notNullValue()));
-        assertThat(reg.uri().toString(), equalTo(webPushUrl(Resource.REGISTRATION, reg.id())));
-        assertThat(reg.subscribeUri().toString(), equalTo(webPushUrl(Resource.SUBSCRIBE, reg.id())));
-    }
-
-    private static String webPushUrl(final Resource resource, final String regId) {
-        return "webpush/" + resource.resourceName() + "/" + regId;
     }
 
     @Test
-    public void newChannel() throws Exception {
-        final Registration reg = server.register();
-        final Optional<Subscription> ch = server.subscription(reg.id());
-        assertThat(ch.isPresent(), equalTo(true));
-        assertThat(ch.get().registrationId(), equalTo(reg.id()));
-        assertThat(ch.get().message(), equalTo(Optional.empty()));
+    public void removeSubscription() throws Exception {
+        final Subscription newSubscription = server.subscription();
+        final Optional<Subscription> subscription = server.subscriptionById(newSubscription.id());
+        assertThat(subscription.isPresent(), equalTo(true));
+        assertThat(subscription.get().id(), equalTo(newSubscription.id()));
+        server.removeSubscription(subscription.get().id());
+        assertThat(server.subscriptionById(newSubscription.id()).isPresent(), is(false));
     }
 
     @Test
-    public void removeChannel() throws Exception {
-        final Registration reg = server.register();
-        final Optional<Subscription> ch = server.subscription(reg.id());
-        assertThat(ch.isPresent(), equalTo(true));
-        assertThat(ch.get().registrationId(), equalTo(reg.id()));
-        server.removeSubscription(ch.get());
-    }
-
-    @Test
-    public void setAndGetMessage() throws Exception {
-        final Registration reg = server.register();
-        final Optional<Subscription> ch = server.subscription(reg.id());
-        assertThat(ch.isPresent(), equalTo(true));
-        server.setMessage(ch.get().endpoint(), Optional.of("some message"));
-        final Optional<String> message = server.getMessage(ch.get().endpoint());
-        assertThat(message.get(), equalTo("some message"));
+    public void waitingDeliveryMessages() throws Exception {
+        final Subscription subscription = server.subscription();
+        final String messageId = UUID.randomUUID().toString();
+        server.saveMessage(new DefaultPushMessage(messageId,
+                subscription.id(),
+                Optional.empty(),
+                "testing",
+                0));
+        final List<PushMessage> message = server.waitingDeliveryMessages(subscription.id());
+        assertThat(message.get(0).payload(), equalTo("testing"));
+        assertThat(message.get(0).ttl(), equalTo(0));
     }
 
 }

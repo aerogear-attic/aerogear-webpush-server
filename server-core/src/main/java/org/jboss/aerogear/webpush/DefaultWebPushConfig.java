@@ -30,7 +30,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     private final String password;
     private final String endpointHost;
     private final int endpointPort;
-    private final long registrationMaxAge;
     private final long subscriptionMaxAge;
     private final long messageMaxAge;
     private final long messageMaxSize;
@@ -45,7 +44,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         privateKey = fileSystemOrClasspath(Objects.requireNonNull(builder.privateKey, "privateKey must not be null"));
         endpointTls = builder.endpointTls;
         password = builder.password;
-        registrationMaxAge = builder.registrationMaxAge;
         subscriptionMaxAge = builder.subscriptionMaxAge;
         protocol = builder.protocol;
         messageMaxAge = builder.messageMaxAge;
@@ -104,11 +102,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     }
 
     @Override
-    public long registrationMaxAge() {
-        return registrationMaxAge;
-    }
-
-    @Override
     public long subscriptionMaxAge() {
         return subscriptionMaxAge;
     }
@@ -138,7 +131,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
                 .append(", endpointPort=").append(endpointPort)
                 .append(", endpointTls=").append(endpointTls)
                 .append(", protocol=").append(protocol)
-                .append(", registrationMaxAge=").append(registrationMaxAge)
                 .append(", subscriptionMaxAge=").append(subscriptionMaxAge)
                 .append(", messageMaxAge=").append(messageMaxAge)
                 .append(", messageMaxSize=").append(messageMaxSize)
@@ -162,7 +154,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private boolean endpointTls;
         private String endpointHost;
         private int endpointPort;
-        private long registrationMaxAge = 604800000L;
         private long subscriptionMaxAge = 604800000L;
         private long messageMaxAge = 0L;
         private Protocol protocol = Protocol.ALPN;
@@ -207,13 +198,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
 
         public Builder endpointPort(final int endpointPort) {
             this.endpointPort = endpointPort;
-            return this;
-        }
-
-        public Builder registrationMaxAge(final Long maxAge) {
-            if (maxAge != null) {
-                this.registrationMaxAge = maxAge;
-            }
             return this;
         }
 

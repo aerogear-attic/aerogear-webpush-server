@@ -20,14 +20,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A Java implementation of <a href="http://tools.ietf.org/html/draft-thomson-webpush-http2-01">WebPush</a> Server.
+ * A Java implementation of <a href="https://tools.ietf.org/html/draft-ietf-webpush-protocol-00">WebPush</a> Server.
  */
 public interface WebPushServer {
 
     /**
      * TODO add comments
      */
-    Subscription subscription();
+    Subscription subscribe();
 
     Optional<Subscription> subscriptionById(String id);
 

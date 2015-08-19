@@ -190,7 +190,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private void handleSubscribe(final ChannelHandlerContext ctx, final int streamId) {
-        Subscription subscription = webpushServer.subscription();
+        Subscription subscription = webpushServer.subscribe();
         encoder.writeHeaders(ctx, streamId, subscriptionHeaders(subscription), 0, true, ctx.newPromise());
         LOGGER.info("Subscription for Push Messages: {}", subscription);
     }

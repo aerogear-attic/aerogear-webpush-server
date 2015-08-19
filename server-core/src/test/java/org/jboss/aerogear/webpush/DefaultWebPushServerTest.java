@@ -45,13 +45,13 @@ public class DefaultWebPushServerTest {
 
     @Test
     public void subscribe() {
-        final Subscription reg = server.subscription();
+        final Subscription reg = server.subscribe();
         assertThat(reg.id(), is(notNullValue()));
     }
 
     @Test
     public void removeSubscription() throws Exception {
-        final Subscription newSubscription = server.subscription();
+        final Subscription newSubscription = server.subscribe();
         final Optional<Subscription> subscription = server.subscriptionById(newSubscription.id());
         assertThat(subscription.isPresent(), equalTo(true));
         assertThat(subscription.get().id(), equalTo(newSubscription.id()));
@@ -61,7 +61,7 @@ public class DefaultWebPushServerTest {
 
     @Test
     public void waitingDeliveryMessages() throws Exception {
-        final Subscription subscription = server.subscription();
+        final Subscription subscription = server.subscribe();
         final String messageId = UUID.randomUUID().toString();
         server.saveMessage(new DefaultPushMessage(messageId,
                 subscription.id(),

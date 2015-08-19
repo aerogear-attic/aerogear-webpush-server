@@ -49,7 +49,7 @@ public class DefaultWebPushServer implements WebPushServer {
      * TODO add comments
      */
     @Override
-    public Subscription subscription() {
+    public Subscription subscribe() {
         String id = UUID.randomUUID().toString();
         String pushResourceId = UUID.randomUUID().toString();
         Subscription subscription = new DefaultSubscription(id, pushResourceId);

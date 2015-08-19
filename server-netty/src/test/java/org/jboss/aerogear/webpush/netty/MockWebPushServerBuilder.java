@@ -22,7 +22,7 @@ public class MockWebPushServerBuilder {
 
     private MockWebPushServerBuilder(final Subscription subscription) {
         this.subscription = subscription;
-        when(webPushServer.subscription()).thenReturn(subscription);
+        when(webPushServer.subscribe()).thenReturn(subscription);
         when(webPushServer.subscriptionById(subscription.id())).thenReturn(Optional.of(subscription));
         when(config.messageMaxSize()).thenReturn(4096L);
     }

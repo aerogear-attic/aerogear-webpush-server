@@ -22,6 +22,8 @@ import java.util.Objects;
 
 public final class DefaultWebPushConfig implements WebPushServerConfig {
 
+    private static final long MESSAGE_MAX_SIZE_LOWER_BOUND = 4096;
+
     private final String host;
     private final int port;
     private final boolean endpointTls;

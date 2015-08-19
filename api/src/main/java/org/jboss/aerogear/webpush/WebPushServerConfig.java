@@ -19,11 +19,9 @@ package org.jboss.aerogear.webpush;
 import java.io.File;
 
 /**
- * Configuration settings for WebPush server
+ * Configuration settings for WebPush server.
  */
 public interface WebPushServerConfig {
-
-    long MESSAGE_MAX_SIZE_LOWER_BOUND = 4096;
 
     enum Protocol {
         ALPN, NPN

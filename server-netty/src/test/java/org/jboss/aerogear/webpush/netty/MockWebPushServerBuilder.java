@@ -1,16 +1,17 @@
 package org.jboss.aerogear.webpush.netty;
 
+import org.jboss.aerogear.webpush.PushMessage;
 import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.WebPushServer;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
 import org.mockito.stubbing.OngoingStubbing;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -19,12 +20,15 @@ public class MockWebPushServerBuilder {
     private final WebPushServer webPushServer = mock(WebPushServer.class);
     private final WebPushServerConfig config = mock(WebPushServerConfig.class);
     private final Subscription subscription;
+    private OngoingStubbing<String> tokens;
 
     private MockWebPushServerBuilder(final Subscription subscription) {
         this.subscription = subscription;
         when(webPushServer.subscribe()).thenReturn(subscription);
         when(webPushServer.subscriptionById(subscription.id())).thenReturn(Optional.of(subscription));
         when(config.messageMaxSize()).thenReturn(4096L);
+        when(webPushServer.generateEndpointToken(eq(subscription.pushResourceId()), eq(subscription.id())))
+                .thenReturn(subscription.pushResourceId());
     }
 
     public MockWebPushServerBuilder subscriptionMaxAge(final long maxAge) {
@@ -32,13 +36,9 @@ public class MockWebPushServerBuilder {
         return this;
     }
 
-    public MockWebPushServerBuilder addSubscription(final Subscription subscription) {
-        when(webPushServer.subscriptionById(subscription.id())).thenReturn(Optional.of(subscription));
-        return this;
-    }
-
-    public MockWebPushServerBuilder subscriptionOrder(final Consumer<OngoingStubbing<Optional<Subscription>>> consumer) {
-        //consumer.accept(when(webPushServer.newSubscription(registrationId)));
+    public MockWebPushServerBuilder waitingPushMessage(final PushMessage message) {
+        when(webPushServer.waitingDeliveryMessages(subscription.id())).thenReturn(Collections.singletonList(message))
+                .thenReturn(Collections.emptyList());
         return this;
     }
 
@@ -47,14 +47,27 @@ public class MockWebPushServerBuilder {
         return this;
     }
 
-    public MockWebPushServerBuilder receiptToken(final String token) {
-        when(webPushServer.generateEndpointToken(anyString())).thenReturn(token);
+    public MockWebPushServerBuilder receiptsToken(final String token) {
+        when(webPushServer.generateEndpointToken(subscription.id())).thenReturn(token);
+        when(webPushServer.subscriptionByToken(eq(token))).thenReturn(Optional.of(subscription));
+        when(webPushServer.subscriptionByReceiptToken(token)).thenReturn(Optional.of(subscription));
         return this;
     }
 
-    public MockWebPushServerBuilder pushToken(final String token) {
-        when(webPushServer.generateEndpointToken(anyString(), anyString())).thenReturn(token);
+    public MockWebPushServerBuilder receiptToken(final String token) {
+        when(webPushServer.subscriptionByReceiptToken(eq(token))).thenReturn(Optional.of(subscription));
+        when(webPushServer.generateEndpointToken(anyString(), eq(subscription.id()))).thenReturn(token);
+        return this;
+    }
+
+    public MockWebPushServerBuilder pushResourceToken(final String token) {
+        when(webPushServer.generateEndpointToken(eq(token), eq(subscription.id()))).thenReturn(token);
         when(webPushServer.subscriptionByPushToken(token)).thenReturn(Optional.of(subscription));
+        return this;
+    }
+
+    public MockWebPushServerBuilder pushMessageToken(final String token) {
+        when(webPushServer.generateEndpointToken(anyString(), eq(subscription.id()))).thenReturn(token);
         return this;
     }
 
@@ -67,11 +80,4 @@ public class MockWebPushServerBuilder {
         return new MockWebPushServerBuilder(subscription);
     }
 
-    private static URI asURI(final String context, final String resource, final String id) {
-        try {
-            return new URI(context + "/" + resource + "/" + id);
-        } catch (final URISyntaxException e) {
-            throw new RuntimeException("String [" + resource + " is not a valid URI", e);
-        }
-    }
 }

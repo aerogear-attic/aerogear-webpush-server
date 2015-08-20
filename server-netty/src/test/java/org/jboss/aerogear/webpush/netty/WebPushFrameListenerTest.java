@@ -93,7 +93,6 @@ public class WebPushFrameListenerTest {
         final ChannelHandlerContext ctx = mockChannelHandlerContext(subscriptionId);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                 .withSubscription(new DefaultSubscription(subscriptionId, pushResourceId))
-                .subscriptionMaxAge(10000L)
                 .pushToken(pushResourceId)
                 .build());
         final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(pushPath(pushResourceId))
@@ -111,7 +110,7 @@ public class WebPushFrameListenerTest {
                     any(ChannelPromise.class));
             final Http2Headers headers = captor.getValue();
             assertThat(headers.status(), equalTo(OK.codeAsText()));
-            assertThat(headers.get(CACHE_CONTROL), equalTo(asciiString("private, max-age=10000")));
+            assertThat(headers.get(CACHE_CONTROL), equalTo(asciiString("private")));
         } finally {
             frameListener.shutdown();
         }

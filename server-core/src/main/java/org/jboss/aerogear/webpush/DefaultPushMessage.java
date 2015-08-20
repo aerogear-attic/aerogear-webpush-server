@@ -26,19 +26,24 @@ public class DefaultPushMessage implements PushMessage {
     private final String subscription;
     private final Optional<String> receiptSubscription;
     private final String payload;
-    private final int ttl;
+    private final Optional<Integer> ttl;
     private final LocalDateTime createdDateTime;
 
-    public DefaultPushMessage(String id, String subscription, Optional<String> receiptSubscription,
-            String payload, int ttl) {
-        Objects.requireNonNull(id, "id");
-        Objects.requireNonNull(subscription, "subscription");
-        Objects.requireNonNull(payload, "payload");
-        this.id = id;
-        this.subscription = subscription;
-        this.receiptSubscription = receiptSubscription;
-        this.payload = payload;
-        this.ttl = ttl;
+    public DefaultPushMessage(final String id,
+                              final String subscription,
+                              final Optional<String> receiptSubscription,
+                              final String payload,
+                              final Optional<Integer> ttl) {
+        this.id = Objects.requireNonNull(id, "id");
+        this.subscription = Objects.requireNonNull(subscription, "subscription");
+        this.receiptSubscription = Objects.requireNonNull(receiptSubscription, "receiptSubscription");
+        this.payload = Objects.requireNonNull(payload, "payload");
+        this.ttl = Objects.requireNonNull(ttl, "ttl");
+        ttl.ifPresent(v -> {
+            if (v < 0) {
+                throw new IllegalArgumentException("TTL value must be greater than 0, current: " + v);
+            }
+        });
         this.createdDateTime = LocalDateTime.now();
     }
 
@@ -63,7 +68,7 @@ public class DefaultPushMessage implements PushMessage {
     }
 
     @Override
-    public int ttl() {
+    public Optional<Integer> ttl() {
         return ttl;
     }
 

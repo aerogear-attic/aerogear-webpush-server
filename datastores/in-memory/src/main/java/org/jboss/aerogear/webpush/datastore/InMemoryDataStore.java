@@ -41,18 +41,18 @@ public class InMemoryDataStore implements DataStore {
     private byte[] salt;
 
     @Override
-    public void saveSubscription(Subscription subscription) {
+    public void saveSubscription(final Subscription subscription) {
         Objects.requireNonNull(subscription, "subscription must not be null");
         subscriptions.putIfAbsent(subscription.id(), subscription);
     }
 
     @Override
-    public Optional<Subscription> subscription(String id) {
+    public Optional<Subscription> subscription(final String id) {
         return Optional.ofNullable(subscriptions.get(id));
     }
 
     @Override
-    public List<PushMessage> removeSubscription(String id) {
+    public List<PushMessage> removeSubscription(final String id) {
         List<PushMessage> result = null;
         Subscription subscription;
         List<PushMessage> waitingDelivery;
@@ -73,16 +73,16 @@ public class InMemoryDataStore implements DataStore {
     }
 
     @Override
-    public void saveMessage(PushMessage msg) {
+    public void saveMessage(final PushMessage msg) {
         Objects.requireNonNull(msg, "push message can not be null");
-        String subId = msg.subscription();
-        List<PushMessage> currentList = waitingDeliveryMessages.get(subId);
+        final String subId = msg.subscription();
+        final List<PushMessage> currentList = waitingDeliveryMessages.get(subId);
         if (currentList != null) {
             currentList.add(msg);
         } else {
-            List<PushMessage> newList = Collections.synchronizedList(new ArrayList<>());
+            final List<PushMessage> newList = Collections.synchronizedList(new ArrayList<>());
             newList.add(msg);
-            List<PushMessage> previousList = waitingDeliveryMessages.putIfAbsent(subId, newList);
+            final List<PushMessage> previousList = waitingDeliveryMessages.putIfAbsent(subId, newList);
             if (previousList != null) {
                 previousList.add(msg);
             }
@@ -90,8 +90,8 @@ public class InMemoryDataStore implements DataStore {
     }
 
     @Override
-    public List<PushMessage> waitingDeliveryMessages(String subId) {
-        List<PushMessage> currentList = waitingDeliveryMessages.remove(subId);
+    public List<PushMessage> waitingDeliveryMessages(final String subId) {
+        final List<PushMessage> currentList = waitingDeliveryMessages.remove(subId);
         if (currentList == null) {
             return Collections.emptyList();
         }
@@ -99,27 +99,27 @@ public class InMemoryDataStore implements DataStore {
     }
 
     @Override
-    public void saveSentMessage(PushMessage msg) {
+    public void saveSentMessage(final PushMessage msg) {
         Objects.requireNonNull(msg, "push message can not be null");
         if (!msg.receiptSubscription().isPresent()) {
             throw new IllegalArgumentException("push message must have receipt subscription URI");
         }
 
-        String subId = msg.subscription();
+        final String subId = msg.subscription();
         ConcurrentMap<String, PushMessage> currentMap = sentMessages.get(subId);
         if (currentMap == null) {
-            ConcurrentMap<String, PushMessage> newMap = new ConcurrentHashMap<>();
-            ConcurrentMap<String, PushMessage> previousMap = sentMessages.putIfAbsent(subId, newMap);
+            final ConcurrentMap<String, PushMessage> newMap = new ConcurrentHashMap<>();
+            final ConcurrentMap<String, PushMessage> previousMap = sentMessages.putIfAbsent(subId, newMap);
             currentMap = previousMap != null ? previousMap : newMap;
         }
         currentMap.put(msg.id(), msg);
     }
 
     @Override
-    public Optional<PushMessage> sentMessage(String subId, String msgId) {
-        ConcurrentMap<String, PushMessage> currentMap = sentMessages.get(subId);
-        if (currentMap != null) {
-            return Optional.ofNullable(currentMap.remove(msgId));
+    public Optional<PushMessage> sentMessage(final String subId, final String msgId) {
+        final ConcurrentMap<String, PushMessage> map = sentMessages.get(subId);
+        if (map != null) {
+            return Optional.ofNullable(map.remove(msgId));
         }
         return Optional.empty();
     }

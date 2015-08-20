@@ -45,28 +45,25 @@ public class DefaultWebPushServer implements WebPushServer {
         this.privateKey = privateKey;
     }
 
-    /**
-     * TODO add comments
-     */
     @Override
     public Subscription subscribe() {
-        String id = UUID.randomUUID().toString();
-        String pushResourceId = UUID.randomUUID().toString();
-        Subscription subscription = new DefaultSubscription(id, pushResourceId);
+        final String id = UUID.randomUUID().toString();
+        final String pushResourceId = UUID.randomUUID().toString();
+        final Subscription subscription = new DefaultSubscription(id, pushResourceId);
         store.saveSubscription(subscription);
         return subscription;
     }
 
     @Override
-    public Optional<Subscription> subscriptionById(String subscriptionId) {
-        return store.subscription(subscriptionId);
+    public Optional<Subscription> subscriptionById(final String id) {
+        return store.subscription(id);
     }
 
     @Override
-    public Optional<Subscription> subscriptionByToken(String subscriptionToken) {
+    public Optional<Subscription> subscriptionByToken(final String subscriptionToken) {
         try {
-            String subscriptionId = CryptoUtil.decrypt(privateKey, subscriptionToken);
-            return subscriptionById(subscriptionId);
+            final String subId = CryptoUtil.decrypt(privateKey, subscriptionToken);
+            return subscriptionById(subId);
         } catch (Exception e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -74,13 +71,12 @@ public class DefaultWebPushServer implements WebPushServer {
     }
 
     @Override
-    public Optional<Subscription> subscriptionByPushToken(String pushToken) {
+    public Optional<Subscription> subscriptionByPushToken(final String pushToken) {
         try {
-            String decrypt = CryptoUtil.decrypt(privateKey, pushToken);
-            String[] tokens = decrypt.split(CryptoUtil.DELIMITER);
-            Optional<Subscription> subscription = store.subscription(tokens[1]);
+            final String[] tokens = decryptToken(pushToken);
+            final Optional<Subscription> subscription = store.subscription(tokens[1]);
             if (subscription.isPresent()) {
-                Subscription sub = subscription.get();
+                final Subscription sub = subscription.get();
                 if (sub.pushResourceId().equals(tokens[0])) {
                     return subscription;
                 }
@@ -92,10 +88,9 @@ public class DefaultWebPushServer implements WebPushServer {
     }
 
     @Override
-    public Optional<Subscription> subscriptionByReceiptToken(String receiptToken) {
+    public Optional<Subscription> subscriptionByReceiptToken(final String receiptToken) {
         try {
-            String decrypt = CryptoUtil.decrypt(privateKey, receiptToken);
-            String[] tokens = decrypt.split(CryptoUtil.DELIMITER);
+            final String[] tokens = decryptToken(receiptToken);
             return store.subscription(tokens[1]);
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
@@ -104,30 +99,29 @@ public class DefaultWebPushServer implements WebPushServer {
     }
 
     @Override
-    public List<PushMessage> removeSubscription(String id) {
+    public List<PushMessage> removeSubscription(final String id) {
         return store.removeSubscription(id);
     }
 
     @Override
-    public void saveMessage(PushMessage msg) {
+    public void saveMessage(final PushMessage msg) {
         store.saveMessage(msg);
     }
 
     @Override
-    public List<PushMessage> waitingDeliveryMessages(String subId) {
+    public List<PushMessage> waitingDeliveryMessages(final String subId) {
         return store.waitingDeliveryMessages(subId);
     }
 
     @Override
-    public void saveSentMessage(PushMessage msg) {
+    public void saveSentMessage(final PushMessage msg) {
         store.saveSentMessage(msg);
     }
 
     @Override
-    public Optional<PushMessage> sentMessage(String pushMsgResource) {
+    public Optional<PushMessage> sentMessage(final String pushMsgResource) {
         try {
-            String decrypt = CryptoUtil.decrypt(privateKey, pushMsgResource);
-            String[] tokens = decrypt.split(CryptoUtil.DELIMITER);
+            final String[] tokens = decryptToken(pushMsgResource);
             return store.sentMessage(tokens[1], tokens[0]);
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
@@ -147,6 +141,11 @@ public class DefaultWebPushServer implements WebPushServer {
             store.savePrivateKeySalt(keySalt);
         }
         return CryptoUtil.secretKey(config.password(), keySalt);
+    }
+
+    private String[] decryptToken(final String token) throws Exception {
+        final String decrypt = CryptoUtil.decrypt(privateKey, token);
+        return decrypt.split(CryptoUtil.DELIMITER);
     }
 
     @Override

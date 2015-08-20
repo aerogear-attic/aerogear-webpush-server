@@ -67,10 +67,10 @@ public class DefaultWebPushServerTest {
                 subscription.id(),
                 Optional.empty(),
                 "testing",
-                0));
+                Optional.of(0)));
         final List<PushMessage> message = server.waitingDeliveryMessages(subscription.id());
         assertThat(message.get(0).payload(), equalTo("testing"));
-        assertThat(message.get(0).ttl(), equalTo(0));
+        assertThat(message.get(0).ttl().get(), equalTo(0));
     }
 
 }

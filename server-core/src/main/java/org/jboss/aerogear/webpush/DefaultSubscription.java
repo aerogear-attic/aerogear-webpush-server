@@ -16,14 +16,16 @@
  */
 package org.jboss.aerogear.webpush;
 
+import java.util.Objects;
+
 public class DefaultSubscription implements Subscription {
 
     private final String id;
     private final String pushResourceId;
 
-    public DefaultSubscription(String id, String pushResourceId) {
-        this.id = id;
-        this.pushResourceId = pushResourceId;
+    public DefaultSubscription(final String id, final String pushResourceId) {
+        this.id = Objects.requireNonNull(id, "id");
+        this.pushResourceId = Objects.requireNonNull(pushResourceId, "pushResourceId");
     }
 
     @Override
@@ -41,24 +43,17 @@ public class DefaultSubscription implements Subscription {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof DefaultSubscription)) {
             return false;
         }
 
         DefaultSubscription that = (DefaultSubscription) o;
-
-        if (!id.equals(that.id)) {
-            return false;
-        }
-        return pushResourceId.equals(that.pushResourceId);
-
+        return id.equals(that.id);
     }
 
     @Override
     public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + pushResourceId.hashCode();
-        return result;
+        return Objects.hash(id);
     }
 
     @Override

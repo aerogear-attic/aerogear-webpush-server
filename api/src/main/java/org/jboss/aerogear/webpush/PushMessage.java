@@ -29,7 +29,7 @@ public interface PushMessage {
 
     String payload();
 
-    int ttl();
+    Optional<Integer> ttl();
 
     LocalDateTime createdDateTime();
 }

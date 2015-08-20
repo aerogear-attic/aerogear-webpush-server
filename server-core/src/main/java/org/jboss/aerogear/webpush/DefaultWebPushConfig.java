@@ -203,10 +203,8 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             return this;
         }
 
-        public Builder subscriptionMaxAge(final Long maxAge) {
-            if (maxAge != null) {
-                this.subscriptionMaxAge = maxAge;
-            }
+        public Builder subscriptionMaxAge(final long maxAge) {
+            this.subscriptionMaxAge = maxAge;
             return this;
         }
 
@@ -215,17 +213,13 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             return this;
         }
 
-        public Builder messageMaxAge(final Long maxAge) {
-            if (maxAge != null) {
-                this.messageMaxAge = maxAge;
-            }
+        public Builder messageMaxAge(final long maxAge) {
+            this.messageMaxAge = maxAge;
             return this;
         }
 
-        public Builder messageMaxSize(final Long maxSize) {
-            if (maxSize != null) {
-                this.messageMaxSize = maxSize;
-            }
+        public Builder messageMaxSize(final long maxSize) {
+            this.messageMaxSize = maxSize;
             return this;
         }
 
@@ -236,5 +230,4 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             return new DefaultWebPushConfig(this);
         }
     }
-
 }

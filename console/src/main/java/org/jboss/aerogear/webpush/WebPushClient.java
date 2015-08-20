@@ -49,13 +49,12 @@ import static io.netty.handler.codec.http.HttpMethod.DELETE;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.util.CharsetUtil.UTF_8;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.PREFER_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.PUSH_RECEIPT_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.TTL_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.WAIT_0;
 
 public final class WebPushClient {
-
-    private static final AsciiString PUSH_RECEIPT_HEADER = new AsciiString("push-receipt");
-    private static final AsciiString TTL_HEADER = new AsciiString("ttl");
-    private static final AsciiString PREFER_HEADER = new AsciiString("prefer");
-    private static final AsciiString PREFER_HEADER_VALUE = new AsciiString("wait=0");
 
     private final String host;
     private final int port;
@@ -101,7 +100,7 @@ public final class WebPushClient {
     public void monitor(final String monitorUrl, final boolean now) throws Exception {
         final Http2Headers headers = http2Headers(GET, monitorUrl);
         if (now) {
-            headers.add(PREFER_HEADER, PREFER_HEADER_VALUE);
+            headers.add(PREFER_HEADER, WAIT_0);
         }
         writeRequest(headers);
     }
@@ -114,7 +113,10 @@ public final class WebPushClient {
         writeRequest(DELETE, endpointUrl);
     }
 
-    public void notify(final String endpointUrl, final String payload, final String receiptUrl, int ttl) throws Exception {
+    public void notify(final String endpointUrl,
+                       final String payload,
+                       final String receiptUrl,
+                       int ttl) throws Exception {
         final Http2Headers headers = http2Headers(POST, endpointUrl);
         if (receiptUrl != null && !receiptUrl.isEmpty()) {
             headers.add(PUSH_RECEIPT_HEADER, AsciiString.of(receiptUrl));
@@ -261,5 +263,4 @@ public final class WebPushClient {
         }
 
     }
-
 }

@@ -39,9 +39,9 @@ import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.util.CharsetUtil.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.jboss.aerogear.webpush.WebLink.PUSH;
-import static org.jboss.aerogear.webpush.netty.WebPushFrameListener.LINK_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.LINK_HEADER;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -92,8 +92,7 @@ public class WebPushFrameListenerTest {
         final String pushResourceId = "8888";
         final ChannelHandlerContext ctx = mockChannelHandlerContext(subscriptionId);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
-                .withSubscription(new DefaultSubscription(subscriptionId, pushResourceId))
-                .pushToken(pushResourceId)
+                .withSubscription(new DefaultSubscription(subscriptionId, pushResourceId)).pushToken(pushResourceId)
                 .build());
         final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(pushPath(pushResourceId))
                 .thenReturn(pushPath(pushResourceId)), Resource.PUSH);

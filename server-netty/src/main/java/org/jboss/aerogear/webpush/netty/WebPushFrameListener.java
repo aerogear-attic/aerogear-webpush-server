@@ -30,9 +30,9 @@ import io.netty.util.AttributeKey;
 import io.netty.util.ByteString;
 import io.netty.util.concurrent.Future;
 import org.jboss.aerogear.webpush.DefaultPushMessage;
-import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.PushMessage;
 import org.jboss.aerogear.webpush.Resource;
+import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.WebLink;
 import org.jboss.aerogear.webpush.WebPushServer;
 import org.slf4j.Logger;
@@ -60,6 +60,16 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.util.CharsetUtil.UTF_8;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.ALLOW_ORIGIN_ANY;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.CACHE_CONTROL_PRIVATE;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.CONTENT_TYPE_VALUE;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.EXPOSE_HEADERS_CACHE_CONTROL_CONTENT_TYPE_CONTENT_LENGTH;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.EXPOSE_HEADERS_LINK_CACHE_CONTROL_LOCATION;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.EXPOSE_HEADERS_LOCATION;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.LINK_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.PREFER_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.PUSH_RECEIPT_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.TTL_HEADER;
 
 public class WebPushFrameListener extends Http2FrameAdapter {
 
@@ -67,28 +77,16 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     private static final String WEBPUSH_URI = "/webpush/";
 
-    private static final AsciiString PUSH_RECEIPT_HEADER = new AsciiString("push-receipt");
-    private static final AsciiString TTL_HEADER = new AsciiString("ttl");
-    private static final AsciiString PREFER_HEADER = new AsciiString("prefer");
-    static final AsciiString LINK_HEADER = new AsciiString("link");
-
-    private static final AsciiString ANY_ORIGIN = new AsciiString("*");
-    private static final AsciiString EXPOSE_HEADERS = new AsciiString("link, cache-control, location"); //FIXME rename
-    private static final AsciiString EXPOSE_HEADERS_SHORT = new AsciiString("cache-control, content-type"); //FIXME rename
-    private static final AsciiString EXPOSE_HEADERS_LOCATION = new AsciiString("location"); //FIXME rename
-    private static final AsciiString CACHE_CONTROL_PRIVATE = new AsciiString("private");
-    private static final AsciiString CONTENT_TYPE_VALUE = new AsciiString("text/plain;charset=utf8");
+    private static final String GET = "GET";
+    private static final String POST = "POST";
+    private static final String DELETE = "DELETE";
+    private static final AsciiString GET_ASCII = new AsciiString(GET);
 
     private static final AttributeKey<String> SUBSCRIPTION_ID = AttributeKey.valueOf("SUBSCRIPTION_ID");
     private static final AttributeKey<String> RECEIPT_SUBSCRIPTION_ID = AttributeKey.valueOf("RECEIPT_SUBSCRIPTION_ID");
 
     private static final ConcurrentHashMap<String, Client> monitoredStreams = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Client> acksStreams = new ConcurrentHashMap<>();
-
-    private static final String GET = "GET";
-    private static final String POST = "POST";
-    private static final String DELETE = "DELETE";
-    private static final AsciiString ASCII_GET = new AsciiString(GET);
 
     private final WebPushServer webpushServer;
     private final AsciiString authority;
@@ -204,7 +202,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private Http2Headers subscriptionHeaders(final Subscription subscription) {
         final String pushToken = webpushServer.generateEndpointToken(subscription.pushResourceId(), subscription.id());
         final String receiptsToken = webpushServer.generateEndpointToken(subscription.id());
-        return resourceHeaders(Resource.SUBSCRIPTION, subscription.id(), EXPOSE_HEADERS)
+        return resourceHeaders(Resource.SUBSCRIPTION, subscription.id(), EXPOSE_HEADERS_LINK_CACHE_CONTROL_LOCATION)
                 .set(LINK_HEADER, asLink(webpushUri(Resource.PUSH, pushToken), WebLink.PUSH),
                                   asLink(webpushUri(Resource.RECEIPTS, receiptsToken), WebLink.RECEIPTS))
                 .set(CACHE_CONTROL, subscriptionMaxAge);
@@ -299,7 +297,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private static Http2Headers messageToLarge() {
         return new DefaultHttp2Headers(false)
                 .status(REQUEST_ENTITY_TOO_LARGE.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY);
     }
 
     private void handleReceivingPushMessages(final ChannelHandlerContext ctx,
@@ -349,8 +347,8 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private Http2Headers monitorHeaders(final PushMessage pushMessage) {
         return new DefaultHttp2Headers(false)
                 .status(OK.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
-                .set(ACCESS_CONTROL_EXPOSE_HEADERS, EXPOSE_HEADERS_SHORT)   //FIXME incorrect EXPOSE_HEADERS
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY)
+                .set(ACCESS_CONTROL_EXPOSE_HEADERS, EXPOSE_HEADERS_CACHE_CONTROL_CONTENT_TYPE_CONTENT_LENGTH)
                 .set(CACHE_CONTROL, CACHE_CONTROL_PRIVATE)
                 .set(CONTENT_TYPE, CONTENT_TYPE_VALUE)
                 .setInt(CONTENT_LENGTH, pushMessage.payload().length());
@@ -383,7 +381,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private static Http2Headers ackHeaders() {
         return new DefaultHttp2Headers(false)
                 .status(GONE.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);  //FIXME add date
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY);  //FIXME add date
     }
 
     private void handleReceivingPushMessageReceipts(final ChannelHandlerContext ctx,
@@ -430,7 +428,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                                                 final AsciiString exposeHeaders) {
         return new DefaultHttp2Headers(false)
                 .status(CREATED.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY)
                 .set(ACCESS_CONTROL_EXPOSE_HEADERS, exposeHeaders)
                 .set(LOCATION, webpushUri(resource, resourceToken));
     }
@@ -475,19 +473,19 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private static Http2Headers noContentHeaders() {
         return new DefaultHttp2Headers(false)
                 .status(NO_CONTENT.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY);
     }
 
     private static Http2Headers notFoundHeaders() {
         return new DefaultHttp2Headers(false)
                 .status(NOT_FOUND.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY);
     }
 
     private static Http2Headers badRequestHeaders() {
         return new DefaultHttp2Headers(false)
                 .status(BAD_REQUEST.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY);
     }
 
     private void badRequest(final ChannelHandlerContext ctx, final int streamId, final String errorMsg) {
@@ -498,7 +496,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private Http2Headers promiseHeaders(final PushMessage pushMessage) {
         final String token = webpushServer.generateEndpointToken(pushMessage.id(), pushMessage.subscription());
         return new DefaultHttp2Headers(false)
-                .method(ASCII_GET)
+                .method(GET_ASCII)
                 .path(webpushUri(Resource.PUSH_MESSAGE, token))
                 .authority(authority);
     }

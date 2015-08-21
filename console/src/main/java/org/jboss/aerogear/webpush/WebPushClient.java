@@ -24,20 +24,21 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
-import io.netty.handler.codec.http2.Http2OrHttpChooser.SelectedProtocol;
 import io.netty.handler.codec.http2.Http2SecurityUtil;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
+import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.util.AsciiString;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
@@ -153,7 +154,7 @@ public class WebPushClient {
 
     private Http2Headers http2Headers(final HttpMethod method, final String url) {
         final URI hostUri = URI.create("https://" + host + ":" + port + "/" + url);
-        final Http2Headers headers = new DefaultHttp2Headers(false).method(AsciiString.of(method.name()));
+        final Http2Headers headers = new DefaultHttp2Headers().method(AsciiString.of(method.name()));
         headers.path(asciiString(url));
         headers.authority(asciiString(hostUri.getAuthority()));
         headers.scheme(asciiString(hostUri.getScheme()));
@@ -186,31 +187,29 @@ public class WebPushClient {
             // the SslContext to suite both NPN and ALPN.
             final String version = System.getProperty("java.version");
             if (version.startsWith("1.7")) {
-                return SslContext.newClientContext(SslProvider.JDK,
-                        null,
-                        InsecureTrustManagerFactory.INSTANCE,
-                        null,
-                        SupportedCipherSuiteFilter.INSTANCE,
-                        new ApplicationProtocolConfig(
+                return SslContextBuilder.forClient()
+                        .sslProvider(SslProvider.JDK)
+                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .ciphers(null, SupportedCipherSuiteFilter.INSTANCE)
+                        .applicationProtocolConfig(new ApplicationProtocolConfig(
                                 Protocol.NPN,
                                 SelectorFailureBehavior.FATAL_ALERT,
                                 SelectedListenerFailureBehavior.FATAL_ALERT,
-                                SelectedProtocol.HTTP_2.protocolName(),
-                                SelectedProtocol.HTTP_1_1.protocolName()),
-                        0, 0);
+                                ApplicationProtocolNames.HTTP_2,
+                                ApplicationProtocolNames.HTTP_1_1))
+                        .build();
             }
-            return SslContext.newClientContext(SslProvider.JDK,
-                    null,
-                    InsecureTrustManagerFactory.INSTANCE,
-                    Http2SecurityUtil.CIPHERS,
-                    SupportedCipherSuiteFilter.INSTANCE,
-                    new ApplicationProtocolConfig(
+            return SslContextBuilder.forClient()
+                    .sslProvider(SslProvider.JDK)
+                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                    .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
+                    .applicationProtocolConfig(new ApplicationProtocolConfig(
                             Protocol.ALPN,
                             SelectorFailureBehavior.FATAL_ALERT,
                             SelectedListenerFailureBehavior.FATAL_ALERT,
-                            SelectedProtocol.HTTP_2.protocolName(),
-                            SelectedProtocol.HTTP_1_1.protocolName()),
-                    0, 0);
+                            ApplicationProtocolNames.HTTP_2,
+                            ApplicationProtocolNames.HTTP_1_1))
+                    .build();
         }
         return null;
     }
@@ -253,8 +252,8 @@ public class WebPushClient {
 
         public WebPushClient build() {
             if (protocols.isEmpty()) {
-                protocols.add(SelectedProtocol.HTTP_2.protocolName());
-                protocols.add(SelectedProtocol.HTTP_1_1.protocolName());
+                protocols.add(ApplicationProtocolNames.HTTP_2);
+                protocols.add(ApplicationProtocolNames.HTTP_1_1);
             }
             return new WebPushClient(this);
         }

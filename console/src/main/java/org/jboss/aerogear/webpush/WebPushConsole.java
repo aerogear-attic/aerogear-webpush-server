@@ -411,7 +411,6 @@ public class WebPushConsole {
         }
     }
 
-
     private static boolean isConnected(final WebPushClient client, CommandInvocation inv) {
         if (client == null || !client.isConnected()) {
             inv.getShell().out().println("Please use the connect command to connect to the server");

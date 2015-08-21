@@ -5,7 +5,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
@@ -15,8 +14,10 @@ import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.util.AsciiString;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.ByteString;
 import org.jboss.aerogear.webpush.AggregateSubscription;
 import org.jboss.aerogear.webpush.AggregateSubscription.Entry;
 import org.jboss.aerogear.webpush.DefaultAggregateSubscription;
@@ -506,7 +507,7 @@ public class WebPushFrameListenerTest {
                                           final ChannelHandlerContext ctx,
                                           final Http2Headers registrationHeaders,
                                           final Http2ConnectionEncoder encoder) throws Http2Exception {
-        final AsciiString subUri = getLinkUri(asciiString(SUBSCRIBE), registrationHeaders.getAll(LINK));
+        final ByteString subUri = getLinkUri(asciiString(SUBSCRIBE), registrationHeaders.getAll(LINK));
         frameListener.onHeadersRead(ctx, 3, subHeaders(subUri), 0, (short) 22, false, 0, false);
         frameListener.onDataRead(ctx, 3, Unpooled.buffer(), 0, true);
         return verifyAndCapture(ctx, encoder, true);
@@ -517,16 +518,17 @@ public class WebPushFrameListenerTest {
                                                    final Http2Headers registrationHeaders,
                                                    final String json,
                                                    final Http2ConnectionEncoder encoder) throws Http2Exception {
-        final AsciiString aggregateUri = getLinkUri(asciiString(AGGREGATE), registrationHeaders.getAll(LINK));
+        final ByteString aggregateUri = getLinkUri(asciiString(AGGREGATE), registrationHeaders.getAll(LINK));
         frameListener.onHeadersRead(ctx, 3, subHeaders(aggregateUri), 0, (short) 22, false, 0, false);
         frameListener.onDataRead(ctx, 3, copiedBuffer(json, UTF_8), 0, true);
         return verifyAndCapture(ctx, encoder, true);
     }
 
-    private static AsciiString getLinkUri(final AsciiString linkType, final List<AsciiString> links) {
-        for (AsciiString link : links) {
-            if (link.contains(linkType)) {
-                return link.subSequence(1, link.indexOf(";")-1);
+    private static ByteString getLinkUri(final AsciiString linkType, final List<ByteString> links) {
+        for (ByteString link : links) {
+            AsciiString asciiLink = new AsciiString(link, false);
+            if (asciiLink.contains(linkType)) {
+                return link.subSequence(1, asciiLink.indexOf(";") - 1);
             }
         }
         throw new IllegalStateException("No link header of type " + linkType + " was found in " + links);
@@ -535,7 +537,7 @@ public class WebPushFrameListenerTest {
     private static void monitor(final WebPushFrameListener frameListener,
                                         final ChannelHandlerContext ctx,
                                         final Http2Headers registrationHeaders) throws Http2Exception {
-        final AsciiString location = registrationHeaders.get(LOCATION);
+        final ByteString location = registrationHeaders.get(LOCATION);
         frameListener.onHeadersRead(ctx, 3, monitorHeaders(location), 0, (short) 22, false, 0, true);
     }
 
@@ -543,7 +545,7 @@ public class WebPushFrameListenerTest {
                                 final ChannelHandlerContext ctx,
                                 final Http2Headers registrationHeaders,
                                 final int wait) throws Http2Exception {
-        final AsciiString location = registrationHeaders.get(LOCATION);
+        final ByteString location = registrationHeaders.get(LOCATION);
         final Http2Headers http2Headers = monitorHeaders(location);
         http2Headers.add(new AsciiString("prefer"), new AsciiString("wait=" + wait));
         frameListener.onHeadersRead(ctx, 3, http2Headers, 0, (short) 22, false, 0, true);
@@ -554,7 +556,7 @@ public class WebPushFrameListenerTest {
                                 final Http2ConnectionEncoder encoder,
                                 final Http2Headers subHeaders,
                                 final ByteBuf data) throws Http2Exception {
-        final AsciiString location = subHeaders.get(LOCATION);
+        final ByteString location = subHeaders.get(LOCATION);
         frameListener.onHeadersRead(ctx, 3, notifyHeaders(location), 0, (short) 22, false, 0, false);
         frameListener.onDataRead(ctx, 3, data, 0, true);
         return verifyAndCapture(ctx, encoder, true);
@@ -565,7 +567,7 @@ public class WebPushFrameListenerTest {
                                        final Http2Headers subHeaders,
                                        final Http2ConnectionEncoder encoder,
                                        final boolean endstream) throws Http2Exception {
-        final AsciiString location = subHeaders.get(LOCATION);
+        final ByteString location = subHeaders.get(LOCATION);
         frameListener.onHeadersRead(ctx, 3, statusHeaders(location), 0, (short) 22, false, 0, false);
         return verifyAndCapture(ctx, encoder, endstream);
     }
@@ -574,7 +576,7 @@ public class WebPushFrameListenerTest {
                                                    final ChannelHandlerContext ctx,
                                                    final Http2Headers subHeaders,
                                                    final Http2ConnectionEncoder encoder) throws Http2Exception {
-        final AsciiString location = subHeaders.get(LOCATION);
+        final ByteString location = subHeaders.get(LOCATION);
         frameListener.onHeadersRead(ctx, 3, subDeleteHeaders(location), 0, (short) 22, false, 0, false);
         return verifyAndCapture(ctx, encoder, true);
     }
@@ -605,42 +607,42 @@ public class WebPushFrameListenerTest {
     }
 
     private static Http2Headers registerHeaders() {
-        final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
+        final Http2Headers requestHeaders = new DefaultHttp2Headers();
         requestHeaders.method(AsciiString.of(HttpMethod.POST.name()));
         requestHeaders.path(asciiString("/webpush/" + Resource.REGISTER.resourceName()));
         return requestHeaders;
     }
 
-    private static Http2Headers subHeaders(final AsciiString resourceUrl) {
-        final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
+    private static Http2Headers subHeaders(final ByteString resourceUrl) {
+        final Http2Headers requestHeaders = new DefaultHttp2Headers();
         requestHeaders.method(AsciiString.of(HttpMethod.POST.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
-    private static Http2Headers monitorHeaders(final AsciiString resourceUrl) {
-        final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
+    private static Http2Headers monitorHeaders(final ByteString resourceUrl) {
+        final Http2Headers requestHeaders = new DefaultHttp2Headers();
         requestHeaders.method(AsciiString.of(HttpMethod.GET.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
-    private static Http2Headers notifyHeaders(final AsciiString resourceUrl) {
-        final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
+    private static Http2Headers notifyHeaders(final ByteString resourceUrl) {
+        final Http2Headers requestHeaders = new DefaultHttp2Headers();
         requestHeaders.method(AsciiString.of(HttpMethod.PUT.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
-    private static Http2Headers statusHeaders(final AsciiString resourceUrl) {
-        final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
+    private static Http2Headers statusHeaders(final ByteString resourceUrl) {
+        final Http2Headers requestHeaders = new DefaultHttp2Headers();
         requestHeaders.method(AsciiString.of(HttpMethod.GET.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
     }
 
-    private static Http2Headers subDeleteHeaders(final AsciiString resourceUrl) {
-        final Http2Headers requestHeaders = new DefaultHttp2Headers(false);
+    private static Http2Headers subDeleteHeaders(final ByteString resourceUrl) {
+        final Http2Headers requestHeaders = new DefaultHttp2Headers();
         requestHeaders.method(AsciiString.of(HttpMethod.DELETE.name()));
         requestHeaders.path(resourceUrl);
         return requestHeaders;
@@ -652,7 +654,7 @@ public class WebPushFrameListenerTest {
         final Endpoint local = mock(Endpoint.class);
         final Http2Stream stream = mock(Http2Stream.class);
         when(local.nextStreamId()).thenReturn(4);
-        consumer.accept(when(stream.getProperty("webpush.path")));
+        consumer.accept(when(stream.getProperty(connection.newKey())));
         when(connection.local()).thenReturn(local);
         when(connection.stream(anyInt())).thenReturn(stream);
         when(encoder.connection()).thenReturn(connection);
@@ -704,5 +706,4 @@ public class WebPushFrameListenerTest {
         when(ctx.attr(any(AttributeKey.class))).thenReturn(attribute);
         return ctx;
     }
-
 }

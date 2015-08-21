@@ -213,16 +213,11 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private void handleReceipts(final ChannelHandlerContext ctx, final int streamId, final String path) {
-        final Optional<String> receiptsToken = extractToken(path);
-        receiptsToken.ifPresent(e -> {
-            final String subscriptionToken = receiptsToken.get();
-            final Optional<Subscription> subscription = webpushServer.subscriptionByToken(subscriptionToken);
-            subscription.ifPresent(sub -> {
-                final String receiptResourceId = UUID.randomUUID().toString();
-                final String receiptResourceToken = webpushServer.generateEndpointToken(receiptResourceId, sub.id());
-                encoder.writeHeaders(ctx, streamId, receiptsHeaders(receiptResourceToken), 0, true, ctx.newPromise());
-                LOGGER.info("Receipt Subscription Resource: {}", receiptResourceToken);
-            });
+        extractToken(path).flatMap(webpushServer::subscriptionByToken).ifPresent(sub -> {
+            final String receiptResourceId = UUID.randomUUID().toString();
+            final String receiptResourceToken = webpushServer.generateEndpointToken(receiptResourceId, sub.id());
+            encoder.writeHeaders(ctx, streamId, receiptsHeaders(receiptResourceToken), 0, true, ctx.newPromise());
+            LOGGER.info("Receipt Subscription Resource: {}", receiptResourceToken);
         });
     }
 
@@ -304,8 +299,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                                              final int streamId,
                                              final Http2Headers headers,
                                              final String path) {
-        final Optional<Subscription> subscription = extractToken(path).flatMap(webpushServer::subscriptionById);
-        subscription.ifPresent(sub -> {
+        extractToken(path).flatMap(webpushServer::subscriptionById).ifPresent(sub -> {
             final Client client = new Client(ctx, streamId, encoder);
 
             List<PushMessage> newMessages = null;
@@ -356,8 +350,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private void handleAcknowledgement(final ChannelHandlerContext ctx, final int streamId, final String path) {
-        final Optional<PushMessage> pushMessageOpt = extractToken(path).flatMap(webpushServer::sentMessage);
-        pushMessageOpt.ifPresent(pushMessage -> {
+        extractToken(path).flatMap(webpushServer::sentMessage).ifPresent(pushMessage -> {
             final Client client = acksStreams.get(pushMessage.receiptSubscription().get());
             if (client != null) {
                 receivePushMessageReceipts(pushMessage, client);
@@ -387,12 +380,11 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private void handleReceivingPushMessageReceipts(final ChannelHandlerContext ctx,
                                                     final int streamId,
                                                     final String path) {
-        final Optional<String> receiptTokenOpt = extractToken(path);
-        final Optional<Subscription> subscription = receiptTokenOpt.flatMap(webpushServer::subscriptionByReceiptToken);
-        subscription.ifPresent(sub -> {
+        final Optional<String> receiptToken = extractToken(path);
+        receiptToken.flatMap(webpushServer::subscriptionByReceiptToken).ifPresent(sub -> {
             final Client client = new Client(ctx, streamId, encoder);
-            acksStreams.put(receiptTokenOpt.get(), client);
-            ctx.attr(RECEIPT_SUBSCRIPTION_ID).set(receiptTokenOpt.get());
+            acksStreams.put(receiptToken.get(), client);
+            ctx.attr(RECEIPT_SUBSCRIPTION_ID).set(receiptToken.get());
             LOGGER.info("Registered application for acks={}", client);
         });
     }
@@ -413,14 +405,13 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private void handleReceiptSubscriptionRemoval(final ChannelHandlerContext ctx,
                                                   final int streamId,
                                                   final String path) {
-        final Optional<String> receiptTokenOpt = extractToken(path);
-        final Client client = acksStreams.remove(receiptTokenOpt.get());
+        final Client client = extractToken(path).map(acksStreams::remove).orElse(null);
         if (client != null) {
             ctx.attr(RECEIPT_SUBSCRIPTION_ID).remove();
             LOGGER.info("Removed application server registration for acks={}", client);
         }
-        encoder.writeHeaders(ctx, streamId, client != null ? noContentHeaders() : notFoundHeaders(), 0, true,
-                ctx.newPromise());
+        final Http2Headers headers = client != null ? noContentHeaders() : notFoundHeaders();
+        encoder.writeHeaders(ctx, streamId, headers, 0, true, ctx.newPromise());
     }
 
     private static Http2Headers resourceHeaders(final Resource resource,

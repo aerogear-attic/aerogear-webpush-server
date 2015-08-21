@@ -46,7 +46,7 @@
     <aerogear.crypto.version>0.1.2</aerogear.crypto.version>
     <bouncycastle.version>140</bouncycastle.version>
     <version.exec-maven-plugin>1.2</version.exec-maven-plugin>
-    <netty.version>4.1.0.Beta5</netty.version>
+    <netty.version>4.1.0.Beta6-SNAPSHOT</netty.version>
     <jackson.version>2.3.0</jackson.version>
     <junit.version>4.11</junit.version>
     <easytesting.version>1.4</easytesting.version>
@@ -57,6 +57,19 @@
     <jetty.npn.version>7.6.2.v20120308</jetty.npn.version>
     <additionalparam>-Xdoclint:none</additionalparam>
   </properties>
+
+  <repositories>
+    <repository>
+      <id>netty-snapshots</id>
+      <url>http://clinker.netty.io/nexus/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
   <modules>
     <module>common</module>

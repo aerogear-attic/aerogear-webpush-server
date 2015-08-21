@@ -26,23 +26,21 @@ import io.netty.handler.codec.http.HttpHeaderUtil;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.util.CharsetUtil;
-import org.jboss.aerogear.webpush.WebPushServer;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.*;
-import static io.netty.handler.codec.http.HttpResponseStatus.*;
-import static io.netty.handler.codec.http.HttpVersion.*;
+import static io.netty.buffer.Unpooled.copiedBuffer;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONNECTION;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
+import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * HTTP handler that responds with a "Hello World"
  */
 public class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpRequest> {
 
-    static final byte[] RESPONSE_BYTES = "WebPush HTTP 1.1".getBytes(CharsetUtil.UTF_8);
-    private final WebPushServer webPushServer;
-
-    public WebPushHttp11Handler(final WebPushServer webPushServer) {
-        this.webPushServer = webPushServer;
-    }
+    static final ByteBuf RESPONSE_BYTES = copiedBuffer("WebPush HTTP/1.1", CharsetUtil.UTF_8);
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
@@ -50,7 +48,7 @@ public class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpReques
             ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
         }
         final ByteBuf content = ctx.alloc().buffer();
-        content.writeBytes(RESPONSE_BYTES);
+        content.writeBytes(RESPONSE_BYTES.retain());
 
         final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, content);
         response.headers().set(CONTENT_TYPE, "text/plain; charset=UTF-8");

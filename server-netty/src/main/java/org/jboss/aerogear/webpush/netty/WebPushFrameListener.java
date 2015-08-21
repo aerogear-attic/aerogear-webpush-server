@@ -256,7 +256,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private Http2Headers registrationHeaders(final Registration registration) {
-        return new DefaultHttp2Headers(false)
+        return new DefaultHttp2Headers()
                 .status(CREATED.codeAsText())
                 .set(LOCATION, new AsciiString(registration.uri().toString()))
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
@@ -268,14 +268,13 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private Http2Headers acceptedHeaders() {
-        return new DefaultHttp2Headers(false)
-                .status(OK.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
+        return new DefaultHttp2Headers()
+                .status(OK.codeAsText()).set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(CACHE_CONTROL, privateCacheWithMaxAge(webpushServer.config().messageMaxAge()));
     }
 
     private static Http2Headers messageToLarge() {
-        return new DefaultHttp2Headers(false)
+        return new DefaultHttp2Headers()
                 .status(REQUEST_ENTITY_TOO_LARGE.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
     }
@@ -295,7 +294,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private Http2Headers createdHeaders(final Subscription subscription) {
-        return new DefaultHttp2Headers(false)
+        return new DefaultHttp2Headers()
                 .status(CREATED.codeAsText())
                 .set(LOCATION, new AsciiString("/webpush/" + subscription.endpoint()))
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
@@ -347,7 +346,8 @@ public class WebPushFrameListener extends Http2FrameAdapter {
             final Client client = new Client(ctx, pushStreamId, encoder);
             monitoredStreams.put(reg.id(), Optional.of(client));
             encoder.writePushPromise(ctx, streamId, pushStreamId, monitorHeaders(reg), 0, ctx.newPromise());
-            LOGGER.info("Monitor ctx={}, registrationId={}, pushPromiseStreamId={}, headers={}", ctx, reg.id(), pushStreamId, monitorHeaders(reg));
+            LOGGER.info("Monitor ctx={}, registrationId={}, pushPromiseStreamId={}, headers={}", ctx, reg.id(),
+                    pushStreamId, monitorHeaders(reg));
             final Optional<ByteString> wait = Optional.ofNullable(headers.get(PREFER))
                                                       .filter(val -> "wait=0".equals(val.toString()));
             wait.ifPresent(s ->
@@ -384,19 +384,19 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private static Http2Headers noContentHeaders() {
-        return new DefaultHttp2Headers(false)
+        return new DefaultHttp2Headers()
                 .status(NO_CONTENT.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
     }
 
     private static Http2Headers notFoundHeaders() {
-        return new DefaultHttp2Headers(false)
+        return new DefaultHttp2Headers()
                 .status(NOT_FOUND.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
     }
 
     private Http2Headers monitorHeaders(final Registration registration) {
-        return new DefaultHttp2Headers(false)
+        return new DefaultHttp2Headers()
                 .status(OK.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(ACCESS_CONTROL_EXPOSE_HEADERS, new AsciiString("Link, Cache-Control"))
@@ -406,7 +406,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private static Http2Headers okHeaders() {
-        return new DefaultHttp2Headers(false)
+        return new DefaultHttp2Headers()
                 .status(OK.codeAsText())
                 .set(ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN)
                 .set(ACCESS_CONTROL_EXPOSE_HEADERS, CONTENT_TYPE);

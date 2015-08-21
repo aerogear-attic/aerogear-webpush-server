@@ -22,18 +22,23 @@ import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
 import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2ConnectionHandler;
+import io.netty.handler.codec.http2.Http2FrameLogger;
 import io.netty.handler.codec.http2.Http2FrameReader;
 import io.netty.handler.codec.http2.Http2FrameWriter;
+import io.netty.handler.codec.http2.Http2InboundFrameLogger;
+import io.netty.handler.codec.http2.Http2OutboundFrameLogger;
+import io.netty.handler.logging.LogLevel;
 import org.jboss.aerogear.webpush.WebPushServer;
 
 public class WebPushHttp2Handler extends Http2ConnectionHandler {
 
+    private static final Http2FrameLogger LOGGER = new Http2FrameLogger(LogLevel.TRACE, WebPushHttp2Handler.class);
     private final WebPushFrameListener listener;
 
     public WebPushHttp2Handler(final WebPushServer webpushServer) {
         this(new DefaultHttp2Connection(true),
-                new DefaultHttp2FrameReader(),
-                new DefaultHttp2FrameWriter(),
+                new Http2InboundFrameLogger(new DefaultHttp2FrameReader(), LOGGER),
+                new Http2OutboundFrameLogger(new DefaultHttp2FrameWriter(), LOGGER),
                 new WebPushFrameListener(webpushServer));
     }
 

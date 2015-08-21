@@ -102,7 +102,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                               final boolean endStream) throws Http2Exception {
         final String path = headers.path().toString();
         final String method = headers.method().toString();
-        LOGGER.info("onHeadersRead. streamId={}, method={}, path={}, endstream={}", streamId, method, path, endStream);
+//        LOGGER.info("onHeadersRead. streamId={}, method={}, path={}, endstream={}", streamId, method, path, endStream);
 
         Http2Stream stream = encoder.connection().stream(streamId);
         stream.setProperty(webpushPathPropertyKey, path);
@@ -135,7 +135,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                           final boolean endOfStream) throws Http2Exception {
         Http2Stream stream = encoder.connection().stream(streamId);
         final String path = stream.getProperty(webpushPathPropertyKey);
-        LOGGER.info("onDataRead. streamId={}, path={}, endstream={}", streamId, path, endOfStream);
+//        LOGGER.info("onDataRead. streamId={}, path={}, endstream={}", streamId, path, endOfStream);
         if (path.contains(Resource.REGISTER.resourceName())) {
             handleDeviceRegister(ctx, streamId);
         } else if (path.contains(Resource.SUBSCRIBE.resourceName())) {

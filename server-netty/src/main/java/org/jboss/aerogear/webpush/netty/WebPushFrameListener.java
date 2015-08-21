@@ -301,23 +301,29 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                                              final String path) {
         extractToken(path).flatMap(webpushServer::subscriptionById).ifPresent(sub -> {
             final Client client = new Client(ctx, streamId, encoder);
-
-            List<PushMessage> newMessages = null;
-            while (!(newMessages = webpushServer.waitingDeliveryMessages(sub.id())).isEmpty()) {
-                for (PushMessage pushMessage : newMessages) {
-                    receivePushMessage(pushMessage, client);
+            monitoredStreams.put(sub.id(), client); //close the storage
+            // all new messages will be sent to the connected client
+            try {
+                List<PushMessage> newMessages = null;
+                while (!(newMessages = webpushServer.waitingDeliveryMessages(sub.id())).isEmpty()) {
+                    for (PushMessage pushMessage : newMessages) {
+                        receivePushMessage(pushMessage, client);
+                    }
                 }
-            }
-            final Optional<ByteString> wait = Optional.ofNullable(headers.get(PREFER_HEADER))
-                                                      .filter(val -> "wait=0".equals(val.toString()));  //FIXME improve
-            wait.ifPresent(s -> {
-                encoder.writeHeaders(ctx, streamId, noContentHeaders(), 0, true, ctx.newPromise());
-                LOGGER.info("204 No Content has sent to client={}", client);
-            });
-            if (!wait.isPresent()) {
-                monitoredStreams.put(sub.id(), client);
-                ctx.attr(SUBSCRIPTION_ID).set(sub.id());
-                LOGGER.info("Registered client={}", client);
+                final Optional<ByteString> wait =
+                        Optional.ofNullable(headers.get(PREFER_HEADER)).filter(val -> "wait=0".equals(val.toString()));
+                if (wait.isPresent()) {
+                    monitoredStreams.remove(sub.id());  //open the storage
+                    encoder.writeHeaders(ctx, streamId, noContentHeaders(), 0, true, ctx.newPromise());
+                    LOGGER.info("204 No Content has sent to client={}", client);
+                } else {
+                    ctx.attr(SUBSCRIPTION_ID).set(sub.id());
+                    LOGGER.info("Registered client={}", client);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error handleReceivingPushMessages", e);
+                monitoredStreams.remove(sub.id());  //open the storage if exception occurred
+                //TODO probably, we also should send something to client
             }
         });
     }
@@ -365,8 +371,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final int pushStreamId = client.encoder.connection().local().nextStreamId();
         client.encoder.writePushPromise(client.ctx, client.streamId, pushStreamId, promiseHeaders, 0,
                 client.ctx.newPromise()).addListener(WebPushFrameListener::logFutureError);
-        client.encoder.writeHeaders(client.ctx, pushStreamId, ackHeaders, 0, true, client.ctx.newPromise())
-                .addListener(WebPushFrameListener::logFutureError);
+        client.encoder.writeHeaders(client.ctx, pushStreamId, ackHeaders, 0, true, client.ctx.newPromise()).addListener(WebPushFrameListener::logFutureError);
         LOGGER.info("Sent ack to client={}, pushPromiseStreamId={}, promiseHeaders={}, ackHeaders={}, pushMessage={}",
                 client, pushStreamId, promiseHeaders, ackHeaders, pushMessage);
     }

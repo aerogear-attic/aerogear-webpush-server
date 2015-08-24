@@ -84,7 +84,7 @@ public class WebPushFrameListenerTest {
         final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(subscribePath(subscriptionId)), SUBSCRIBE);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers responseHeaders = subscribe(frameListener, ctx, encoder);
+            final Http2Headers responseHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
             assertThat(responseHeaders.status(), equalTo(CREATED.codeAsText()));
             assertThat(responseHeaders.get(LOCATION), equalTo(subscriptionLocation(subscriptionId)));
             assertThat(responseHeaders.getAll(LINK_HEADER), hasItems(pushWebLink(pushResourceId), receiptWebLink(receiptToken)));
@@ -107,10 +107,10 @@ public class WebPushFrameListenerTest {
                 .thenReturn(pushPath(pushResourceId)), Resource.PUSH);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers subscribeHeaders = subscribe(frameListener, ctx, encoder);
-            deleteSubscription(frameListener, ctx, subscribeHeaders, encoder);
+            final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
+            UserAgent.deleteSubscription(frameListener, ctx, subscribeHeaders, encoder);
             final ByteBuf payload = copiedBuffer("payload", UTF_8);
-            final Http2Headers headers = sendPush(frameListener, ctx, encoder, subscribeHeaders, payload);
+            final Http2Headers headers = AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, payload);
             /*
             https://tools.ietf.org/html/draft-thomson-webpush-protocol-00#section-7.3:
             "A push service MUST return a 400-series status code, such as 404 (Not
@@ -139,9 +139,9 @@ public class WebPushFrameListenerTest {
                 .thenReturn(pushPath(pushResourceId)), Resource.PUSH);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers subscribeHeaders = subscribe(frameListener, ctx, encoder);
-            receivePushMessages(frameListener, ctx, subscribeHeaders);
-            sendPush(frameListener, ctx, encoder, subscribeHeaders, copiedBuffer("payload", UTF_8));
+            final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
+            UserAgent.receivePushMessages(frameListener, ctx, subscribeHeaders);
+            AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, copiedBuffer("payload", UTF_8));
             verify(encoder).writePushPromise(any(ChannelHandlerContext.class), eq(STREAM_ID), eq(PROMISE_STEAM_ID), any(Http2Headers.class), eq(0), any(ChannelPromise.class));
             final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
             verify(encoder).writeHeaders(any(ChannelHandlerContext.class), eq(PROMISE_STEAM_ID), captor.capture(), eq(0), eq(false), any(ChannelPromise.class));
@@ -167,9 +167,9 @@ public class WebPushFrameListenerTest {
                 .thenReturn(pushPath(pushResourceId)), Resource.PUSH);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers subscribeHeaders = subscribe(frameListener, ctx, encoder);
-            sendPush(frameListener, ctx, encoder, subscribeHeaders, copiedBuffer("payload", UTF_8));
-            receivePushMessagesWithWait(frameListener, ctx, subscribeHeaders, 0);
+            final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
+            AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, copiedBuffer("payload", UTF_8));
+            UserAgent.receivePushMessagesWithWait(frameListener, ctx, subscribeHeaders, 0);
             final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
             verify(encoder, atLeastOnce()).writeHeaders(any(ChannelHandlerContext.class), eq(STREAM_ID), captor.capture(), eq(0), eq(true), any(ChannelPromise.class));
             final Http2Headers headers = captor.getValue();
@@ -195,9 +195,9 @@ public class WebPushFrameListenerTest {
                 .thenReturn(pushPath(pushResourceId)), Resource.PUSH);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers subscribeHeaders = subscribe(frameListener, ctx, encoder);
-            sendPush(frameListener, ctx, encoder, subscribeHeaders, copiedBuffer(pushMessage.payload(), UTF_8));
-            receivePushMessagesWithWait(frameListener, ctx, subscribeHeaders, 0);
+            final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
+            AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, copiedBuffer(pushMessage.payload(), UTF_8));
+            UserAgent.receivePushMessagesWithWait(frameListener, ctx, subscribeHeaders, 0);
             final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
             verify(encoder).writeHeaders(any(ChannelHandlerContext.class), eq(PROMISE_STEAM_ID), captor.capture(), eq(0), eq(false), any(ChannelPromise.class));
             final Http2Headers headers = captor.getValue();
@@ -227,8 +227,8 @@ public class WebPushFrameListenerTest {
                 .thenReturn(pushPath(pushResourceId)), Resource.PUSH);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers subscribeHeaders = subscribe(frameListener, ctx, encoder);
-            final Http2Headers headers = sendPush(frameListener, ctx, encoder, subscribeHeaders, copiedBuffer("Test", UTF_8));
+            final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
+            final Http2Headers headers = AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, copiedBuffer("Test", UTF_8));
             assertThat(headers.status(), equalTo(CREATED.codeAsText()));
             assertThat(headers.get(LOCATION), equalTo(asciiString(messagePath(pushMessageToken))));
         } finally {
@@ -254,8 +254,8 @@ public class WebPushFrameListenerTest {
                 .thenReturn(pushPath(pushResourceId)), Resource.PUSH);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers subscribeHeaders = subscribe(frameListener, ctx, encoder);
-            final Http2Headers headers = sendPush(frameListener, ctx, encoder, subscribeHeaders, data);
+            final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
+            final Http2Headers headers = AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, data);
             assertThat(headers.status(), equalTo(REQUEST_ENTITY_TOO_LARGE.codeAsText()));
         } finally {
             frameListener.shutdown();
@@ -279,9 +279,9 @@ public class WebPushFrameListenerTest {
         final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(recieptsPath(receiptToken)), Resource.RECEIPT);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers subscribeHeaders = subscribe(frameListener, ctx, encoder);
+            final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
             final ByteString receiptsUri = getLinkUri(asciiString(WebLink.RECEIPTS), subscribeHeaders.getAll(LINK_HEADER));
-            final Http2Headers headers = receiptsSubcsribe(receiptsUri, frameListener, ctx, encoder);
+            final Http2Headers headers = AppServer.receiptsSubcsribe(receiptsUri, frameListener, ctx, encoder);
             assertThat(headers.status(), equalTo(CREATED.codeAsText()));
             assertThat(headers.get(LOCATION), equalTo(asciiString(recieptsPath(receiptToken))));
         } finally {
@@ -312,29 +312,22 @@ public class WebPushFrameListenerTest {
                 Resource.PUSH);
         frameListener.encoder(encoder);
         try {
-            final Http2Headers subscribeHeaders = subscribe(frameListener, ctx, encoder);
+            final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
 
             final ByteString receiptsUri = getLinkUri(asciiString(WebLink.RECEIPTS), subscribeHeaders.getAll(LINK_HEADER));
-            final Http2Headers receiptsHeaders = receiptsSubcsribe(receiptsUri, frameListener, ctx, encoder);
+            final Http2Headers receiptsHeaders = AppServer.receiptsSubcsribe(receiptsUri, frameListener, ctx, encoder);
             receiveReceipts(frameListener, ctx, receiptsHeaders.get(LOCATION));
 
-            final Http2Headers sendHeaders = sendPush(frameListener, ctx, encoder, subscribeHeaders, payload);
+            final Http2Headers sendHeaders = AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, payload);
             final ByteString pushMessageUri = sendHeaders.get(LOCATION);
             assertThat(sendHeaders.status(), equalTo(CREATED.codeAsText()));
             assertThat(pushMessageUri, equalTo(asciiString(messagePath(receiptToken))));
 
-            final Http2Headers ackHeaders = acknowledgePushMessage(frameListener, ctx, encoder, pushMessageUri);
+            final Http2Headers ackHeaders = UserAgent.acknowledgePushMessage(frameListener, ctx, encoder, pushMessageUri);
             assertThat(ackHeaders.status(), equalTo(GONE.codeAsText()));
         } finally {
             frameListener.shutdown();
         }
-    }
-
-    private static Http2Headers subscribe(final WebPushFrameListener frameListener,
-                                          final ChannelHandlerContext ctx,
-                                          final Http2ConnectionEncoder encoder) throws Http2Exception {
-        frameListener.onHeadersRead(ctx, STREAM_ID, subscribeHeaders(), 0, (short) 22, false, 0, true);
-        return verifyAndCapture(ctx, encoder, true);
     }
 
     private static ByteString getLinkUri(final AsciiString linkType, final List<ByteString> links) {
@@ -347,68 +340,10 @@ public class WebPushFrameListenerTest {
         throw new IllegalStateException("No link header of type " + linkType + " was found in " + links);
     }
 
-    private static void receivePushMessages(final WebPushFrameListener frameListener,
-                                            final ChannelHandlerContext ctx,
-                                            final Http2Headers subscribeHeaders) throws Http2Exception {
-        final ByteString location = subscribeHeaders.get(LOCATION);
-        frameListener.onHeadersRead(ctx, STREAM_ID, receivePushMessageHeaders(location), 0, (short) 22, false, 0, true);
-    }
-
     private static void receiveReceipts(final WebPushFrameListener frameListener,
                                             final ChannelHandlerContext ctx,
                                             final ByteString receiptUri) throws Http2Exception {
         frameListener.onHeadersRead(ctx, STREAM_ID, receiveReceiptsHeaders(receiptUri), 0, (short) 22, false, 0, true);
-    }
-
-    private static Http2Headers receiptsSubcsribe(final ByteString receiptsUri,
-                                          final WebPushFrameListener frameListener,
-                                          final ChannelHandlerContext ctx,
-                                          final Http2ConnectionEncoder encoder) throws Http2Exception {
-        frameListener.onHeadersRead(ctx, STREAM_ID, receiptsSubscribeHeaders(receiptsUri), 0, (short) 22, false, 0, true);
-        final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
-        verify(encoder, atLeastOnce()).writeHeaders(any(ChannelHandlerContext.class), eq(STREAM_ID), captor.capture(), eq(0), eq(true), any(ChannelPromise.class));
-        return captor.getValue();
-    }
-
-    private static void receivePushMessagesWithWait(final WebPushFrameListener frameListener,
-                                final ChannelHandlerContext ctx,
-                                final Http2Headers subscribeHeaders,
-                                final int wait) throws Http2Exception {
-        final Http2Headers http2Headers = receivePushMessageHeaders(subscribeHeaders.get(LOCATION));
-        http2Headers.add(new AsciiString("prefer"), new AsciiString("wait=" + wait));
-        frameListener.onHeadersRead(ctx, STREAM_ID, http2Headers, 0, (short) 22, false, 0, true);
-    }
-
-    private static Http2Headers sendPush(final WebPushFrameListener frameListener,
-                                         final ChannelHandlerContext ctx,
-                                         final Http2ConnectionEncoder encoder,
-                                         final Http2Headers subHeaders,
-                                         final ByteBuf data) throws Http2Exception {
-        final ByteString push = getLinkUri(asciiString(PUSH), subHeaders.getAll(LINK_HEADER));
-        final Optional<ByteString> receipts = Optional.ofNullable(getLinkUri(asciiString(WebLink.RECEIPTS), subHeaders.getAll(LINK_HEADER)));
-        frameListener.onHeadersRead(ctx, STREAM_ID, sendHeaders(push, receipts), 0, (short) 22, false, 0, false);
-        frameListener.onDataRead(ctx, STREAM_ID, data, 0, true);
-        return verifyAndCapture(ctx, encoder, true);
-    }
-
-    private static Http2Headers acknowledgePushMessage(final WebPushFrameListener frameListener,
-                                         final ChannelHandlerContext ctx,
-                                         final Http2ConnectionEncoder encoder,
-                                         final ByteString location) throws Http2Exception {
-        frameListener.onHeadersRead(ctx, STREAM_ID, ackDeleteHeaders(location), 0, (short) 22, false, 0, false);
-        final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
-        verify(encoder, atLeastOnce()).writeHeaders(eq(ctx), eq(PROMISE_STEAM_ID), captor.capture(), eq(0), eq(true),
-                any(ChannelPromise.class));
-        return captor.getValue();
-    }
-
-    private static Http2Headers deleteSubscription(final WebPushFrameListener frameListener,
-                                                   final ChannelHandlerContext ctx,
-                                                   final Http2Headers subHeaders,
-                                                   final Http2ConnectionEncoder encoder) throws Http2Exception {
-        final ByteString location = subHeaders.get(LOCATION);
-        frameListener.onHeadersRead(ctx, STREAM_ID, subDeleteHeaders(location), 0, (short) 22, false, 0, false);
-        return verifyAndCapture(ctx, encoder, true);
     }
 
     private static Http2Headers verifyAndCapture(final ChannelHandlerContext ctx,
@@ -595,6 +530,78 @@ public class WebPushFrameListenerTest {
 
     private static AsciiString receiptWebLink(final String receiptToken) {
         return asLink(webpushUri(Resource.RECEIPTS, receiptToken), WebLink.RECEIPTS);
+    }
+
+    private static class UserAgent {
+
+        private static Http2Headers subscribe(final WebPushFrameListener frameListener,
+                                              final ChannelHandlerContext ctx,
+                                              final Http2ConnectionEncoder encoder) throws Http2Exception {
+            frameListener.onHeadersRead(ctx, STREAM_ID, subscribeHeaders(), 0, (short) 22, false, 0, true);
+            return verifyAndCapture(ctx, encoder, true);
+        }
+
+        private static Http2Headers deleteSubscription(final WebPushFrameListener frameListener,
+                                                       final ChannelHandlerContext ctx,
+                                                       final Http2Headers subHeaders,
+                                                       final Http2ConnectionEncoder encoder) throws Http2Exception {
+            final ByteString location = subHeaders.get(LOCATION);
+            frameListener.onHeadersRead(ctx, STREAM_ID, subDeleteHeaders(location), 0, (short) 22, false, 0, false);
+            return verifyAndCapture(ctx, encoder, true);
+        }
+
+        private static void receivePushMessages(final WebPushFrameListener frameListener,
+                                                final ChannelHandlerContext ctx,
+                                                final Http2Headers subscribeHeaders) throws Http2Exception {
+            final ByteString location = subscribeHeaders.get(LOCATION);
+            frameListener.onHeadersRead(ctx, STREAM_ID, receivePushMessageHeaders(location), 0, (short) 22, false, 0, true);
+        }
+
+        private static void receivePushMessagesWithWait(final WebPushFrameListener frameListener,
+                                                        final ChannelHandlerContext ctx,
+                                                        final Http2Headers subscribeHeaders,
+                                                        final int wait) throws Http2Exception {
+            final Http2Headers http2Headers = receivePushMessageHeaders(subscribeHeaders.get(LOCATION));
+            http2Headers.add(new AsciiString("prefer"), new AsciiString("wait=" + wait));
+            frameListener.onHeadersRead(ctx, STREAM_ID, http2Headers, 0, (short) 22, false, 0, true);
+        }
+
+        private static Http2Headers acknowledgePushMessage(final WebPushFrameListener frameListener,
+                                                           final ChannelHandlerContext ctx,
+                                                           final Http2ConnectionEncoder encoder,
+                                                           final ByteString location) throws Http2Exception {
+            frameListener.onHeadersRead(ctx, STREAM_ID, ackDeleteHeaders(location), 0, (short) 22, false, 0, false);
+            final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
+            verify(encoder, atLeastOnce()).writeHeaders(eq(ctx), eq(PROMISE_STEAM_ID), captor.capture(), eq(0), eq(true),
+                    any(ChannelPromise.class));
+            return captor.getValue();
+        }
+
+    }
+
+    private static class AppServer {
+        private static Http2Headers sendPush(final WebPushFrameListener frameListener,
+                                             final ChannelHandlerContext ctx,
+                                             final Http2ConnectionEncoder encoder,
+                                             final Http2Headers subHeaders,
+                                             final ByteBuf data) throws Http2Exception {
+            final ByteString push = getLinkUri(asciiString(PUSH), subHeaders.getAll(LINK_HEADER));
+            final Optional<ByteString> receipts = Optional.ofNullable(getLinkUri(asciiString(WebLink.RECEIPTS), subHeaders.getAll(LINK_HEADER)));
+            frameListener.onHeadersRead(ctx, STREAM_ID, sendHeaders(push, receipts), 0, (short) 22, false, 0, false);
+            frameListener.onDataRead(ctx, STREAM_ID, data, 0, true);
+            return verifyAndCapture(ctx, encoder, true);
+        }
+
+        private static Http2Headers receiptsSubcsribe(final ByteString receiptsUri,
+                                                      final WebPushFrameListener frameListener,
+                                                      final ChannelHandlerContext ctx,
+                                                      final Http2ConnectionEncoder encoder) throws Http2Exception {
+            frameListener.onHeadersRead(ctx, STREAM_ID, receiptsSubscribeHeaders(receiptsUri), 0, (short) 22, false, 0, true);
+            final ArgumentCaptor<Http2Headers> captor = ArgumentCaptor.forClass(Http2Headers.class);
+            verify(encoder, atLeastOnce()).writeHeaders(any(ChannelHandlerContext.class), eq(STREAM_ID), captor.capture(), eq(0), eq(true), any(ChannelPromise.class));
+            return captor.getValue();
+        }
+
     }
 
 }

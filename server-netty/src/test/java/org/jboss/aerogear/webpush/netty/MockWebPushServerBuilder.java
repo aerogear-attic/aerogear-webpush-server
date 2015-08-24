@@ -60,6 +60,12 @@ public class MockWebPushServerBuilder {
         return this;
     }
 
+    public MockWebPushServerBuilder receiptToken(final String token, final PushMessage pushMessage) {
+        receiptToken(token);
+        when(webPushServer.sentMessage(token)).thenReturn(Optional.of(pushMessage));
+        return this;
+    }
+
     public MockWebPushServerBuilder pushResourceToken(final String token) {
         when(webPushServer.generateEndpointToken(eq(token), eq(subscription.id()))).thenReturn(token);
         when(webPushServer.subscriptionByPushToken(token)).thenReturn(Optional.of(subscription));

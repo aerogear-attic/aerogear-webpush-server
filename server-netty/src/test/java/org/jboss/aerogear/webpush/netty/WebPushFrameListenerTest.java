@@ -48,7 +48,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.jboss.aerogear.webpush.Resource.SUBSCRIBE;
-import static org.jboss.aerogear.webpush.WebLink.PUSH;
 import static org.jboss.aerogear.webpush.util.HttpHeaders.LINK_HEADER;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -274,7 +273,7 @@ public class WebPushFrameListenerTest {
         frameListener.encoder(encoder);
         try {
             final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
-            final ByteString receiptsUri = getLinkUri(asciiString(WebLink.RECEIPTS), subscribeHeaders.getAll(LINK_HEADER));
+            final ByteString receiptsUri = getLinkUri(WebLink.RECEIPTS, subscribeHeaders.getAll(LINK_HEADER));
             final Http2Headers headers = AppServer.receiptsSubcsribe(receiptsUri, frameListener, ctx, encoder);
             assertThat(headers.status(), equalTo(CREATED.codeAsText()));
             assertThat(headers.get(LOCATION), equalTo(asciiString(recieptsPath(receiptToken))));
@@ -307,7 +306,7 @@ public class WebPushFrameListenerTest {
         frameListener.encoder(encoder);
         try {
             final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
-            final ByteString receiptsUri = getLinkUri(asciiString(WebLink.RECEIPTS), subscribeHeaders.getAll(LINK_HEADER));
+            final ByteString receiptsUri = getLinkUri(WebLink.RECEIPTS, subscribeHeaders.getAll(LINK_HEADER));
             final Http2Headers receiptsHeaders = AppServer.receiptsSubcsribe(receiptsUri, frameListener, ctx, encoder);
             AppServer.receiveReceipts(frameListener, ctx, receiptsHeaders.get(LOCATION));
             final Http2Headers sendHeaders = AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, payload);
@@ -321,7 +320,7 @@ public class WebPushFrameListenerTest {
         }
     }
 
-    private static ByteString getLinkUri(final AsciiString linkType, final List<ByteString> links) {
+    private static ByteString getLinkUri(final WebLink linkType, final List<ByteString> links) {
         for (ByteString link : links) {
             AsciiString asciiLink = new AsciiString(link, false);
             if (asciiLink.toString().contains(linkType.toString())) {
@@ -343,10 +342,6 @@ public class WebPushFrameListenerTest {
 
     private static AsciiString asciiString(final String str) {
         return new AsciiString(str);
-    }
-
-    private static AsciiString asciiString(final WebLink type) {
-        return new AsciiString(type.toString());
     }
 
     private static Http2Headers subscribeHeaders() {
@@ -384,7 +379,6 @@ public class WebPushFrameListenerTest {
         headers.path(path);
         headers.method(AsciiString.of(method.name()));
         return headers;
-
     }
 
     private static Http2ConnectionEncoder mockEncoder(final Consumer<OngoingStubbing<String>> consumer,
@@ -572,8 +566,8 @@ public class WebPushFrameListenerTest {
                                              final Http2ConnectionEncoder encoder,
                                              final Http2Headers subHeaders,
                                              final ByteBuf data) throws Http2Exception {
-            final ByteString push = getLinkUri(asciiString(PUSH), subHeaders.getAll(LINK_HEADER));
-            final Optional<ByteString> receipts = Optional.ofNullable(getLinkUri(asciiString(WebLink.RECEIPTS), subHeaders.getAll(LINK_HEADER)));
+            final ByteString push = getLinkUri(WebLink.PUSH, subHeaders.getAll(LINK_HEADER));
+            final Optional<ByteString> receipts = Optional.ofNullable(getLinkUri(WebLink.RECEIPTS, subHeaders.getAll(LINK_HEADER)));
             frameListener.onHeadersRead(ctx, STREAM_ID, sendHeaders(push, receipts), 0, (short) 22, false, 0, false);
             frameListener.onDataRead(ctx, STREAM_ID, data, 0, true);
             return verifyAndCapture(ctx, encoder, true);

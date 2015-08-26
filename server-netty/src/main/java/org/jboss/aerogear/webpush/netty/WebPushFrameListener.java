@@ -363,7 +363,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                 receivePushMessageReceipts(pushMessage, client);
             }
         });
-        //FIXME should I send a response to a UA?
+        encoder.writeHeaders(ctx, streamId, noContentHeaders(), 0, true, ctx.newPromise());
     }
 
     private void receivePushMessageReceipts(final PushMessage pushMessage, final Client client) {
@@ -397,9 +397,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         final String subId = extractEndpointToken(path);
         final List<PushMessage> sentMessages = webpushServer.removeSubscription(subId);
         removeClient(Optional.ofNullable(subId), monitoredStreams);
-        sentMessages.forEach(sm -> {
-            removeClient(sm.receiptSubscription(), acksStreams);
-        });
+        sentMessages.forEach(sm -> removeClient(sm.receiptSubscription(), acksStreams));
         LOGGER.info("Subscription {} removed", subId);
         encoder.writeHeaders(ctx, streamId, noContentHeaders(), 0, true, ctx.newPromise());
     }

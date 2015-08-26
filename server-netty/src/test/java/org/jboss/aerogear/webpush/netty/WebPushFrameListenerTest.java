@@ -24,7 +24,6 @@ import org.jboss.aerogear.webpush.Resource;
 import org.jboss.aerogear.webpush.Subscription;
 import org.jboss.aerogear.webpush.WebLink;
 import org.jboss.aerogear.webpush.util.HttpHeaders;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.OngoingStubbing;
@@ -38,12 +37,12 @@ import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
 import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
+import static io.netty.handler.codec.http.HttpResponseStatus.GONE;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.util.CharsetUtil.UTF_8;
-import static io.netty.handler.codec.http.HttpResponseStatus.GONE;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -93,32 +92,26 @@ public class WebPushFrameListenerTest {
         }
     }
 
-    @Test @Ignore("need to sort out the return status code.")
+    @Test
     public void deleteSubscription() throws Exception {
         final String subscriptionId = "subscriptionId";
         final String pushResourceId = "pushResourceId";
         final ChannelHandlerContext ctx = mockChannelHandlerContext(subscriptionId);
         final WebPushFrameListener frameListener = new WebPushFrameListener(MockWebPushServerBuilder
                 .withSubscription(new DefaultSubscription(subscriptionId, pushResourceId))
-                .pushResourceToken(pushResourceId)
+                .nonexistentPushResourceToken(pushResourceId)
                 .build());
         final Http2ConnectionEncoder encoder = mockEncoder(w -> w.thenReturn(pushPath(pushResourceId))
                 .thenReturn(pushPath(pushResourceId)), Resource.PUSH);
         frameListener.encoder(encoder);
         try {
             final Http2Headers subscribeHeaders = UserAgent.subscribe(frameListener, ctx, encoder);
-            UserAgent.deleteSubscription(frameListener, ctx, subscribeHeaders, encoder);
+            final Http2Headers deleteSubscriptionHeaders = UserAgent.deleteSubscription(frameListener, ctx,
+                    subscribeHeaders, encoder);
+            assertThat(deleteSubscriptionHeaders.status(), equalTo(NO_CONTENT.codeAsText()));
             final ByteBuf payload = copiedBuffer("payload", UTF_8);
             final Http2Headers headers = AppServer.sendPush(frameListener, ctx, encoder, subscribeHeaders, payload);
-            /*
-            https://tools.ietf.org/html/draft-thomson-webpush-protocol-00#section-7.3:
-            "A push service MUST return a 400-series status code, such as 404 (Not
-             Found) or 410 (Gone) if an application server attempts to send a push
-             message to a removed or expired push message subscription."
-            */
             assertThat(headers.status(), equalTo(NOT_FOUND.codeAsText()));
-            // or
-            assertThat(headers.status(), equalTo(GONE.codeAsText()));
         } finally {
             frameListener.shutdown();
         }

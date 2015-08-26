@@ -72,6 +72,11 @@ public class MockWebPushServerBuilder {
         return this;
     }
 
+    public MockWebPushServerBuilder nonexistentPushResourceToken(final String token) {
+        when(webPushServer.subscriptionByPushToken(token)).thenReturn(Optional.empty());
+        return this;
+    }
+
     public MockWebPushServerBuilder pushMessageToken(final String token) {
         when(webPushServer.generateEndpointToken(anyString(), eq(subscription.id()))).thenReturn(token);
         return this;

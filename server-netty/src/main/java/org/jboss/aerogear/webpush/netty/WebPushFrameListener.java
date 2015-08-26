@@ -396,9 +396,9 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                                                       final String path) {
         final String subId = extractEndpointToken(path);
         final List<PushMessage> sentMessages = webpushServer.removeSubscription(subId);
-        removeClient(Optional.ofNullable(subId), monitoredStreams); //FIXME sent last response
+        removeClient(Optional.ofNullable(subId), monitoredStreams);
         sentMessages.forEach(sm -> {
-            removeClient(sm.receiptSubscription(), acksStreams);    //FIXME sent last response
+            removeClient(sm.receiptSubscription(), acksStreams);
         });
         LOGGER.info("Subscription {} removed", subId);
         //FIXME sent last response
@@ -519,6 +519,9 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         idOpt.ifPresent(id -> {
             final Client client = map.remove(id);
             if (client != null) {
+                client.encoder.writeHeaders(client.ctx, client.streamId, goneHeaders(), 0, true,
+                        client.ctx.newPromise());
+                client.ctx.flush();
                 LOGGER.info("Removed client={}", client);
             }
         });

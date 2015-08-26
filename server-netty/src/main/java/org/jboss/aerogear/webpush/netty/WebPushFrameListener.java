@@ -412,8 +412,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
             ctx.attr(RECEIPT_SUBSCRIPTION_ID).remove();
             LOGGER.info("Removed application server registration for acks={}", client);
         }
-        final Http2Headers headers = client != null ? noContentHeaders() : notFoundHeaders();
-        encoder.writeHeaders(ctx, streamId, headers, 0, true, ctx.newPromise());
+        encoder.writeHeaders(ctx, streamId, noContentHeaders(), 0, true, ctx.newPromise());
     }
 
     private static Http2Headers resourceHeaders(final Resource resource,

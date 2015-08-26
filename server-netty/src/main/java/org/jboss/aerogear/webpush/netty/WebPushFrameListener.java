@@ -401,7 +401,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
             removeClient(sm.receiptSubscription(), acksStreams);
         });
         LOGGER.info("Subscription {} removed", subId);
-        //FIXME sent last response
+        encoder.writeHeaders(ctx, streamId, noContentHeaders(), 0, true, ctx.newPromise());
     }
 
     private void handleReceiptSubscriptionRemoval(final ChannelHandlerContext ctx,

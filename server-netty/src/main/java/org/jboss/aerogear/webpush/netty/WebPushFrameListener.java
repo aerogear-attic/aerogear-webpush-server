@@ -368,7 +368,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
 
     private void receivePushMessageReceipts(final PushMessage pushMessage, final Client client) {
         final Http2Headers promiseHeaders = promiseHeaders(pushMessage);
-        final Http2Headers ackHeaders = ackHeaders();
+        final Http2Headers ackHeaders = goneHeaders();
         final int pushStreamId = client.encoder.connection().local().nextStreamId();
         client.encoder.writePushPromise(client.ctx, client.streamId, pushStreamId, promiseHeaders, 0,
                 client.ctx.newPromise()).addListener(WebPushFrameListener::logFutureError);
@@ -377,12 +377,6 @@ public class WebPushFrameListener extends Http2FrameAdapter {
         client.ctx.flush();
         LOGGER.info("Sent ack to client={}, pushPromiseStreamId={}, promiseHeaders={}, ackHeaders={}, pushMessage={}",
                 client, pushStreamId, promiseHeaders, ackHeaders, pushMessage);
-    }
-
-    private static Http2Headers ackHeaders() {
-        return new DefaultHttp2Headers(false)
-                .status(GONE.codeAsText())
-                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY);  //FIXME add date
     }
 
     private void handleReceivingPushMessageReceipts(final ChannelHandlerContext ctx,
@@ -467,6 +461,12 @@ public class WebPushFrameListener extends Http2FrameAdapter {
             resourceName = path.substring(WEBPUSH_URI.length());
         }
         return Resource.byResourceName(resourceName);
+    }
+
+    private static Http2Headers goneHeaders() {
+        return new DefaultHttp2Headers(false)
+                .status(GONE.codeAsText())
+                .set(ACCESS_CONTROL_ALLOW_ORIGIN, ALLOW_ORIGIN_ANY);  //FIXME add date
     }
 
     private static Http2Headers noContentHeaders() {

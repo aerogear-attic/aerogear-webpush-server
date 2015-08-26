@@ -405,11 +405,8 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private void handleReceiptSubscriptionRemoval(final ChannelHandlerContext ctx,
                                                   final int streamId,
                                                   final String path) {
-        final Client client = extractToken(path).map(acksStreams::remove).orElse(null);
-        if (client != null) {
-            ctx.attr(RECEIPT_SUBSCRIPTION_ID).remove();
-            LOGGER.info("Removed application server registration for acks={}", client);
-        }
+        final Optional<String> recSubId = extractToken(path);
+        removeClient(recSubId, acksStreams);
         encoder.writeHeaders(ctx, streamId, noContentHeaders(), 0, true, ctx.newPromise());
     }
 

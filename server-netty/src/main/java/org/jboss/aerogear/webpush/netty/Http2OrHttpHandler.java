@@ -16,58 +16,36 @@
  */
 package org.jboss.aerogear.webpush.netty;
 
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http2.Http2ConnectionHandler;
-import io.netty.handler.codec.http2.Http2OrHttpChooser;
+import io.netty.handler.ssl.ApplicationProtocolNames;
+import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import org.jboss.aerogear.webpush.WebPushServer;
 
-import javax.net.ssl.SSLEngine;
 
 /**
  * Negotiates with the browser if HTTP2 or HTTP is going to be used. Once decided, the Netty
  * pipeline is setup with the correct handlers for the selected protocol.
  */
-public class Http2OrHttpHandler extends Http2OrHttpChooser {
+public class Http2OrHttpHandler extends ApplicationProtocolNegotiationHandler {
 
-    private static final int MAX_CONTENT_LENGTH = 1024 * 100;
     private final WebPushServer webPushServer;
 
     public Http2OrHttpHandler(final WebPushServer webPushServer) {
-        this(MAX_CONTENT_LENGTH, webPushServer);
-    }
-
-    public Http2OrHttpHandler(int maxHttpContentLength, final WebPushServer webPushServer) {
-        super(maxHttpContentLength);
+        super(ApplicationProtocolNames.HTTP_1_1);
         this.webPushServer = webPushServer;
     }
 
     @Override
-    protected SelectedProtocol getProtocol(final SSLEngine engine) {
-        final String[] protocols = engine.getSession().getProtocol().split(":");
-        if (protocols.length > 1) {
-            SelectedProtocol selectedProtocol = SelectedProtocol.protocol(protocols[1]);
-            System.err.println("Selected Protocol is " + selectedProtocol);
-            return selectedProtocol;
+    protected void configurePipeline(final ChannelHandlerContext ctx, final String protocol) throws Exception {
+        if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
+            ctx.pipeline().addLast(new WebPushHttp2Handler(webPushServer));
+            return;
         }
-        return SelectedProtocol.UNKNOWN;
-    }
-
-    @Override
-    protected ChannelHandler createHttp1RequestHandler() {
-        return new WebPushHttp11Handler(webPushServer);
-    }
-
-    @Override
-    protected Http2ConnectionHandler createHttp2RequestHandler() {
-        return new WebPushHttp2Handler(webPushServer);
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        if (!"javax.net.ssl.SSLException: Received fatal alert: unknown_ca".equals(cause.getMessage())) {
-            ctx.fireExceptionCaught(cause);
+        if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
+            ctx.pipeline().addLast(new WebPushHttp11Handler(webPushServer));
+            return;
         }
+        throw new IllegalStateException("unknown protocol: " + protocol);
     }
 
 }

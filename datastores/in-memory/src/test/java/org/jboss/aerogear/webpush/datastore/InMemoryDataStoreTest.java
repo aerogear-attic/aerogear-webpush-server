@@ -16,12 +16,13 @@
  */
 package org.jboss.aerogear.webpush.datastore;
 
-import org.jboss.aerogear.webpush.Registration;
+import org.jboss.aerogear.webpush.Subscription;
 import org.junit.Test;
 
-import java.net.URI;
+import java.util.Optional;
 import java.util.UUID;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -32,20 +33,18 @@ public class InMemoryDataStoreTest {
     @Test
     public void saveSubscription() {
         final InMemoryDataStore store = new InMemoryDataStore();
-        final Registration registration = mockRegistration(UUID.randomUUID().toString(), asURI("regURI"), asURI("subscribeURI"));
-        final boolean saved = store.saveRegistration(registration);
-        assertThat(saved, is(true));
+        final Subscription subscription = mockSubscription(UUID.randomUUID().toString(), "p123");
+        store.saveSubscription(subscription);
+        final Optional<Subscription> optionalSub = store.subscription(subscription.id());
+        assertThat(optionalSub.isPresent(), is(true));
+        assertThat(optionalSub.get().id(), equalTo(subscription.id()));
+        assertThat(optionalSub.get().pushResourceId(), equalTo(subscription.pushResourceId()));
     }
 
-    private static URI asURI(final String uri) {
-        return URI.create(uri);
-    }
-
-    private static Registration mockRegistration(final String id, final URI monitorURI, final URI subscribeUri) {
-        final Registration r = mock(Registration.class);
+    private static Subscription mockSubscription(final String id, final String pushResourceId) {
+        final Subscription r = mock(Subscription.class);
         when(r.id()).thenReturn(id);
-        when(r.uri()).thenReturn(monitorURI);
-        when(r.subscribeUri()).thenReturn(subscribeUri);
+        when(r.pushResourceId()).thenReturn(pushResourceId);
         return r;
     }
 

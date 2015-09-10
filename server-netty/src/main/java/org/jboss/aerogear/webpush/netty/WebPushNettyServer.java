@@ -22,7 +22,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http2.Http2OrHttpChooser.SelectedProtocol;
 import io.netty.handler.codec.http2.Http2SecurityUtil;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -30,7 +29,9 @@ import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
+import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
@@ -77,19 +78,16 @@ public final class WebPushNettyServer {
 
     private static SslContext createSslContext(final WebPushServerConfig config) throws Exception {
         if (config.useEndpointTls()) {
-            return SslContext.newServerContext(SslProvider.JDK,
-                    config.cert(),
-                    config.privateKey(),
-                    null,
-                    Http2SecurityUtil.CIPHERS,
-                    SupportedCipherSuiteFilter.INSTANCE,
-                    new ApplicationProtocolConfig(
+            return SslContextBuilder.forServer(config.cert(), config.privateKey())
+                    .sslProvider(SslProvider.JDK)
+                    .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
+                    .applicationProtocolConfig(new ApplicationProtocolConfig(
                             protocol(config),
                             SelectorFailureBehavior.FATAL_ALERT,
                             SelectedListenerFailureBehavior.FATAL_ALERT,
-                            SelectedProtocol.HTTP_2.protocolName(),
-                            SelectedProtocol.HTTP_1_1.protocolName()),
-                    0, 0);
+                            ApplicationProtocolNames.HTTP_2,
+                            ApplicationProtocolNames.HTTP_1_1))
+                    .build();
         }
         return null;
     }

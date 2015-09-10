@@ -18,26 +18,26 @@ package org.jboss.aerogear.webpush;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
-import io.netty.handler.codec.http2.Http2OrHttpChooser.SelectedProtocol;
 import io.netty.handler.codec.http2.Http2SecurityUtil;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
+import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.util.AsciiString;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
@@ -45,13 +45,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.netty.buffer.Unpooled.copiedBuffer;
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpMethod.PUT;
 import static io.netty.handler.codec.http.HttpMethod.DELETE;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.util.CharsetUtil.UTF_8;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.PREFER_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.PUSH_RECEIPT_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.TTL_HEADER;
+import static org.jboss.aerogear.webpush.util.HttpHeaders.WAIT_0;
 
-public class WebPushClient {
+public final class WebPushClient {
 
     private final String host;
     private final int port;
@@ -94,36 +97,46 @@ public class WebPushClient {
         }
     }
 
-    public void register(final String path) throws Exception {
-        writeRequest(POST, path, Unpooled.buffer());
-    }
-
     public void monitor(final String monitorUrl, final boolean now) throws Exception {
         final Http2Headers headers = http2Headers(GET, monitorUrl);
         if (now) {
-            headers.add(new AsciiString("prefer"), new AsciiString("wait=0"));
+            headers.add(PREFER_HEADER, WAIT_0);
         }
         writeRequest(headers);
     }
 
     public void createSubscription(final String subscribeUrl) throws Exception {
-        writeRequest(POST, subscribeUrl, Unpooled.buffer());
-    }
-
-    public void status(final String endpointUrl) throws Exception {
-        writeRequest(GET, endpointUrl);
+        writeRequest(POST, subscribeUrl);
     }
 
     public void deleteSubscription(final String endpointUrl) throws Exception {
         writeRequest(DELETE, endpointUrl);
     }
 
-    public void createAggregateSubscription(final String aggregateUrl, final String json) throws Exception {
-        writeJsonRequest(POST, aggregateUrl, copiedBuffer(json, UTF_8));
+    public void notify(final String endpointUrl,
+                       final String payload,
+                       final String receiptUrl,
+                       int ttl) throws Exception {
+        final Http2Headers headers = http2Headers(POST, endpointUrl);
+        if (receiptUrl != null && !receiptUrl.isEmpty()) {
+            headers.add(PUSH_RECEIPT_HEADER, AsciiString.of(receiptUrl));
+        }
+        if (ttl > 0) {
+            headers.addInt(TTL_HEADER, ttl);
+        }
+        writeRequest(headers, copiedBuffer(payload, UTF_8));
     }
 
-    public void notify(final String endpointUrl, final String payload) throws Exception {
-        writeRequest(PUT, endpointUrl, copiedBuffer(payload, UTF_8));
+    public void ackNotification(final String messageUrl) throws Exception {
+        writeRequest(DELETE, messageUrl);
+    }
+
+    public void requestReceipts(final String receiptSubscribeUrl) throws Exception {
+        writeRequest(POST, receiptSubscribeUrl);
+    }
+
+    public void acks(final String receiptSubUrl) throws Exception {
+        writeRequest(GET, receiptSubUrl);
     }
 
     private void writeRequest(final HttpMethod method, final String url) throws Exception {
@@ -137,23 +150,15 @@ public class WebPushClient {
         requestFuture.sync();
     }
 
-    private void writeRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
-        final Http2Headers headers = http2Headers(method, url);
+    private void writeRequest(final Http2Headers headers, final ByteBuf payload) throws Exception {
         handler.outbound(headers);
-        ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
-        requestFuture.sync();
-    }
-
-    private void writeJsonRequest(final HttpMethod method, final String url, final ByteBuf payload) throws Exception {
-        final Http2Headers headers = http2Headers(method, url);
-        handler.outbound(headers, payload);
         ChannelFuture requestFuture = channel.writeAndFlush(new WebPushMessage(headers, payload)).sync();
         requestFuture.sync();
     }
 
     private Http2Headers http2Headers(final HttpMethod method, final String url) {
         final URI hostUri = URI.create("https://" + host + ":" + port + "/" + url);
-        final Http2Headers headers = new DefaultHttp2Headers(false).method(AsciiString.of(method.name()));
+        final Http2Headers headers = new DefaultHttp2Headers().method(AsciiString.of(method.name()));
         headers.path(asciiString(url));
         headers.authority(asciiString(hostUri.getAuthority()));
         headers.scheme(asciiString(hostUri.getScheme()));
@@ -186,31 +191,29 @@ public class WebPushClient {
             // the SslContext to suite both NPN and ALPN.
             final String version = System.getProperty("java.version");
             if (version.startsWith("1.7")) {
-                return SslContext.newClientContext(SslProvider.JDK,
-                        null,
-                        InsecureTrustManagerFactory.INSTANCE,
-                        null,
-                        SupportedCipherSuiteFilter.INSTANCE,
-                        new ApplicationProtocolConfig(
+                return SslContextBuilder.forClient()
+                        .sslProvider(SslProvider.JDK)
+                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .ciphers(null, SupportedCipherSuiteFilter.INSTANCE)
+                        .applicationProtocolConfig(new ApplicationProtocolConfig(
                                 Protocol.NPN,
                                 SelectorFailureBehavior.FATAL_ALERT,
                                 SelectedListenerFailureBehavior.FATAL_ALERT,
-                                SelectedProtocol.HTTP_2.protocolName(),
-                                SelectedProtocol.HTTP_1_1.protocolName()),
-                        0, 0);
+                                ApplicationProtocolNames.HTTP_2,
+                                ApplicationProtocolNames.HTTP_1_1))
+                        .build();
             }
-            return SslContext.newClientContext(SslProvider.JDK,
-                    null,
-                    InsecureTrustManagerFactory.INSTANCE,
-                    Http2SecurityUtil.CIPHERS,
-                    SupportedCipherSuiteFilter.INSTANCE,
-                    new ApplicationProtocolConfig(
+            return SslContextBuilder.forClient()
+                    .sslProvider(SslProvider.JDK)
+                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                    .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
+                    .applicationProtocolConfig(new ApplicationProtocolConfig(
                             Protocol.ALPN,
                             SelectorFailureBehavior.FATAL_ALERT,
                             SelectedListenerFailureBehavior.FATAL_ALERT,
-                            SelectedProtocol.HTTP_2.protocolName(),
-                            SelectedProtocol.HTTP_1_1.protocolName()),
-                    0, 0);
+                            ApplicationProtocolNames.HTTP_2,
+                            ApplicationProtocolNames.HTTP_1_1))
+                    .build();
         }
         return null;
     }
@@ -253,12 +256,11 @@ public class WebPushClient {
 
         public WebPushClient build() {
             if (protocols.isEmpty()) {
-                protocols.add(SelectedProtocol.HTTP_2.protocolName());
-                protocols.add(SelectedProtocol.HTTP_1_1.protocolName());
+                protocols.add(ApplicationProtocolNames.HTTP_2);
+                protocols.add(ApplicationProtocolNames.HTTP_1_1);
             }
             return new WebPushClient(this);
         }
 
     }
-
 }

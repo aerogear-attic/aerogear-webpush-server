@@ -36,7 +36,7 @@ public class WebPushFrameListener implements Http2FrameListener {
 
     @Override
     public void onPushPromiseRead(ChannelHandlerContext ctx, int streamId, int promisedStreamId, Http2Headers headers, int padding) throws Http2Exception {
-        callback.inbound(headers, streamId);
+        callback.pushPromise(headers, streamId, promisedStreamId);
     }
 
     @Override

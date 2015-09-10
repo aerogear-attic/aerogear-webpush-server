@@ -14,27 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.aerogear.webpush.util;
+package org.jboss.aerogear.webpush;
 
-/**
- * Utility methods for checking method arguments.
- */
-public final class Arguments {
+public enum Resource {
 
-    private Arguments() {
+    SUBSCRIBE("subscribe"),
+    SUBSCRIPTION("s"),
+    PUSH("p"),
+    PUSH_MESSAGE("d"),
+    RECEIPTS("receipts"),
+    RECEIPT("r");
+
+    private final String resourceName;
+
+    Resource(final String resourceName) {
+        this.resourceName = resourceName;
     }
 
-    /**
-     * Checks that the given argument is not null. If it is, throws {@link NullPointerException}.
-     * Otherwise, returns the argument.
-     *
-     * @param arg the argument to check.
-     * @param text the text to display if the {@code arg} was null
-     */
-    public static <T> T checkNotNull(final T arg, final String text) {
-        if (arg == null) {
-            throw new NullPointerException(text);
+    public String resourceName() {
+        return resourceName;
+    }
+
+    public static Resource byResourceName(String name) {
+        for (Resource resource : Resource.values()) {
+            if (resource.resourceName().equalsIgnoreCase(name)) {
+                return resource;
+            }
         }
-        return arg;
+        return null;
     }
 }

@@ -20,6 +20,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
+import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
+import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
 import io.netty.handler.ssl.SslContext;
 import org.jboss.aerogear.webpush.DefaultWebPushServer;
@@ -28,7 +30,6 @@ import org.jboss.aerogear.webpush.WebPushServerConfig;
 import org.jboss.aerogear.webpush.datastore.DataStore;
 
 import static io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodec;
-import static java.util.Collections.singletonList;
 
 public class WebPushChannelInitializer extends ChannelInitializer<SocketChannel> {
 
@@ -61,12 +62,29 @@ public class WebPushChannelInitializer extends ChannelInitializer<SocketChannel>
     }
 
     private static void configureClearText(final SocketChannel ch, final WebPushServer webPushServer) {
-        final UpgradeCodec upgradeCodec = new Http2ServerUpgradeCodec(new WebPushHttp2Handler(webPushServer));
         final HttpServerCodec sourceCodec = new HttpServerCodec();
         final HttpServerUpgradeHandler upgradeHandler =
-                new HttpServerUpgradeHandler(sourceCodec, singletonList(upgradeCodec), 65536);
+                new HttpServerUpgradeHandler(sourceCodec, new WebPushCodecFactory(webPushServer), 65536);
         ch.pipeline().addLast(sourceCodec);
         ch.pipeline().addLast(upgradeHandler);
+    }
+
+    private static class WebPushCodecFactory implements UpgradeCodecFactory {
+
+        private final WebPushServer webPushServer;
+
+        WebPushCodecFactory(final WebPushServer webPushServer) {
+            this.webPushServer = webPushServer;
+        }
+
+        @Override
+        public UpgradeCodec newUpgradeCodec(final String protocol) {
+            if (Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME.equals(protocol)) {
+                return new Http2ServerUpgradeCodec(new WebPushHttp2Handler(webPushServer));
+            } else {
+                return null;
+            }
+        }
     }
 
 }

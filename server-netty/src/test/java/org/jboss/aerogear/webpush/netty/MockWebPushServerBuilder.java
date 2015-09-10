@@ -1,16 +1,16 @@
 package org.jboss.aerogear.webpush.netty;
 
+import org.jboss.aerogear.webpush.PushMessage;
 import org.jboss.aerogear.webpush.Subscription;
-import org.jboss.aerogear.webpush.Registration;
-import org.jboss.aerogear.webpush.Registration.Resource;
 import org.jboss.aerogear.webpush.WebPushServer;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
 import org.mockito.stubbing.OngoingStubbing;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.Optional;
-import java.util.function.Consumer;
+
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -19,26 +19,16 @@ public class MockWebPushServerBuilder {
 
     private final WebPushServer webPushServer = mock(WebPushServer.class);
     private final WebPushServerConfig config = mock(WebPushServerConfig.class);
-    private final Registration registration = mock(Registration.class);
-    private static final String context = "/webpush";
-    private final String registrationId;
+    private final Subscription subscription;
+    private OngoingStubbing<String> tokens;
 
-    private MockWebPushServerBuilder(final String registrationId) {
-        this.registrationId = registrationId;
-        when(registration.id()).thenReturn(registrationId);
-        setRegistrationUrls(registrationId);
+    private MockWebPushServerBuilder(final Subscription subscription) {
+        this.subscription = subscription;
+        when(webPushServer.subscribe()).thenReturn(subscription);
+        when(webPushServer.subscriptionById(subscription.id())).thenReturn(Optional.of(subscription));
         when(config.messageMaxSize()).thenReturn(4096L);
-    }
-
-    private void setRegistrationUrls(final String id) {
-        when(registration.uri()).thenReturn(asURI(context, Resource.REGISTRATION.resourceName(), id));
-        when(registration.subscribeUri()).thenReturn(asURI(context, Resource.SUBSCRIBE.resourceName(), id));
-        when(registration.aggregateUri()).thenReturn(asURI(context, Resource.AGGREGATE.resourceName(), id));
-    }
-
-    public MockWebPushServerBuilder registrationMaxAge(final long maxAge) {
-        when(config.registrationMaxAge()).thenReturn(maxAge);
-        return this;
+        when(webPushServer.generateEndpointToken(eq(subscription.pushResourceId()), eq(subscription.id())))
+                .thenReturn(subscription.pushResourceId());
     }
 
     public MockWebPushServerBuilder subscriptionMaxAge(final long maxAge) {
@@ -46,14 +36,9 @@ public class MockWebPushServerBuilder {
         return this;
     }
 
-    public MockWebPushServerBuilder addSubscription(final Subscription subscription) {
-        when(webPushServer.subscription(subscription.endpoint())).thenReturn(Optional.of(subscription));
-        when(webPushServer.newSubscription(registrationId)).thenReturn(Optional.of(subscription));
-        return this;
-    }
-
-    public MockWebPushServerBuilder subscriptionOrder(final Consumer<OngoingStubbing<Optional<Subscription>>> consumer) {
-        consumer.accept(when(webPushServer.newSubscription(registrationId)));
+    public MockWebPushServerBuilder waitingPushMessage(final PushMessage message) {
+        when(webPushServer.waitingDeliveryMessages(subscription.id())).thenReturn(Collections.singletonList(message))
+                .thenReturn(Collections.emptyList());
         return this;
     }
 
@@ -62,22 +47,48 @@ public class MockWebPushServerBuilder {
         return this;
     }
 
+    public MockWebPushServerBuilder receiptsToken(final String token) {
+        when(webPushServer.generateEndpointToken(subscription.id())).thenReturn(token);
+        when(webPushServer.subscriptionByToken(eq(token))).thenReturn(Optional.of(subscription));
+        when(webPushServer.subscriptionByReceiptToken(token)).thenReturn(Optional.of(subscription));
+        return this;
+    }
+
+    public MockWebPushServerBuilder receiptToken(final String token) {
+        when(webPushServer.subscriptionByReceiptToken(eq(token))).thenReturn(Optional.of(subscription));
+        when(webPushServer.generateEndpointToken(anyString(), eq(subscription.id()))).thenReturn(token);
+        return this;
+    }
+
+    public MockWebPushServerBuilder receiptToken(final String token, final PushMessage pushMessage) {
+        receiptToken(token);
+        when(webPushServer.sentMessage(token)).thenReturn(Optional.of(pushMessage));
+        return this;
+    }
+
+    public MockWebPushServerBuilder pushResourceToken(final String token) {
+        when(webPushServer.generateEndpointToken(eq(token), eq(subscription.id()))).thenReturn(token);
+        when(webPushServer.subscriptionByPushToken(token)).thenReturn(Optional.of(subscription));
+        return this;
+    }
+
+    public MockWebPushServerBuilder nonexistentPushResourceToken(final String token) {
+        when(webPushServer.subscriptionByPushToken(token)).thenReturn(Optional.empty());
+        return this;
+    }
+
+    public MockWebPushServerBuilder pushMessageToken(final String token) {
+        when(webPushServer.generateEndpointToken(anyString(), eq(subscription.id()))).thenReturn(token);
+        return this;
+    }
+
     public WebPushServer build() throws Exception {
         when(webPushServer.config()).thenReturn(config);
-        when(webPushServer.register()).thenReturn(registration);
-        when(webPushServer.registration(registrationId)).thenReturn(Optional.of(registration));
         return webPushServer;
     }
 
-    public static MockWebPushServerBuilder withRegistrationid(final String id) {
-        return new MockWebPushServerBuilder(id);
+    public static MockWebPushServerBuilder withSubscription(final Subscription subscription) {
+        return new MockWebPushServerBuilder(subscription);
     }
 
-    private static URI asURI(final String context, final String resource, final String id) {
-        try {
-            return new URI(context + "/" + resource + "/" + id);
-        } catch (final URISyntaxException e) {
-            throw new RuntimeException("String [" + resource + " is not a valid URI", e);
-        }
-    }
 }

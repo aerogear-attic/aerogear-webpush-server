@@ -98,10 +98,6 @@ public class ConfigReader {
         if (endpointTls != null) {
             builder.endpointTls(endpointTls.asBoolean());
         }
-        final JsonNode registrationMaxAge = json.get("registration-max-age");
-        if (registrationMaxAge != null) {
-            builder.registrationMaxAge(registrationMaxAge.asLong());
-        }
         final JsonNode subscriptionMaxAge = json.get("subscription-max-age");
         if (subscriptionMaxAge != null) {
             builder.subscriptionMaxAge(subscriptionMaxAge.asLong());

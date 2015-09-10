@@ -16,16 +16,30 @@
  */
 package org.jboss.aerogear.webpush.datastore;
 
-import java.util.Optional;
-import java.util.Set;
-
 import org.jboss.aerogear.webpush.Subscription;
-import org.jboss.aerogear.webpush.Registration;
+import org.jboss.aerogear.webpush.PushMessage;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Handles the storing of subscriptions for a WebPush Server implementation.
  */
 public interface DataStore {
+
+    void saveSubscription(Subscription subscription);
+
+    Optional<Subscription> subscription(String id);
+
+    List<PushMessage> removeSubscription(String id);
+
+    void saveMessage(PushMessage msg);
+
+    List<PushMessage> waitingDeliveryMessages(String subId);
+
+    void saveSentMessage(PushMessage msg);
+
+    Optional<PushMessage> sentMessage(String subId, String msgId);
 
     /**
      * Saves the server's private key salt.
@@ -40,42 +54,5 @@ public interface DataStore {
      * @return {@code byte[]} the server's private key salt if one has previously been saved, or an empty byte array
      */
     byte[] getPrivateKeySalt();
-
-    /**
-     * Saves a {@link Registration} to the underlying storage system.
-     *
-     * @param registration the registration to store
-     * @return {@code true} if storage was successful
-     */
-    boolean saveRegistration(Registration registration);
-
-    /**
-     * Returns the {@link Registration} for the passed-in id.
-     *
-     * @param registrationId the registration identifier to retreive
-     */
-    Optional<Registration> getRegistration(String registrationId);
-
-    /**
-     * Saves a {@link Subscription} to the underlying storage system.
-     *
-     * @param subscription the subscription to store
-     */
-    void saveChannel(Subscription subscription);
-
-    /**
-     * Remove a {@link Subscription} from the underlying storage system.
-     *
-     * @param subscription the subscription to remove
-     */
-    void removeChannel(Subscription subscription);
-
-    /**
-     * Returns registrations for a certain registration.
-     *
-     * @param registrationId the registration identifier.
-     * @return {@code Set<Channel>} the registration id
-     */
-    Set<Subscription> getSubscriptions(String registrationId);
 
 }

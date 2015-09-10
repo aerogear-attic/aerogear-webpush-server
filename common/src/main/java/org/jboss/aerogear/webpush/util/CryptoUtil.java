@@ -27,6 +27,8 @@ import java.security.InvalidKeyException;
  */
 public final class CryptoUtil {
 
+    public static final String DELIMITER = ":";
+
     private static final Charset ASCII = Charset.forName("US-ASCII");
     private static final int IV_SIZE = 16;
 
@@ -94,13 +96,11 @@ public final class CryptoUtil {
         }
     }
 
-    public static String endpointToken(final String uaid, final String subscriptionId, final byte[] key) {
+    public static String endpointToken(final byte[] key, final String value) {
         try {
-            final String path = uaid + "." + subscriptionId;
-            return encrypt(key, path);
+            return encrypt(key, value);
         } catch (final Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Can not encrypt path", e);
         }
     }
-
 }

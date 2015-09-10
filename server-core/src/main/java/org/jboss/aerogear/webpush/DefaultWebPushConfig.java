@@ -16,12 +16,13 @@
  */
 package org.jboss.aerogear.webpush;
 
-import org.jboss.aerogear.webpush.util.Arguments;
-
 import java.io.File;
 import java.net.URL;
+import java.util.Objects;
 
 public final class DefaultWebPushConfig implements WebPushServerConfig {
+
+    private static final long MESSAGE_MAX_SIZE_LOWER_BOUND = 4096;
 
     private final String host;
     private final int port;
@@ -31,7 +32,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     private final String password;
     private final String endpointHost;
     private final int endpointPort;
-    private final long registrationMaxAge;
     private final long subscriptionMaxAge;
     private final long messageMaxAge;
     private final long messageMaxSize;
@@ -42,16 +42,15 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         port = builder.port;
         endpointHost = builder.endpointHost == null ? host : builder.endpointHost;
         endpointPort = builder.endpointPort <= 0 ? port : builder.endpointPort;
-        cert = fileSystemOrClasspath(Arguments.checkNotNull(builder.cert, "cert must not be null"));
-        privateKey = fileSystemOrClasspath(Arguments.checkNotNull(builder.privateKey, "privateKey must not be null"));
+        cert = fileSystemOrClasspath(Objects.requireNonNull(builder.cert, "cert must not be null"));
+        privateKey = fileSystemOrClasspath(Objects.requireNonNull(builder.privateKey, "privateKey must not be null"));
         endpointTls = builder.endpointTls;
         password = builder.password;
-        registrationMaxAge = builder.registrationMaxAge;
         subscriptionMaxAge = builder.subscriptionMaxAge;
         protocol = builder.protocol;
         messageMaxAge = builder.messageMaxAge;
-        if (builder.messageMaxSize < MESSAGE_MAX_LOWER_BOUND) {
-            throw new IllegalStateException("messageMaxSize cannot be set lower than " + MESSAGE_MAX_LOWER_BOUND);
+        if (builder.messageMaxSize < MESSAGE_MAX_SIZE_LOWER_BOUND) {
+            throw new IllegalStateException("messageMaxSize cannot be set lower than " + MESSAGE_MAX_SIZE_LOWER_BOUND);
         }
         messageMaxSize = builder.messageMaxSize;
     }
@@ -105,11 +104,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     }
 
     @Override
-    public long registrationMaxAge() {
-        return registrationMaxAge;
-    }
-
-    @Override
     public long subscriptionMaxAge() {
         return subscriptionMaxAge;
     }
@@ -139,7 +133,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
                 .append(", endpointPort=").append(endpointPort)
                 .append(", endpointTls=").append(endpointTls)
                 .append(", protocol=").append(protocol)
-                .append(", registrationMaxAge=").append(registrationMaxAge)
                 .append(", subscriptionMaxAge=").append(subscriptionMaxAge)
                 .append(", messageMaxAge=").append(messageMaxAge)
                 .append(", messageMaxSize=").append(messageMaxSize)
@@ -163,11 +156,10 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private boolean endpointTls;
         private String endpointHost;
         private int endpointPort;
-        private long registrationMaxAge = 604800000L;
         private long subscriptionMaxAge = 604800000L;
         private long messageMaxAge = 0L;
         private Protocol protocol = Protocol.ALPN;
-        private long messageMaxSize = Long.MAX_VALUE;
+        private long messageMaxSize = MESSAGE_MAX_SIZE_LOWER_BOUND;
 
         public Builder host(final String host) {
             if (host != null) {
@@ -211,17 +203,8 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             return this;
         }
 
-        public Builder registrationMaxAge(final Long maxAge) {
-            if (maxAge != null) {
-                this.registrationMaxAge = maxAge;
-            }
-            return this;
-        }
-
-        public Builder subscriptionMaxAge(final Long maxAge) {
-            if (maxAge != null) {
-                this.subscriptionMaxAge = maxAge;
-            }
+        public Builder subscriptionMaxAge(final long maxAge) {
+            this.subscriptionMaxAge = maxAge;
             return this;
         }
 
@@ -230,17 +213,13 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             return this;
         }
 
-        public Builder messageMaxAge(final Long maxAge) {
-            if (maxAge != null) {
-                this.messageMaxAge = maxAge;
-            }
+        public Builder messageMaxAge(final long maxAge) {
+            this.messageMaxAge = maxAge;
             return this;
         }
 
-        public Builder messageMaxSize(final Long maxSize) {
-            if (maxSize != null) {
-                this.messageMaxSize = maxSize;
-            }
+        public Builder messageMaxSize(final long maxSize) {
+            this.messageMaxSize = maxSize;
             return this;
         }
 
@@ -251,5 +230,4 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
             return new DefaultWebPushConfig(this);
         }
     }
-
 }

@@ -59,7 +59,7 @@ Most command also support a ```--help``` option to display information about opt
     
     [webpush]$
 
-#### Connect
+#### Connecting to the Server
 
     [webpush]$ connect -h hostname -p port
     Connected to [hostname:port]
@@ -74,107 +74,94 @@ For example, add a FQDN to /etc/hosts:
 
     127.0.0.1	localhost localhost.com
 
+#### Subscribing for Push Messages
 
-#### Register 
+    [webpush]$ subscribe --url /webpush/subscribe
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: /webpush/subscribe, :scheme: https]
+    < [streamId:3] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: link, cache-control, location, cache-control: private, max-age=604800000, link: </webpush/p/MJzDNtVKd9KO0XclJfDXYzhOh3sx%2BhePggdyfWtG%2BjAUb74O6DhsPDSlNkrFnspAj75DzDKWYyYEDKt%2BiGwfk%2FgAMrJD3GGxAH1l5xyYoInks6B90GGbIEE77HDF%2FM9cXzKZdWxcgpPB>;rel="urn:ietf:params:push", link: </webpush/receipts/u9HAZeFzbUvzkiDOhxOHb%2BLtPZtSyp47tL9w5ZSDY%2FYA0%2BJOfjV6sH%2F4woxz4zIKOTTxB8MX%2Fwe2qNHwsSKKok8mVCU%3D>;rel="urn:ietf:params:push:receipt", location: /webpush/s/bc949630-341a-44d0-8d11-6bd160588f8d]
 
-AeroGear WebPush server:
-
-    [webpush]$ register --path /webpush/register
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: /webpush/register, :scheme: https]
-    < [streamid:3] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, Location, cache-control: private, max-age=604800000, link: <webpush/aggregate/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:aggregate", link: <webpush/reg/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:reg", link: <webpush/subscribe/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:sub", location: webpush/reg/14752553-f74c-4031-9e0f-1dbc7a54cb45]
-
-Node.js WebPush server:
-
-    [webpush]$ register --path /devices
-    > DefaultHttp2Headers[:authority: localhost:7777, :method: POST, :path: /devices, :scheme: https]
-    < [streamid:3] DefaultHttp2Headers[:status: 201, cache-control: max-age=3600, private, content-length: 0, date: Tue, 10 Feb 2015 12:37:02 GMT, link: </devices/25b1ac1b-cec7-4ee9-abf7-25e199db6484>; rel="urn:ietf:params:push:reg", </devices/25b1ac1b-cec7-4ee9-abf7-25e199db6484/channels>; rel="urn:ietf:params:push:sub", location: /devices/25b1ac1b-cec7-4ee9-abf7-25e199db6484]
-
-#### Monitor
-Use the WebLink of type _urn:ietf:params:push:reg_ from the registration stage above as the url option below:
-
-    [webpush]$ monitor --url url
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: webpush/reg/14752553-f74c-4031-9e0f-1dbc7a54cb45, :scheme: https]
-    < [streamid:7] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, cache-control: private, max-age=604800000, link: <webpush/aggregate/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:aggregate", link: <webpush/subscribe/14752553-f74c-4031-9e0f-1dbc7a54cb45>;rel="urn:ietf:params:push:sub"]
-
-#### Create a subscription
-Use the WebLink of type _urn:ietf:params:push:sub_ from the registration stage above as the url option below:
-
-    [webpush]$ subscribe --url url
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: webpush/subscribe/14752553-f74c-4031-9e0f-1dbc7a54cb45, :scheme: https]
-    < [streamid:5] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/zZ9Y1tf1aSjKF135DlJve4TUcbp33tSfiHsalh8a0U%2FTFLd54bCSiVf0KX9YB2jw6W5lVNcBK3aO25C3ccknfpnMO77qJiUitrG4tvKSyhDmIFQFef8ZOCq9RwI1u8H7%2Bg70U0S79gXC]
-    
-
-#### Send notification
+#### Receiving Push Messages
 Use the _location_ header value from the subscription response above as the url below:
 
-    [webpush]$ notify --url url --payload hello
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: PUT, :path: /webpush/zZ9Y1tf1aSjKF135DlJve4TUcbp33tSfiHsalh8a0U%2FTFLd54bCSiVf0KX9YB2jw6W5lVNcBK3aO25C3ccknfpnMO77qJiUitrG4tvKSyhDmIFQFef8ZOCq9RwI1u8H7%2Bg70U0S79gXC, :scheme: https]
-    < [streamid:2] DefaultHttp2Header]
-    < [streamid:2] hello
-    [webpush]$ notify --url url --payload hello2
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: PUT, :path: /webpush/zZ9Y1tf1aSjKF135DlJve4TUcbp33tSfiHsalh8a0U%2FTFLd54bCSiVf0KX9YB2jw6W5lVNcBK3aO25C3ccknfpnMO77qJiUitrG4tvKSyhDmIFQFef8ZOCq9RwI1u8H7%2Bg70U0S79gXC, :scheme: https]
-    < [streamid:2] hello2
-    
+    [webpush]$ monitor --url /webpush/s/bc949630-341a-44d0-8d11-6bd160588f8d
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: /webpush/s/bc949630-341a-44d0-8d11-6bd160588f8d, :scheme: https]
+
+You can also use _--nowait_ option, if you want only check availability of pending Push Messages and do not monitor new ones.
+A 204 (No Content) status code with no associated server pushes indicates that no messages are presently available.
+
+    [webpush]$ monitor --url /webpush/s/bc949630-341a-44d0-8d11-6bd160588f8d --nowait 
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: /webpush/s/bc949630-341a-44d0-8d11-6bd160588f8d, :scheme: https, prefer: wait=0]
+    < [streamId:5] DefaultHttp2Headers[:status: 204, access-control-allow-origin: *]
+
+#### Requesting Push Message Delivery
+Use the WebLink of type _urn:ietf:params:push_ from the subscription response above as the url below:
+
+    [webpush]$ notify --url /webpush/p/MJzDNtVKd9KO0XclJfDXYzhOh3sx%2BhePggdyfWtG%2BjAUb74O6DhsPDSlNkrFnspAj75DzDKWYyYEDKt%2BiGwfk%2FgAMrJD3GGxAH1l5xyYoInks6B90GGbIEE77HDF%2FM9cXzKZdWxcgpPB --payload hello
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: /webpush/p/MJzDNtVKd9KO0XclJfDXYzhOh3sx%2BhePggdyfWtG%2BjAUb74O6DhsPDSlNkrFnspAj75DzDKWYyYEDKt%2BiGwfk%2FgAMrJD3GGxAH1l5xyYoInks6B90GGbIEE77HDF%2FM9cXzKZdWxcgpPB, :scheme: https]
+    < [streamId:9] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: location, location: /webpush/d/qOyBjcw5ilSJM5uTviPBPhP%2BRpUKMgrILfb2w2%2Bd15JcfT%2BADUL1RIrACThAiwstDf6wYNoWWaawUVkfaoA3Q3ABx6OzmetNynhSJlqA7gnLneqhpK2hYmrGdsRWfFuN6POLB9B3ySDs]
+
+User Agent, which monitor its own subscription, will receive the Push Message via HTTP/2 Server Push:
+
+    < [streamId:7, promisedStreamId:2] DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: /webpush/d/fDeM5XViE98VT%2B1WfdMEBfjMIuGCwJzmQAirLPFY0XFwRsE%2FDYfww2%2Flj7fu%2Fed4UKRETQyqvJndTIGfX6u%2BUtRFtFbeH2q4nwTpfszX9mOZg1xq1chKPbi5IPkZSut5V8FvYGTRBxcL]
+    < [streamId:2] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: cache-control, content-type, cache-control: private, max-age=604800000, content-length: 5, content-type: text/plain;charset=utf8]
+    < [streamId:2] hello
+
+#### Subscribing for Push Message Receipts
+Use the WebLink of type _urn:ietf:params:push:receipt_ from the subscription response above as the url below:
+
+    [webpush]$ receipt --url /webpush/receipts/u9HAZeFzbUvzkiDOhxOHb%2BLtPZtSyp47tL9w5ZSDY%2FYA0%2BJOfjV6sH%2F4woxz4zIKOTTxB8MX%2Fwe2qNHwsSKKok8mVCU%3D
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: /webpush/receipts/u9HAZeFzbUvzkiDOhxOHb%2BLtPZtSyp47tL9w5ZSDY%2FYA0%2BJOfjV6sH%2F4woxz4zIKOTTxB8MX%2Fwe2qNHwsSKKok8mVCU%3D, :scheme: https]
+    < [streamId:11] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: location, location: /webpush/r/s5dcKdO03yK6vBFiwcagkKGkzHVJ8TBs4PJHL0ATVo%2BuYkB5nqDRI%2FYwCqI0eoZ6xvlfaJeb%2BssUqwTgMeBZ%2FE5RMpyLieTY1vG8SVR79SUJtJnDQRQVVsIAoUOxOKkI86pKnmEvtpWz]
+
+#### Receiving Push Message Receipts
+Use the _location_ header value from the receipt response above as the url below:
+
+    [webpush]$ acks --url /webpush/r/s5dcKdO03yK6vBFiwcagkKGkzHVJ8TBs4PJHL0ATVo%2BuYkB5nqDRI%2FYwCqI0eoZ6xvlfaJeb%2BssUqwTgMeBZ%2FE5RMpyLieTY1vG8SVR79SUJtJnDQRQVVsIAoUOxOKkI86pKnmEvtpWz
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: /webpush/r/s5dcKdO03yK6vBFiwcagkKGkzHVJ8TBs4PJHL0ATVo%2BuYkB5nqDRI%2FYwCqI0eoZ6xvlfaJeb%2BssUqwTgMeBZ%2FE5RMpyLieTY1vG8SVR79SUJtJnDQRQVVsIAoUOxOKkI86pKnmEvtpWz, :scheme: https]
+
+Now you are able to send a new Push Message with request for Push Message Receipt:
+
+    [webpush]$ notify --receiptUrl /webpush/r/s5dcKdO03yK6vBFiwcagkKGkzHVJ8TBs4PJHL0ATVo%2BuYkB5nqDRI%2FYwCqI0eoZ6xvlfaJeb%2BssUqwTgMeBZ%2FE5RMpyLieTY1vG8SVR79SUJtJnDQRQVVsIAoUOxOKkI86pKnmEvtpWz --url /webpush/p/MJzDNtVKd9KO0XclJfDXYzhOh3sx%2BhePggdyfWtG%2BjAUb74O6DhsPDSlNkrFnspAj75DzDKWYyYEDKt%2BiGwfk%2FgAMrJD3GGxAH1l5xyYoInks6B90GGbIEE77HDF%2FM9cXzKZdWxcgpPB --payload hello2
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: /webpush/p/MJzDNtVKd9KO0XclJfDXYzhOh3sx%2BhePggdyfWtG%2BjAUb74O6DhsPDSlNkrFnspAj75DzDKWYyYEDKt%2BiGwfk%2FgAMrJD3GGxAH1l5xyYoInks6B90GGbIEE77HDF%2FM9cXzKZdWxcgpPB, :scheme: https, push-receipt: /webpush/r/s5dcKdO03yK6vBFiwcagkKGkzHVJ8TBs4PJHL0ATVo%2BuYkB5nqDRI%2FYwCqI0eoZ6xvlfaJeb%2BssUqwTgMeBZ%2FE5RMpyLieTY1vG8SVR79SUJtJnDQRQVVsIAoUOxOKkI86pKnmEvtpWz]
+    < [streamId:15] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: location, location: /webpush/d/0HsGZycMBV3XAjbLkpIm4CdRLJAfS5q%2BnyDUWOKmKn1jluZ0kP9qkCadxxcDhYfnP8u%2BDiIl9B7A7DSAKwoh%2BIVbpLZUr0g914pGyygon%2BB87TeErs4FUicOhGc19MVI8p%2Fen2sKmPWw]
+
+User Agent, which monitor its own subscription, will receive the Push Message via HTTP/2 Server Push:
+
+    < [streamId:7, promisedStreamId:4] DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: /webpush/d/wZf%2FoE0OcYY%2BRzdjvIkXJ2ZRVgmS%2FkJxu2LlZ30nj%2Bct8lSOeMbeAaeSBkl0qwE2mk2kHYs6GweIub02tUhdD6arBbe8bI6H5W9J6YLZigzqYSOt0PY1vEbIwziK%2Fj25uAlA2gag93sG]
+    < [streamId:4] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: cache-control, content-type, cache-control: private, max-age=604800000, content-length: 6, content-type: text/plain;charset=utf8]
+    < [streamId:4] hello2
+
+#### Acknowledging Push Messages
+User Agent acknowledge receipt of the message. Use _path_ value from the PUSH_PROMISE frame above as the url below:
+
+    [webpush]$ ack --url /webpush/d/wZf%2FoE0OcYY%2BRzdjvIkXJ2ZRVgmS%2FkJxu2LlZ30nj%2Bct8lSOeMbeAaeSBkl0qwE2mk2kHYs6GweIub02tUhdD6arBbe8bI6H5W9J6YLZigzqYSOt0PY1vEbIwziK%2Fj25uAlA2gag93sG
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: DELETE, :path: /webpush/d/wZf%2FoE0OcYY%2BRzdjvIkXJ2ZRVgmS%2FkJxu2LlZ30nj%2Bct8lSOeMbeAaeSBkl0qwE2mk2kHYs6GweIub02tUhdD6arBbe8bI6H5W9J6YLZigzqYSOt0PY1vEbIwziK%2Fj25uAlA2gag93sG, :scheme: https]
+
+Push Server pushes a delivery receipt to the application server.
+A 410 (Gone) status code confirms that the message was delivered and acknowledged.
+
+    < [streamId:13, promisedStreamId:6] DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: /webpush/d/WEP7Fhc9WCsLqdcAqofLCTMqZcEsuUOcBVmGz2StiPOJBMJ%2BKZRgMw%2FHk3NenAruq5qSt2Mhj%2FJ2tMVPTrfV4CGxOdaquMphQlBXjDRvKkQXc5nJ%2B53BDZDF%2FeUD1g26o1dUcJ8zJafI]
+    < [streamId:6] DefaultHttp2Headers[:status: 410, access-control-allow-origin: *]
+
+#### Delete Subscription
+Use the _location_ header value from the subscription response above as the url below:
+
+    [webpush]$ delete --url /webpush/s/bc949630-341a-44d0-8d11-6bd160588f8d
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: DELETE, :path: /webpush/s/bc949630-341a-44d0-8d11-6bd160588f8d, :scheme: https]
+
+#### Delete Receipt Subscription
+Use the _location_ header value from the receipt response above as the url below:
+
+    [webpush]$ delete --url /webpush/r/s5dcKdO03yK6vBFiwcagkKGkzHVJ8TBs4PJHL0ATVo%2BuYkB5nqDRI%2FYwCqI0eoZ6xvlfaJeb%2BssUqwTgMeBZ%2FE5RMpyLieTY1vG8SVR79SUJtJnDQRQVVsIAoUOxOKkI86pKnmEvtpWz
+    > DefaultHttp2Headers[:authority: localhost:8443, :method: DELETE, :path: /webpush/r/s5dcKdO03yK6vBFiwcagkKGkzHVJ8TBs4PJHL0ATVo%2BuYkB5nqDRI%2FYwCqI0eoZ6xvlfaJeb%2BssUqwTgMeBZ%2FE5RMpyLieTY1vG8SVR79SUJtJnDQRQVVsIAoUOxOKkI86pKnmEvtpWz, :scheme: https]
+    < [streamId:19] DefaultHttp2Headers[:status: 204, access-control-allow-origin: *]
+
+#### Disconnect
+
+    [webpush]$ disconnect 
+    Disconnected from [localhost:8443]
+    > Channel with id 308e044e, became inactive/disonnected.
+
 #### Exit the console
     
     > exit
-
-
-### WebPush Aggregate Extension
-Allows an application to request that a web push server deliver the same message to a potentially large set of devices,
-and is a separate specification called [webpush-aggregate](http://tools.ietf.org/html/draft-thomson-webpush-aggregate-00)
-
-This may not be supported by all WebPush server implementation but is supported by the WebPush Console. The following
-example is using AeroGear WebPush Server.
-
-    [webpush]$ connect
-    Connected to [localhost:8443]
-
-    [webpush]$ register
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: /webpush/register, :scheme: https]
-    < [streamid:3] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, Location, cache-control: private, max-age=604800000, link: <webpush/aggregate/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:aggregate", link: <webpush/reg/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:reg", link: <webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:sub", location: webpush/reg/66a0f93c-1857-4507-a5da-0bb04e26f6b3]
-
-Notice the web link of rel type _urn:ietf:params:push:aggregate_ which is the url that will be used when creating an
-aggregate channel.
-
-    [webpush]$ monitor --url webpush/reg/66a0f93c-1857-4507-a5da-0bb04e26f6b3
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: GET, :path: webpush/reg/66a0f93c-1857-4507-a5da-0bb04e26f6b3, :scheme: https]
-    < [streamid:5] DefaultHttp2Headers[:status: 200, access-control-allow-origin: *, access-control-expose-headers: Link, Cache-Control, cache-control: private, max-age=604800000, link: <webpush/aggregate/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:aggregate", link: <webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3>;rel="urn:ietf:params:push:sub"]
-
-Create two subscriptions:
-
-    [webpush]$ subscribe --url webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3, :scheme: https]
-    < [streamid:7] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/vlual30OKuEN4OPoXtj73Dsys%2FG05GJXe%2BK1%2FQDFJhcMfbCr8XZF5W5axRu5whKr%2BktqaUGIoMqMRfQPlSr%2Bq0wO2APBtvvdX4%2FDFJbT3wiLC5ug16BzP2%2B1zyyluv2ujVzXinrLeCkt]
-
-    [webpush]$ subscribe --url webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: webpush/subscribe/66a0f93c-1857-4507-a5da-0bb04e26f6b3, :scheme: https]
-    < [streamid:9] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/m2avCgWq14%2FeuuAQiGxZr%2BmmMZJp88FBQ%2BV42irZTm62ORyhg85IWuffZOdoEnkZx3wTs2St4IIaJxy%2FrJfq5eZkAsj355hDdARXrncTbiutv5rgcGGzG2GzDCeZaeHS6KgS9WAAvf5q]
-
-Next, create the aggregate channel using the web link of type _urn:ietf:params:push:aggregate_ from the above _register_ command.
-This command will also print the JSON format of the request body.
-
-    [webpush]$ aggregate --url webpush/aggregate/66a0f93c-1857-4507-a5da-0bb04e26f6b3 --channels /webpush/vlual30OKuEN4OPoXtj73Dsys%2FG05GJXe%2BK1%2FQDFJhcMfbCr8XZF5W5axRu5whKr%2BktqaUGIoMqMRfQPlSr%2Bq0wO2APBtvvdX4%2FDFJbT3wiLC5ug16BzP2%2B1zyyluv2ujVzXinrLeCkt,/webpush/m2avCgWq14%2FeuuAQiGxZr%2BmmMZJp88FBQ%2BV42irZTm62ORyhg85IWuffZOdoEnkZx3wTs2St4IIaJxy%2FrJfq5eZkAsj355hDdARXrncTbiutv5rgcGGzG2GzDCeZaeHS6KgS9WAAvf5q
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: POST, :path: webpush/aggregate/66a0f93c-1857-4507-a5da-0bb04e26f6b3, :scheme: https]
-    [ {
-      "/webpush/m2avCgWq14%2FeuuAQiGxZr%2BmmMZJp88FBQ%2BV42irZTm62ORyhg85IWuffZOdoEnkZx3wTs2St4IIaJxy%2FrJfq5eZkAsj355hDdARXrncTbiutv5rgcGGzG2GzDCeZaeHS6KgS9WAAvf5q" : {
-        "expires" : 0
-      }
-    }, {
-      "/webpush/vlual30OKuEN4OPoXtj73Dsys%2FG05GJXe%2BK1%2FQDFJhcMfbCr8XZF5W5axRu5whKr%2BktqaUGIoMqMRfQPlSr%2Bq0wO2APBtvvdX4%2FDFJbT3wiLC5ug16BzP2%2B1zyyluv2ujVzXinrLeCkt" : {
-        "expires" : 0
-      }
-    } ]
-    < [streamid:11] DefaultHttp2Headers[:status: 201, access-control-allow-origin: *, access-control-expose-headers: Location, cache-control: private, max-age=604800000, location: /webpush/%2FgVm34r0gfnFphFCxxRPSodg94d4zH7CWWd76t0%2BVsMiNIZ%2F1Or%2B52w9X6k913dgHIK0XJnLg7bOsAzLPdvR7RWBzx4mqTTFTWzyymw26J7RCMR76CdNvdfqY%2FnG2s7KtBVVtzijw54p]
-
-Finally, we can use the _notify_ command which is the same as before only the url for the aggreate channel, which is
-the value of the _location_ response header from the _aggregate_ command above:
-
-    [webpush]$ notify --url /webpush/%2FgVm34r0gfnFphFCxxRPSodg94d4zH7CWWd76t0%2BVsMiNIZ%2F1Or%2B52w9X6k913dgHIK0XJnLg7bOsAzLPdvR7RWBzx4mqTTFTWzyymw26J7RCMR76CdNvdfqY%2FnG2s7KtBVVtzijw54p --payload hello
-    > DefaultHttp2Headers[:authority: localhost:8443, :method: PUT, :path: /webpush/%2FgVm34r0gfnFphFCxxRPSodg94d4zH7CWWd76t0%2BVsMiNIZ%2F1Or%2B52w9X6k913dgHIK0XJnLg7bOsAzLPdvR7RWBzx4mqTTFTWzyymw26J7RCMR76CdNvdfqY%2FnG2s7KtBVVtzijw54p, :scheme: https]
-    < [streamid:2] hello
-    < [streamid:2] hello
-
-
-
-

@@ -22,9 +22,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaderUtil;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.util.CharsetUtil;
 import org.jboss.aerogear.webpush.WebPushServer;
 
@@ -46,7 +46,7 @@ public class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpReques
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
-        if (HttpHeaderUtil.is100ContinueExpected(req)) {
+        if (HttpUtil.is100ContinueExpected(req)) {
             ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
         }
         final ByteBuf content = ctx.alloc().buffer();
@@ -56,7 +56,7 @@ public class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpReques
         response.headers().set(CONTENT_TYPE, "text/plain; charset=UTF-8");
         response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());
 
-        if (!HttpHeaderUtil.isKeepAlive(req)) {
+        if (!HttpUtil.isKeepAlive(req)) {
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
         } else {
             response.headers().set(CONNECTION, HttpHeaderValues.KEEP_ALIVE);

@@ -67,11 +67,6 @@ public class ConfigReaderTest {
     }
 
     @Test
-    public void registrationMaxAge() {
-        assertThat(webPushServerConfig.registrationMaxAge(), is(3000L));
-    }
-
-    @Test
     public void subscriptionMaxAge() {
         assertThat(webPushServerConfig.subscriptionMaxAge(), is(4000L));
     }

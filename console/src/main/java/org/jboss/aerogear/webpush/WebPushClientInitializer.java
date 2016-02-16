@@ -21,23 +21,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.ChannelPromiseAggregator;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpClientUpgradeHandler;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
-import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
-import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
 import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Connection;
-import io.netty.handler.codec.http2.Http2ConnectionEncoder;
-import io.netty.handler.codec.http2.Http2ConnectionHandler;
-import io.netty.handler.codec.http2.Http2FrameListener;
-import io.netty.handler.codec.http2.Http2FrameReader;
-import io.netty.handler.codec.http2.Http2FrameWriter;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
@@ -71,10 +62,12 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
         final Http2Connection connection = new DefaultHttp2Connection(false);
-        connectionHandler = new WebPushToHttp2ConnectionHandler(connection,
-                new DefaultHttp2FrameReader(),
-                new DefaultHttp2FrameWriter(),
-                new DelegatingDecompressorFrameListener(new DefaultHttp2Connection(false), new WebPushFrameListener(callback)));
+        connectionHandler = new WebPushToHttp2ConnectionHandlerBuilder()
+                .frameListener(new DelegatingDecompressorFrameListener(
+                        connection,
+                        new WebPushFrameListener(callback)))
+                .connection(connection)
+                .build();
         responseHandler = new HttpResponseHandler(callback);
         settingsHandler = new Http2SettingsHandler(ch.newPromise());
 
@@ -158,43 +151,6 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
                 }
             }
             ctx.fireUserEventTriggered(evt);
-        }
-    }
-
-    public static class WebPushToHttp2ConnectionHandler extends Http2ConnectionHandler {
-
-        public WebPushToHttp2ConnectionHandler(final Http2Connection connection,
-                                               final Http2FrameReader frameReader,
-                                               final Http2FrameWriter frameWriter,
-                                               final Http2FrameListener listener) {
-            super(connection, frameReader, frameWriter, listener);
-        }
-
-        @Override
-        public void write(final ChannelHandlerContext ctx, final Object msg, final ChannelPromise promise) {
-            if (msg instanceof WebPushMessage) {
-                final WebPushMessage message = (WebPushMessage) msg;
-                final Http2ConnectionEncoder encoder = encoder();
-                final int streamId = connection().local().nextStreamId();
-                if (message.hasData()) {
-                    final ChannelPromiseAggregator promiseAggregator = new ChannelPromiseAggregator(promise);
-                    final ChannelPromise headerPromise = ctx.newPromise();
-                    final ChannelPromise dataPromise = ctx.newPromise();
-                    promiseAggregator.add(headerPromise, dataPromise);
-                    encoder.writeHeaders(ctx, streamId, message.headers(), 0, false, headerPromise);
-                    encoder.writeData(ctx, streamId, message.payload(), 0, true, dataPromise);
-                } else {
-                    encoder.writeHeaders(ctx, streamId, message.headers(), 0, true, promise);
-                }
-            } else {
-                ctx.write(msg, promise);
-            }
-        }
-
-        @Override
-        public void onException(ChannelHandlerContext ctx, Throwable cause) {
-            cause.printStackTrace();
-            super.onException(ctx, cause);
         }
     }
 

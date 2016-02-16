@@ -78,9 +78,11 @@ public class WebPushChannelInitializer extends ChannelInitializer<SocketChannel>
         }
 
         @Override
-        public UpgradeCodec newUpgradeCodec(final String protocol) {
+        public UpgradeCodec newUpgradeCodec(final CharSequence protocol) {
             if (Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME.equals(protocol)) {
-                return new Http2ServerUpgradeCodec(new WebPushHttp2Handler(webPushServer));
+                return new Http2ServerUpgradeCodec(new WebPushHttp2HandlerBuilder()
+                        .webPushServer(webPushServer)
+                        .build());
             } else {
                 return null;
             }

@@ -27,7 +27,6 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.AsciiString;
 import io.netty.util.AttributeKey;
-import io.netty.util.ByteString;
 import io.netty.util.concurrent.Future;
 import org.jboss.aerogear.webpush.DefaultPushMessage;
 import org.jboss.aerogear.webpush.PushMessage;
@@ -274,17 +273,17 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     }
 
     private static Optional<String> getPushReceiptToken(final Http2Headers headers) {
-        final ByteString byteString = headers.get(PUSH_RECEIPT_HEADER);
-        if (byteString != null) {
-            return extractToken(byteString.toString(), Resource.RECEIPT);
+        final CharSequence pushReceiptHeader = headers.get(PUSH_RECEIPT_HEADER);
+        if (pushReceiptHeader != null) {
+            return extractToken(pushReceiptHeader.toString(), Resource.RECEIPT);
         }
         return Optional.empty();
     }
 
     private static Optional<Integer> getTtl(final Http2Headers headers) {
-        final ByteString byteString = headers.get(TTL_HEADER);
-        if (byteString != null) {
-            Optional.of(byteString.parseAsciiInt());
+        final CharSequence ttlHeader = headers.get(TTL_HEADER);
+        if (ttlHeader != null) {
+            Optional.of(AsciiString.of(ttlHeader).parseInt());
         }
         return Optional.empty();
     }
@@ -310,7 +309,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
                         receivePushMessage(pushMessage, client);
                     }
                 }
-                final Optional<ByteString> wait =
+                final Optional<CharSequence> wait =
                         Optional.ofNullable(headers.get(PREFER_HEADER)).filter(val -> "wait=0".equals(val.toString()));
                 if (wait.isPresent()) {
                     monitoredStreams.remove(sub.id());  //open the storage
@@ -331,7 +330,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private void receivePushMessage(final PushMessage pushMessage, final Client client) {
         final Http2Headers promiseHeaders = promiseHeaders(pushMessage);
         final Http2Headers monitorHeaders = monitorHeaders(pushMessage);
-        final int pushStreamId = client.encoder.connection().local().nextStreamId();
+        final int pushStreamId = client.encoder.connection().local().incrementAndGetNextStreamId();
         client.encoder.writePushPromise(client.ctx, client.streamId, pushStreamId, promiseHeaders, 0,
                 client.ctx.newPromise()).addListener(WebPushFrameListener::logFutureError);
         client.encoder.writeHeaders(client.ctx, pushStreamId, monitorHeaders, 0, false, client.ctx.newPromise())
@@ -369,7 +368,7 @@ public class WebPushFrameListener extends Http2FrameAdapter {
     private void receivePushMessageReceipts(final PushMessage pushMessage, final Client client) {
         final Http2Headers promiseHeaders = promiseHeaders(pushMessage);
         final Http2Headers ackHeaders = goneHeaders();
-        final int pushStreamId = client.encoder.connection().local().nextStreamId();
+        final int pushStreamId = client.encoder.connection().local().incrementAndGetNextStreamId();
         client.encoder.writePushPromise(client.ctx, client.streamId, pushStreamId, promiseHeaders, 0,
                 client.ctx.newPromise()).addListener(WebPushFrameListener::logFutureError);
         client.encoder.writeHeaders(client.ctx, pushStreamId, ackHeaders, 0, true,

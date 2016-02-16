@@ -38,7 +38,9 @@ public class Http2OrHttpHandler extends ApplicationProtocolNegotiationHandler {
     @Override
     protected void configurePipeline(final ChannelHandlerContext ctx, final String protocol) throws Exception {
         if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
-            ctx.pipeline().addLast(new WebPushHttp2Handler(webPushServer));
+            ctx.pipeline().addLast(new WebPushHttp2HandlerBuilder()
+                    .webPushServer(webPushServer)
+                    .build());
             return;
         }
         if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {

@@ -17,33 +17,21 @@
 package org.jboss.aerogear.webpush.netty;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http2.DefaultHttp2Connection;
-import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
-import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
-import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.codec.http2.Http2ConnectionDecoder;
+import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionHandler;
-import io.netty.handler.codec.http2.Http2FrameReader;
-import io.netty.handler.codec.http2.Http2FrameWriter;
-import org.jboss.aerogear.webpush.WebPushServer;
+import io.netty.handler.codec.http2.Http2Settings;
 
 public class WebPushHttp2Handler extends Http2ConnectionHandler {
 
     private final WebPushFrameListener listener;
 
-    public WebPushHttp2Handler(final WebPushServer webpushServer) {
-        this(new DefaultHttp2Connection(true),
-                new DefaultHttp2FrameReader(),
-                new DefaultHttp2FrameWriter(),
-                new WebPushFrameListener(webpushServer));
-    }
-
-    private WebPushHttp2Handler(final Http2Connection connection,
-                                final Http2FrameReader frameReader,
-                                final Http2FrameWriter frameWriter,
+    protected WebPushHttp2Handler(final Http2ConnectionDecoder decoder,
+                                final Http2ConnectionEncoder encoder,
+                                final Http2Settings initialSettings,
                                 final WebPushFrameListener listener) {
-        super(connection, frameReader, frameWriter, listener);
+        super(decoder, encoder, initialSettings);
         this.listener = listener;
-        listener.encoder(encoder());
     }
 
     @Override

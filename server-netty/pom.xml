@@ -30,9 +30,9 @@
     <url>http://aerogear.org</url>
 
     <properties>
-        <jetty.npn.version>1.1.9.v20141016</jetty.npn.version>
+        <jetty.npn.version>1.1.11.v20150415</jetty.npn.version>
         <jetty.npn.path>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${jetty.npn.version}/npn-boot-${jetty.npn.version}.jar</jetty.npn.path>
-        <jetty.alpn.version>8.1.0.v20141016</jetty.alpn.version>
+        <jetty.alpn.version>8.1.7.v20160121</jetty.alpn.version>
         <jetty.alpn.path>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${jetty.alpn.version}/alpn-boot-${jetty.alpn.version}.jar</jetty.alpn.path>
         <bootcp>${jetty.alpn.path}</bootcp>
         <webpush.alpn.config>/webpush-config.json</webpush.alpn.config>
@@ -183,6 +183,10 @@
     </build>
     
     <profiles>
+      <!--
+        Profiles that assigns proper Jetty alpn-boot version.
+        See: http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions
+      -->
       <profile>
         <id>alpn-8</id>
         <activation>
@@ -243,20 +247,21 @@
           <jetty.alpn.version>8.1.2.v20141202</jetty.alpn.version>
         </properties>
       </profile>
-        <profile>
-            <id>7u9</id>
-            <activation>
-                <property>
-                    <name>java.version</name>
-                    <value>1.7.0_9</value>
-                </property>
-            </activation>
-            <properties>
-                <npn.version>1.1.3.v20130313</npn.version>
-                <bootcp>${jetty.npn.path}</bootcp>
-                <webpush.config>${webpush.npn.config}</webpush.config>
-            </properties>
-        </profile>
+
+      <profile>
+        <id>7u9</id>
+        <activation>
+          <property>
+            <name>java.version</name>
+            <value>1.7.0_9</value>
+          </property>
+        </activation>
+        <properties>
+          <npn.version>1.1.3.v20130313</npn.version>
+          <bootcp>${jetty.npn.path}</bootcp>
+          <webpush.config>${webpush.npn.config}</webpush.config>
+        </properties>
+      </profile>
       <profile>
         <id>7u10</id>
         <activation>
@@ -401,7 +406,7 @@
           <!--
           This profile exists because either ALPN or NPN can exits on the class path at once, but not both.
           The JDK version is typically used to distinguish which should be used but there is some overlap
-          where both could be used.  ALPN is the default and this profile is enabled with a -Dforcenpn=true arugument
+          where both could be used. ALPN is the default and this profile is enabled with a -Dforcenpn=true arugument
           -->
         <id>forcenpn</id>
         <activation>

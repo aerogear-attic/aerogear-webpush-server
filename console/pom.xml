@@ -39,9 +39,9 @@
     <properties>
         <java.version>1.7</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jetty.npn.version>1.1.9.v20141016</jetty.npn.version>
+        <jetty.npn.version>1.1.11.v20150415</jetty.npn.version>
         <jetty.npn.path>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${jetty.npn.version}/npn-boot-${jetty.npn.version}.jar</jetty.npn.path>
-        <jetty.alpn.version>8.1.0.v20141016</jetty.alpn.version>
+        <jetty.alpn.version>8.1.7.v20160121</jetty.alpn.version>
         <jetty.alpn.path>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${jetty.alpn.version}/alpn-boot-${jetty.alpn.version}.jar</jetty.alpn.path>
         <bootcp>${jetty.alpn.path}</bootcp>
     </properties>
@@ -83,37 +83,32 @@
                               <artifactItem>
                                 <groupId>org.mortbay.jetty.npn</groupId>
                                 <artifactId>npn-boot</artifactId>
-                                <version>1.1.9.v20141016</version>
+                                <version>1.1.10.v20150130</version>  <!-- 1.7.0u75 - 1.7.0u76 -->
                               </artifactItem>
                               <artifactItem>
                                 <groupId>org.mortbay.jetty.npn</groupId>
                                 <artifactId>npn-boot</artifactId>
-                                <version>1.1.5.v20130313</version>
+                                <version>1.1.9.v20141016</version>   <!-- 1.7.0u71 - 1.7.0u72 -->
                               </artifactItem>
                               <artifactItem>
                                 <groupId>org.mortbay.jetty.npn</groupId>
                                 <artifactId>npn-boot</artifactId>
-                                <version>1.1.8.v20141013</version>
+                                <version>1.1.8.v20141013</version>   <!-- 1.7.0u55 - 1.7.0u60 - 1.7.0u65 - 1.7.0u67 -->
                               </artifactItem>
                               <artifactItem>
                                 <groupId>org.mortbay.jetty.npn</groupId>
                                 <artifactId>npn-boot</artifactId>
-                                <version>1.1.9.v20141016</version>
+                                <version>1.1.6.v20130911</version>   <!-- 1.7.0u40 - 1.7.0u45 - 1.7.0u51 -->
                               </artifactItem>
                               <artifactItem>
                                 <groupId>org.mortbay.jetty.npn</groupId>
                                 <artifactId>npn-boot</artifactId>
-                                <version>1.1.4.v20130313</version>
+                                <version>1.1.5.v20130313</version>   <!-- 1.7.0u15 - 1.7.0u17 - 1.7.0u21 - 1.7.0u25 -->
                               </artifactItem>
                               <artifactItem>
                                 <groupId>org.mortbay.jetty.npn</groupId>
                                 <artifactId>npn-boot</artifactId>
-                                <version>1.1.6.v20130911</version>
-                              </artifactItem>
-                              <artifactItem>
-                                <groupId>org.mortbay.jetty.npn</groupId>
-                                <artifactId>npn-boot</artifactId>
-                                <version>1.1.10.v20150130</version>
+                                <version>1.1.4.v20130313</version>   <!-- 1.7.0u13 -->
                               </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -497,7 +492,7 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.10.v20150130</jetty.npn.version>
-        <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
+        <jetty.alpn.version>7.1.3.v20150130</jetty.alpn.version>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -511,7 +506,7 @@
       </activation>
       <properties>
         <jetty.npn.version>1.1.10.v20150130</jetty.npn.version>
-        <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
+        <jetty.alpn.version>7.1.3.v20150130</jetty.alpn.version>
         <bootcp>${jetty.npn.path}</bootcp>
       </properties>
     </profile>
@@ -519,7 +514,7 @@
       <!--
       This profile exists because either ALPN or NPN can exits on the class path at once, but not both.
       The JDK version is typically used to distinguish which should be used but there is some overlap
-      where both could be used.  ALPN is the default and this profile is enabled with a -Dforcenpn=true arugument
+      where both could be used. ALPN is the default and this profile is enabled with a -Dforcenpn=true arugument
       -->
       <id>forcenpn</id>
       <activation>

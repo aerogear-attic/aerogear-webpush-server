@@ -39,11 +39,6 @@
     <properties>
         <java.version>1.7</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jetty.npn.version>1.1.11.v20150415</jetty.npn.version>
-        <jetty.npn.path>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${jetty.npn.version}/npn-boot-${jetty.npn.version}.jar</jetty.npn.path>
-        <jetty.alpn.version>8.1.7.v20160121</jetty.alpn.version>
-        <jetty.alpn.path>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${jetty.alpn.version}/alpn-boot-${jetty.alpn.version}.jar</jetty.alpn.path>
-        <bootcp>${jetty.alpn.path}</bootcp>
     </properties>
 
     <build>
@@ -58,6 +53,7 @@
                             <exclude>**/*$*</exclude>
                             <exclude>**/*IntegrationTest.java</exclude>
                         </excludes>
+                        <argLine>${argLine.alpnAgent}</argLine>
                     </configuration>
                 </plugin>
             </plugins>
@@ -68,6 +64,18 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>get-jetty-alpn-agent</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>get</goal>
+                        </goals>
+                        <configuration>
+                            <groupId>org.mortbay.jetty.alpn</groupId>
+                            <artifactId>jetty-alpn-agent</artifactId>
+                            <version>${jetty.alpnAgent.version}</version>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>get-npn-boot</id>
                         <phase>package</phase>
                         <goals>
@@ -77,7 +85,7 @@
                         <configuration>
                             <groupId>org.mortbay.jetty.npn</groupId>
                             <artifactId>npn-boot</artifactId>
-                            <version>${jetty.npn.version}</version>
+                            <version>1.1.11.v20150415</version>
                             <outputDirectory>${project.build.directory}/libs</outputDirectory>
                             <artifactItems>
                               <artifactItem>
@@ -123,7 +131,7 @@
                         <configuration>
                             <groupId>org.mortbay.jetty.alpn</groupId>
                             <artifactId>alpn-boot</artifactId>
-                            <version>${jetty.alpn.version}</version>
+                            <version>8.1.7.v20160121</version>
                             <outputDirectory>${project.build.directory}/libs</outputDirectory>
                             <artifactItems>
                               <artifactItem>
@@ -144,7 +152,7 @@
                     <executable>${java.home}/bin/java</executable>
                     <arguments>
                         <!--argument>-Djavax.net.debug=all</argument-->
-                        <argument>-Xbootclasspath/p:${bootcp}</argument>
+                        <argument>${argLine.alpnAgent}</argument>
                         <argument>-classpath</argument>
                         <classpath />
                         <argument>org.jboss.aerogear.webpush.WebPushConsole</argument>
@@ -227,13 +235,15 @@
         <dependency>
             <groupId>org.eclipse.jetty.npn</groupId>
             <artifactId>npn-api</artifactId>
-            <version>1.1.1.v20141010</version>
+            <version>${npn-api.version}</version>
+            <scope>provided</scope> <!-- Provided by npn-boot -->
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.jetty.alpn</groupId>
             <artifactId>alpn-api</artifactId>
-            <version>1.1.0.v20141014</version>
+            <version>${alpn-api.version}</version>
+            <scope>provided</scope> <!-- Provided by alpn-boot -->
         </dependency>
 
         <dependency>
@@ -246,271 +256,7 @@
     </dependencies>
 
   <profiles>
-
-    <!--
-      Profiles that assigns proper Jetty npn-boot and alpn-boot version.
-      See: http://www.eclipse.org/jetty/documentation/current/npn-chapter.html#npn-versions
-      See: http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions
-    -->
     <profile>
-      <id>npn-7u9</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_9</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.3.v20130313</jetty.npn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-7u10</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_10</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.3.v20130313</jetty.npn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-7u11</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_11</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.3.v20130313</jetty.npn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-7u13</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_13</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.4.v20130313</jetty.npn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-7u15</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_15</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.5.v20130313</jetty.npn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-7u17</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_17</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.5.v20130313</jetty.npn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-7u21</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_21</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.5.v20130313</jetty.npn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-7u25</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_25</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.5.v20130313</jetty.npn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u40</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_40</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.6.v20130911</jetty.npn.version>
-        <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u45</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_45</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.6.v20130911</jetty.npn.version>
-        <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u51</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_51</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.6.v20130911</jetty.npn.version>
-        <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u55</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_55</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.8.v20141013</jetty.npn.version>
-        <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u60</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_60</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.8.v20141013</jetty.npn.version>
-        <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u65</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_65</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.8.v20141013</jetty.npn.version>
-        <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u67</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_67</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.8.v20141013</jetty.npn.version>
-        <jetty.alpn.version>7.1.0.v20141016</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u71</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_71</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.9.v20141016</jetty.npn.version>
-        <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u72</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_72</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.9.v20141016</jetty.npn.version>
-        <jetty.alpn.version>7.1.2.v20141202</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u75</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_75</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.10.v20150130</jetty.npn.version>
-        <jetty.alpn.version>7.1.3.v20150130</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-    <profile>
-      <id>npn-alpn-7u76</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.7.0_76</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.npn.version>1.1.10.v20150130</jetty.npn.version>
-        <jetty.alpn.version>7.1.3.v20150130</jetty.alpn.version>
-        <bootcp>${jetty.npn.path}</bootcp>
-      </properties>
-    </profile>
-  <profile>
       <!--
       This profile exists because either ALPN or NPN can exits on the class path at once, but not both.
       The JDK version is typically used to distinguish which should be used but there is some overlap
@@ -524,9 +270,9 @@
         </property>
       </activation>
       <properties>
-        <bootcp>${jetty.npn.path}</bootcp>
+        <jetty.alpnAgent.option>forceNpn=true</jetty.alpnAgent.option>
       </properties>
     </profile>
   </profiles>
-</project>
 
+</project>

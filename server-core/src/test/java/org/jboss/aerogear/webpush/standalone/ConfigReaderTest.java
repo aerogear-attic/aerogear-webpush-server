@@ -78,7 +78,7 @@ public class ConfigReaderTest {
 
     @Test
     public void protocol() {
-        assertThat(webPushServerConfig.protocol(), is(Protocol.NPN));
+        assertThat(webPushServerConfig.protocol(), is(Protocol.ALPN));
     }
 
     @Test

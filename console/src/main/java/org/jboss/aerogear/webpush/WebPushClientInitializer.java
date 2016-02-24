@@ -92,7 +92,7 @@ public class WebPushClientInitializer extends ChannelInitializer<SocketChannel> 
     }
 
     /**
-     * Configure the pipeline for TLS NPN negotiation to HTTP/2.
+     * Configure the pipeline for ALPN negotiation to HTTP/2.
      */
     private void configureSsl(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();

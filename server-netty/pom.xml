@@ -31,7 +31,6 @@
 
     <properties>
         <webpush.alpn.config>/webpush-config.json</webpush.alpn.config>
-        <webpush.npn.config>/webpush-npn-config.json</webpush.npn.config>
         <webpush.config>${webpush.alpn.config}</webpush.config>
     </properties>
 
@@ -50,13 +49,6 @@
         <dependency>
           <groupId>io.netty</groupId>
           <artifactId>netty-codec-http2</artifactId>
-        </dependency>
-
-        <dependency>
-          <groupId>org.eclipse.jetty.npn</groupId>
-          <artifactId>npn-api</artifactId>
-          <version>${npn-api.version}</version>
-          <scope>provided</scope> <!-- Provided by npn-boot -->
         </dependency>
 
         <dependency>
@@ -109,7 +101,6 @@
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
-            <!-- Download the npn-boot.jar in advance to add it to the boot classpath. -->
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -166,26 +157,5 @@
             </extension>
         </extensions>
     </build>
-    
-    <profiles>
-      <profile>
-          <!--
-          This profile exists because either ALPN or NPN can exits on the class path at once, but not both.
-          The JDK version is typically used to distinguish which should be used but there is some overlap
-          where both could be used. ALPN is the default and this profile is enabled with a -Dforcenpn=true arugument
-          -->
-        <id>forcenpn</id>
-        <activation>
-          <property>
-            <name>forcenpn</name>
-            <value>true</value>
-          </property>
-        </activation>
-        <properties>
-          <jetty.alpnAgent.option>forceNpn=true</jetty.alpnAgent.option>
-          <webpush.config>${webpush.npn.config}</webpush.config>
-        </properties>
-      </profile>
-    </profiles>
 
 </project>

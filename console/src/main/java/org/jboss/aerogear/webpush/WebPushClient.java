@@ -185,37 +185,20 @@ public final class WebPushClient {
     }
 
     private SslContext configureSsl() throws SSLException {
-        if (ssl) {
-            // The jar for the TLS protocol extension must be on the bootclasspath
-            // and will be set up prior to program execution. We need to configure
-            // the SslContext to suite both NPN and ALPN.
-            final String version = System.getProperty("java.version");
-            if (version.startsWith("1.7")) {
-                return SslContextBuilder.forClient()
-                        .sslProvider(SslProvider.JDK)
-                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                        .ciphers(null, SupportedCipherSuiteFilter.INSTANCE)
-                        .applicationProtocolConfig(new ApplicationProtocolConfig(
-                                Protocol.NPN,
-                                SelectorFailureBehavior.FATAL_ALERT,
-                                SelectedListenerFailureBehavior.FATAL_ALERT,
-                                ApplicationProtocolNames.HTTP_2,
-                                ApplicationProtocolNames.HTTP_1_1))
-                        .build();
-            }
-            return SslContextBuilder.forClient()
-                    .sslProvider(SslProvider.JDK)
-                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                    .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
-                    .applicationProtocolConfig(new ApplicationProtocolConfig(
-                            Protocol.ALPN,
-                            SelectorFailureBehavior.FATAL_ALERT,
-                            SelectedListenerFailureBehavior.FATAL_ALERT,
-                            ApplicationProtocolNames.HTTP_2,
-                            ApplicationProtocolNames.HTTP_1_1))
-                    .build();
+        if (!ssl) {
+            return null;
         }
-        return null;
+        return SslContextBuilder.forClient()
+                .sslProvider(SslProvider.JDK)
+                .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
+                .applicationProtocolConfig(new ApplicationProtocolConfig(
+                        Protocol.ALPN,
+                        SelectorFailureBehavior.FATAL_ALERT,
+                        SelectedListenerFailureBehavior.FATAL_ALERT,
+                        ApplicationProtocolNames.HTTP_2,
+                        ApplicationProtocolNames.HTTP_1_1))
+                .build();
     }
 
     public static Builder forHost(final String host) {

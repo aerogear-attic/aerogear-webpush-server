@@ -96,8 +96,6 @@ public final class WebPushNettyServer {
         switch (config.protocol()) {
             case ALPN:
                 return Protocol.ALPN;
-            case NPN:
-                return Protocol.NPN;
             default:
                 throw new IllegalStateException("Protocol not supported [" + config.protocol() + "]");
         }

@@ -1,33 +1,10 @@
 ## WebPush Console
 This module contains WebPush client command line applications called the WebPush Console.
 
-The WebPush Console is intended to be used during development and manual testing of a WebPush server. Currently, it works
-with the [node-webpush-server](https://github.com/kitcambridge/node-webpush-server) and the AeroGear
-[webpush-server](../server-netty).
+The WebPush Console is intended to be used during development and manual testing of a WebPush server.
 
 ## Using the WebPush console
 A very basic console/command line application is available to assist in development and testing of the server.
-
-__NOTE__:
-The [node-webpush-server](https://github.com/kitcambridge/node-webpush-server) uses the Transport Layer Security (TLS)
-extension Next Protocol Negotiation (NPN) and does currently not support Application-Layer Protocol Negotiation (ALPN).
-There is no NPN support for Java 1.8 so it is required that Java 1.7 be used to start the WebPush Console. This cannot
-be done as a choice at runtime as the jar files for either NPN or ALPN must be added to the Java boot classpath.
-
-For __Java 1.7__ the minor version is also important as different minor version of Java 1.7 require different
-[versions](http://www.eclipse.org/jetty/documentation/current/npn-chapter.html#npn-versions) of NPN.
-
-We provide different zip distributions for the various Java 1.7 and NPN version combinations:
-
-* 1.7.0_9 - 1.7.0_11      webpush-console-7_0_11.zip
-* 1.7.0_13                webpush-console-7_0_13.zip
-* 1.7.0_15 - 1.7.0_25     webpush-console-7_0_25.zip
-* 1.7.0_40 - 1.7.0_51     webpush-console-7_0_51.zip
-* 1.7.0_55 - 1.7.0_67     webpush-console-7_0_67.zip
-* 1.7.0_71 - 1.7.0_72     webpush-console-7_0_72.zip
-* 1.7.0_75 - 1.7.0_76     webpush-console-7_0_76.zip
-
-The above zip files can be found in the ```target``` directory after building.
 
 ### Start the AerogGear server
 __Java 1.8__ is required for the AeroGear WebPush Server.
@@ -37,18 +14,10 @@ __Java 1.8__ is required for the AeroGear WebPush Server.
     (maven output not displayed)
     [main] INFO org.jboss.aerogear.webpush.netty.WebPushNettyServer - WebPush server bound to localhost:8443
 
-### Start the Node.js server
-Follow the [Getting started instructions](https://github.com/kitcambridge/node-webpush-server#getting-started) to start
-the Node.js WebPush Server.
-
-    $ webpush-server --port 8080 --key demo.key --cert selfsigned.crt
-    Listening on https://Daniels-MBP.lan:8080...
-
 The ```demo.key``` and ```selfsigned.crt``` can be found in [server-netty/src/main/resources](../server-netty/src/main/resources).
 
 ### Start the console
-__Java 1.8__ is required for the WebPush Console when connecting to the AeroGear WebPush Server, and __Java 1.7__ for
-the WebPush Console running against the node-webpush-server.
+__Java 1.8__ is required for the WebPush Console when connecting to the AeroGear WebPush Server.
 
 
 Press ```tab``` to see the available commands and also to display the available options for specific commands.
@@ -63,16 +32,6 @@ Most command also support a ```--help``` option to display information about opt
 
     [webpush]$ connect -h hostname -p port
     Connected to [hostname:port]
-
-__Note__
-When connecting to the ```node-webpush-server``` the hostname specified must be a fully qualified domain name
-[FQDN](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)
-since this hostname is used for [Server Name Indication](http://tools.ietf.org/html/rfc6066#section-3).  
-The hostname must have a hostname part, and a domain part, separated by a comma. If the address that the
-_node-webpush-server_ is listening to is not a FQDN you can add such a name to hosts file.  
-For example, add a FQDN to /etc/hosts:
-
-    127.0.0.1	localhost localhost.com
 
 #### Subscribing for Push Messages
 

@@ -24,7 +24,7 @@ import java.io.File;
 public interface WebPushServerConfig {
 
     enum Protocol {
-        ALPN, NPN
+        ALPN
     }
 
     /**

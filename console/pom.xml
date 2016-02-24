@@ -59,7 +59,6 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <!-- Download the npn-boot.jar in advance to add it to the boot classpath. -->
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -73,52 +72,6 @@
                             <groupId>org.mortbay.jetty.alpn</groupId>
                             <artifactId>jetty-alpn-agent</artifactId>
                             <version>${jetty.alpnAgent.version}</version>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>get-npn-boot</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>get</goal>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>org.mortbay.jetty.npn</groupId>
-                            <artifactId>npn-boot</artifactId>
-                            <version>1.1.11.v20150415</version>
-                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
-                            <artifactItems>
-                              <artifactItem>
-                                <groupId>org.mortbay.jetty.npn</groupId>
-                                <artifactId>npn-boot</artifactId>
-                                <version>1.1.10.v20150130</version>  <!-- 1.7.0u75 - 1.7.0u76 -->
-                              </artifactItem>
-                              <artifactItem>
-                                <groupId>org.mortbay.jetty.npn</groupId>
-                                <artifactId>npn-boot</artifactId>
-                                <version>1.1.9.v20141016</version>   <!-- 1.7.0u71 - 1.7.0u72 -->
-                              </artifactItem>
-                              <artifactItem>
-                                <groupId>org.mortbay.jetty.npn</groupId>
-                                <artifactId>npn-boot</artifactId>
-                                <version>1.1.8.v20141013</version>   <!-- 1.7.0u55 - 1.7.0u60 - 1.7.0u65 - 1.7.0u67 -->
-                              </artifactItem>
-                              <artifactItem>
-                                <groupId>org.mortbay.jetty.npn</groupId>
-                                <artifactId>npn-boot</artifactId>
-                                <version>1.1.6.v20130911</version>   <!-- 1.7.0u40 - 1.7.0u45 - 1.7.0u51 -->
-                              </artifactItem>
-                              <artifactItem>
-                                <groupId>org.mortbay.jetty.npn</groupId>
-                                <artifactId>npn-boot</artifactId>
-                                <version>1.1.5.v20130313</version>   <!-- 1.7.0u15 - 1.7.0u17 - 1.7.0u21 - 1.7.0u25 -->
-                              </artifactItem>
-                              <artifactItem>
-                                <groupId>org.mortbay.jetty.npn</groupId>
-                                <artifactId>npn-boot</artifactId>
-                                <version>1.1.4.v20130313</version>   <!-- 1.7.0u13 -->
-                              </artifactItem>
-                            </artifactItems>
                         </configuration>
                     </execution>
                     <execution>
@@ -173,12 +126,6 @@
                     <descriptors>
                       <descriptor>src/assembly/jar.xml</descriptor>
                       <descriptor>src/assembly/zip-java-8.xml</descriptor>
-                      <descriptor>src/assembly/zip-java-7_0_76.xml</descriptor>
-                      <descriptor>src/assembly/zip-java-7_0_72.xml</descriptor>
-                      <descriptor>src/assembly/zip-java-7_0_67.xml</descriptor>
-                      <descriptor>src/assembly/zip-java-7_0_51.xml</descriptor>
-                      <descriptor>src/assembly/zip-java-7_0_25.xml</descriptor>
-                      <descriptor>src/assembly/zip-java-7_0_13.xml</descriptor>
                     </descriptors>
                     <appendAssemblyId>true</appendAssemblyId>
                     <archive>
@@ -233,13 +180,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.eclipse.jetty.npn</groupId>
-            <artifactId>npn-api</artifactId>
-            <version>${npn-api.version}</version>
-            <scope>provided</scope> <!-- Provided by npn-boot -->
-        </dependency>
-
-        <dependency>
             <groupId>org.jboss.aesh</groupId>
             <artifactId>aesh</artifactId>
             <version>0.56</version>
@@ -247,25 +187,5 @@
         </dependency>
 
     </dependencies>
-
-  <profiles>
-    <profile>
-      <!--
-      This profile exists because either ALPN or NPN can exits on the class path at once, but not both.
-      The JDK version is typically used to distinguish which should be used but there is some overlap
-      where both could be used. ALPN is the default and this profile is enabled with a -Dforcenpn=true arugument
-      -->
-      <id>forcenpn</id>
-      <activation>
-        <property>
-          <name>forcenpn</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <properties>
-        <jetty.alpnAgent.option>forceNpn=true</jetty.alpnAgent.option>
-      </properties>
-    </profile>
-  </profiles>
 
 </project>

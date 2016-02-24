@@ -12,5 +12,5 @@
     "datastore": { "in-memory": {} },
     "registration-max-age": 3000,
     "subscription-max-age": 4000,
-    "protocol": "NPN"
+    "protocol": "ALPN"
 }

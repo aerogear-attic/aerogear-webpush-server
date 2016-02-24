@@ -55,12 +55,10 @@
     <mockito.version>1.9.0</mockito.version>
     <slf4j.version>1.7.5</slf4j.version>
     <additionalparam>-Xdoclint:none</additionalparam>
-    <npn-api.version>1.1.1.v20141010</npn-api.version>
 
     <jetty.alpnAgent.version>2.0.0</jetty.alpnAgent.version>
     <jetty.alpnAgent.path>${settings.localRepository}/org/mortbay/jetty/alpn/jetty-alpn-agent/${jetty.alpnAgent.version}/jetty-alpn-agent-${jetty.alpnAgent.version}.jar</jetty.alpnAgent.path>
-    <jetty.alpnAgent.option>forceNpn=false</jetty.alpnAgent.option>
-    <argLine.alpnAgent>-javaagent:${jetty.alpnAgent.path}=${jetty.alpnAgent.option}</argLine.alpnAgent>
+    <argLine.alpnAgent>-javaagent:${jetty.alpnAgent.path}</argLine.alpnAgent>
   </properties>
 
   <modules>

@@ -240,13 +240,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.eclipse.jetty.alpn</groupId>
-            <artifactId>alpn-api</artifactId>
-            <version>${alpn-api.version}</version>
-            <scope>provided</scope> <!-- Provided by alpn-boot -->
-        </dependency>
-
-        <dependency>
             <groupId>org.jboss.aesh</groupId>
             <artifactId>aesh</artifactId>
             <version>0.56</version>

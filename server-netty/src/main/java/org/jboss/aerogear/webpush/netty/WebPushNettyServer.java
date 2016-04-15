@@ -93,11 +93,9 @@ public final class WebPushNettyServer {
     }
 
     private static Protocol protocol(final WebPushServerConfig config) {
-        switch (config.protocol()) {
-            case ALPN:
-                return Protocol.ALPN;
-            default:
-                throw new IllegalStateException("Protocol not supported [" + config.protocol() + "]");
+        if (config.protocol() == WebPushServerConfig.Protocol.ALPN) {
+            return Protocol.ALPN;
         }
+        throw new IllegalStateException("Protocol not supported [" + config.protocol() + "]");
     }
 }

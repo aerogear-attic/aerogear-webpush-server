@@ -82,7 +82,7 @@ public final class WebPushNettyServer {
                     .sslProvider(SslProvider.JDK)
                     .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
                     .applicationProtocolConfig(new ApplicationProtocolConfig(
-                            protocol(config),
+                            Protocol.ALPN,
                             SelectorFailureBehavior.FATAL_ALERT,
                             SelectedListenerFailureBehavior.FATAL_ALERT,
                             ApplicationProtocolNames.HTTP_2,
@@ -90,12 +90,5 @@ public final class WebPushNettyServer {
                     .build();
         }
         return null;
-    }
-
-    private static Protocol protocol(final WebPushServerConfig config) {
-        if (config.protocol() == WebPushServerConfig.Protocol.ALPN) {
-            return Protocol.ALPN;
-        }
-        throw new IllegalStateException("Protocol not supported [" + config.protocol() + "]");
     }
 }

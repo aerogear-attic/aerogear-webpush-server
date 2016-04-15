@@ -26,8 +26,7 @@ Example configuration:
         "endpoint-port": 8899,
         "endpoint-tls": false,
         "endpoint-prefix": "/update",
-        "datastore": { "in-memory": {} },
-        "protocol": "ALPN"
+        "datastore": { "in-memory": {} }
     }
 
 #### host

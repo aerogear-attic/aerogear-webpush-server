@@ -11,6 +11,5 @@
     "ack-interval": "80000",
     "datastore": { "in-memory": {} },
     "registration-max-age": 3000,
-    "subscription-max-age": 4000,
-    "protocol": "ALPN"
+    "subscription-max-age": 4000
 }

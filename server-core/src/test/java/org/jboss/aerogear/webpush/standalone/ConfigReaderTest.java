@@ -14,7 +14,6 @@ package org.jboss.aerogear.webpush.standalone;
 
 import org.hamcrest.CoreMatchers;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
-import org.jboss.aerogear.webpush.WebPushServerConfig.Protocol;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -74,11 +73,6 @@ public class ConfigReaderTest {
     @Test
     public void messageMaxAge() {
         assertThat(webPushServerConfig.messageMaxAge(), is(0L));
-    }
-
-    @Test
-    public void protocol() {
-        assertThat(webPushServerConfig.protocol(), is(Protocol.ALPN));
     }
 
     @Test

@@ -23,10 +23,6 @@ import java.io.File;
  */
 public interface WebPushServerConfig {
 
-    enum Protocol {
-        ALPN
-    }
-
     /**
      * The host that this server will bind to.
      *
@@ -40,13 +36,6 @@ public interface WebPushServerConfig {
      * @return {@code port} the port.
      */
     int port();
-
-    /**
-     * Returnes the {@link Protocol} to use.
-     *
-     * @return {@link Protocol} the protocol used for TLS application protocol negotiation.
-     */
-    Protocol protocol();
 
     /**
      * Returns the server certificate file.

@@ -35,7 +35,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     private final long subscriptionMaxAge;
     private final long messageMaxAge;
     private final long messageMaxSize;
-    private final Protocol protocol;
 
     private DefaultWebPushConfig(final Builder builder) {
         host = builder.host;
@@ -47,7 +46,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         endpointTls = builder.endpointTls;
         password = builder.password;
         subscriptionMaxAge = builder.subscriptionMaxAge;
-        protocol = builder.protocol;
         messageMaxAge = builder.messageMaxAge;
         if (builder.messageMaxSize < MESSAGE_MAX_SIZE_LOWER_BOUND) {
             throw new IllegalStateException("messageMaxSize cannot be set lower than " + MESSAGE_MAX_SIZE_LOWER_BOUND);
@@ -109,11 +107,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
     }
 
     @Override
-    public Protocol protocol() {
-        return protocol;
-    }
-
-    @Override
     public long messageMaxAge() {
         return messageMaxAge;
     }
@@ -132,7 +125,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
                 .append(", endpointHost=").append(endpointHost)
                 .append(", endpointPort=").append(endpointPort)
                 .append(", endpointTls=").append(endpointTls)
-                .append(", protocol=").append(protocol)
                 .append(", subscriptionMaxAge=").append(subscriptionMaxAge)
                 .append(", messageMaxAge=").append(messageMaxAge)
                 .append(", messageMaxSize=").append(messageMaxSize)
@@ -158,7 +150,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
         private int endpointPort;
         private long subscriptionMaxAge = 604800000L;
         private long messageMaxAge = 0L;
-        private Protocol protocol = Protocol.ALPN;
         private long messageMaxSize = MESSAGE_MAX_SIZE_LOWER_BOUND;
 
         public Builder host(final String host) {
@@ -205,11 +196,6 @@ public final class DefaultWebPushConfig implements WebPushServerConfig {
 
         public Builder subscriptionMaxAge(final long maxAge) {
             this.subscriptionMaxAge = maxAge;
-            return this;
-        }
-
-        public Builder protocol(final Protocol protocol) {
-            this.protocol = protocol;
             return this;
         }
 

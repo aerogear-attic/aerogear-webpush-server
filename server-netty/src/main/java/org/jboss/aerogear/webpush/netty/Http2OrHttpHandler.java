@@ -44,7 +44,7 @@ class Http2OrHttpHandler extends ApplicationProtocolNegotiationHandler {
             return;
         }
         if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
-            ctx.pipeline().addLast(new WebPushHttp11Handler(webPushServer));
+            ctx.pipeline().addLast(new WebPushHttp11Handler());
             return;
         }
         throw new IllegalStateException("unknown protocol: " + protocol);

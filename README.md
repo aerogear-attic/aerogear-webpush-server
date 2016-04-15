@@ -27,11 +27,8 @@ Just common classes used by multiple modules in the project.
 * [datastores](./datastores)  
 Contains implementations of various datastores. Please see the specific datastore's readme for further details.
 
-* [protocol](./protocol)  
-The WebPush Server Protocol provides interfaces for the protocol.
-
-* [server-api](./server-api)  
-An API for AeroGear WebPush Server
+* [api](./api)  
+The WebPush server and protocol interfaces.
 
 * [server-core](./server-core)  
 An implementation of AeroGear WebPush Server API.

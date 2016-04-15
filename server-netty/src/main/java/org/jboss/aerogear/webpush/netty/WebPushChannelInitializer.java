@@ -31,14 +31,14 @@ import org.jboss.aerogear.webpush.datastore.DataStore;
 
 import static io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodec;
 
-public class WebPushChannelInitializer extends ChannelInitializer<SocketChannel> {
+class WebPushChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     private final SslContext sslCtx;
     private final DataStore dataStore;
     private final WebPushServerConfig config;
     private final byte[] privateKey;
 
-    public WebPushChannelInitializer(final SslContext sslCtx,
+    WebPushChannelInitializer(final SslContext sslCtx,
                                      final DataStore dataStore,
                                      final WebPushServerConfig config) {
         this.sslCtx = sslCtx;

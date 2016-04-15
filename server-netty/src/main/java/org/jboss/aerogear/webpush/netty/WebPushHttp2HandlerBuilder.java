@@ -44,10 +44,9 @@ public class WebPushHttp2HandlerBuilder
                                         final Http2ConnectionEncoder encoder,
                                         final Http2Settings initialSettings) throws Exception {
         if (webpushServer == null) {
-            throw new IllegalStateException("WebPushServer does not specified");
+            throw new IllegalStateException("WebPushServer was not specified");
         }
-        WebPushFrameListener listener = new WebPushFrameListener(webpushServer);
-        listener.encoder(encoder);
+        WebPushFrameListener listener = new WebPushFrameListener(webpushServer, encoder);
         frameListener(listener);
         return new WebPushHttp2Handler(decoder, encoder, initialSettings, listener);
     }

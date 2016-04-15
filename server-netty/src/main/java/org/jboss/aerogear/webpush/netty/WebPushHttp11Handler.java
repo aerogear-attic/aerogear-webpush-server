@@ -26,23 +26,20 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.util.CharsetUtil;
-import org.jboss.aerogear.webpush.WebPushServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
 /**
- * HTTP handler that responds with a "Hello World"
+ * HTTP handler that responds with a "WebPush HTTP 1.1"
  */
-public class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpRequest> {
+class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpRequest> {
 
-    static final byte[] RESPONSE_BYTES = "WebPush HTTP 1.1".getBytes(CharsetUtil.UTF_8);
-    private final WebPushServer webPushServer;
-
-    public WebPushHttp11Handler(final WebPushServer webPushServer) {
-        this.webPushServer = webPushServer;
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebPushHttp11Handler.class);
+    private static final byte[] RESPONSE_BYTES = "WebPush HTTP 1.1".getBytes(CharsetUtil.UTF_8);
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
@@ -66,7 +63,7 @@ public class WebPushHttp11Handler extends SimpleChannelInboundHandler<HttpReques
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        LOGGER.error("Exception caught:", cause);
         ctx.close();
     }
 }

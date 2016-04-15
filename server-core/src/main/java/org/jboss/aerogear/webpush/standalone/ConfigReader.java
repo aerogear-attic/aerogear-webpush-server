@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.aerogear.webpush.DefaultWebPushConfig;
 import org.jboss.aerogear.webpush.DefaultWebPushConfig.Builder;
 import org.jboss.aerogear.webpush.WebPushServerConfig;
-import org.jboss.aerogear.webpush.WebPushServerConfig.Protocol;
 
 /**
  * Utility to read a JSON config files.
@@ -101,10 +100,6 @@ public class ConfigReader {
         final JsonNode subscriptionMaxAge = json.get("subscription-max-age");
         if (subscriptionMaxAge != null) {
             builder.subscriptionMaxAge(subscriptionMaxAge.asLong());
-        }
-        final JsonNode protocol = json.get("protocol");
-        if (protocol != null) {
-            builder.protocol(Protocol.valueOf(protocol.asText()));
         }
         return builder.build();
     }

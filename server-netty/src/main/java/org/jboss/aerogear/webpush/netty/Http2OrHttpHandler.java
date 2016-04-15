@@ -26,11 +26,11 @@ import org.jboss.aerogear.webpush.WebPushServer;
  * Negotiates with the browser if HTTP2 or HTTP is going to be used. Once decided, the Netty
  * pipeline is setup with the correct handlers for the selected protocol.
  */
-public class Http2OrHttpHandler extends ApplicationProtocolNegotiationHandler {
+class Http2OrHttpHandler extends ApplicationProtocolNegotiationHandler {
 
     private final WebPushServer webPushServer;
 
-    public Http2OrHttpHandler(final WebPushServer webPushServer) {
+    Http2OrHttpHandler(final WebPushServer webPushServer) {
         super(ApplicationProtocolNames.HTTP_1_1);
         this.webPushServer = webPushServer;
     }

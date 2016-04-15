@@ -97,15 +97,12 @@ class WebPushFrameListener extends Http2FrameAdapter {
     private Http2Connection.PropertyKey pushReceiptPropertyKey;
     private Http2Connection.PropertyKey ttlPropertyKey;
 
-    WebPushFrameListener(final WebPushServer webpushServer) {
+    WebPushFrameListener(final WebPushServer webpushServer, final Http2ConnectionEncoder encoder) {
         this.webpushServer = Objects.requireNonNull(webpushServer, "webpushServer must not be null");
         this.authority = new AsciiString(webpushServer.config().host() + ":" + webpushServer.config().port());
         this.subscriptionMaxAge = new AsciiString("private, max-age=" + webpushServer.config().subscriptionMaxAge());
-    }
-
-    void encoder(Http2ConnectionEncoder encoder) {
         this.encoder = encoder;
-        Http2Connection connection = encoder.connection();
+        final Http2Connection connection = encoder.connection();
         pathPropertyKey = connection.newKey();
         resourcePropertyKey = connection.newKey();
         pushReceiptPropertyKey = connection.newKey();
